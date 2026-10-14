@@ -21,3 +21,4 @@ token.json
 .beads-credential-key
 .beads/proxieddb/
 *.gate.lock*
+*.egg-info/
