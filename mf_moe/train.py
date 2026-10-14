@@ -3,7 +3,7 @@
 Exactitud = respuesta exacta. Con teacher forcing, una respuesta es exacta si el argmax acierta cada
 token de la respuesta (EOS incluido): equivale a decodificar greedy, en una sola pasada.
 No hay tope de pasos (decisión del usuario). La alarma pausa y avisa si la exactitud no mejora durante
-`patience` evaluaciones seguidas: devuelve `stalled=True` y el llamador decide.
+`patience` evaluaciones seguidas en ninguna tarea: devuelve `stalled=True` y el llamador decide.
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ def train_until(
     digits: dict | None = None,
 ) -> Result:
     """Entrena con lotes parejos de `tasks` hasta que TODAS lleguen al 88 % (o salte la alarma)."""
-    res, best, since = Result(), -1.0, 0
+    res, best, since = Result(), dict.fromkeys(tasks, -1.0), 0
     model.train()
     while True:
         t0 = time.perf_counter()
@@ -99,8 +99,13 @@ def train_until(
         log(rec)
         if worst >= MASTERY:
             return res
-        if worst > best + 0.01:
-            best, since = worst, 0
+        # Alarma: ninguna tarea mejoró 1 punto. Mirar solo la peor la disparaba con una tarea trabada
+        # en 0 % aunque las demás avanzaran (ref 2026-10-14: 12 tareas cortadas a los 5.250 pasos).
+        improved = [t for t in tasks if accs[t] > best[t] + 0.01]
+        for t in improved:
+            best[t] = accs[t]
+        if improved:
+            since = 0
         else:
             since += 1
             if since >= patience:

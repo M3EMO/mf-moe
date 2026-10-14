@@ -18,7 +18,7 @@ from pathlib import Path
 import torch
 
 from mf_moe.model import build
-from mf_moe.tasks import DEFAULT_DIGITS, TASKS, eval_set
+from mf_moe.tasks import DEFAULT_DIGITS, REVERSED_ANSWER, TASKS, eval_set
 from mf_moe.train import accuracy, train_until
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -57,12 +57,43 @@ def capacidad(n_experts: int, seed: int = 0) -> dict:
             "tok_s": round(r.tokens / max(r.seconds, 1e-9)), "historia": r.history}  # fmt: skip
 
 
+# Corrida 3 de calibración: las seis tareas invertidas con sus largos, y respaldo más corto para las
+# tres donde invertir casi no ayuda (respuesta corta, el cálculo empieza por el dígito más alto).
+CALIBRACION_3 = [(t, DEFAULT_DIGITS[t]) for t in sorted(REVERSED_ANSWER)] + [
+    ("mod", (6, 1)), ("modmult", (3, 3, 2)), ("digmult", (3, 2)),
+]  # fmt: skip
+
+
+def aprendibilidad(seed: int = 0, variants: list | None = None) -> dict:
+    """Cada tarea sola, modelo nuevo de 12 expertos: pasos hasta 88 % o alarma (paciencia 40 = 10.000 pasos)."""
+    out = {}
+    for t, dig in variants or [(t, DEFAULT_DIGITS[t]) for t in TASKS]:
+        digits = {**DEFAULT_DIGITS, t: tuple(dig)}
+        model = build(12, seed=seed).to(DEVICE)
+        ev = {t: eval_set(t, True, digits=digits)}
+        r = train_until(model, _opt(model), [t], ev, named=True, rng=random.Random(seed), device=DEVICE,
+                        patience=40, digits=digits)  # fmt: skip
+        key = f"{t}{'-'.join(map(str, dig))}"
+        out[key] = {"pasos": r.steps, "estancada": r.stalled, "exactitud": r.history[-1]["acc"][t],
+                    "digitos": dig, "invertida": t in REVERSED_ANSWER,
+                    "tok_s": round(r.tokens / max(r.seconds, 1e-9))}  # fmt: skip
+        print(f"== {key}: {out[key]}", flush=True)
+    return out
+
+
 def main(out: str, which: str = "olvido,capacidad12,capacidad6") -> None:
     Path(out).mkdir(parents=True, exist_ok=True)
     meta = {"device": DEVICE, "gpu": torch.cuda.get_device_name() if DEVICE == "cuda" else None,
             "digitos": DEFAULT_DIGITS, "semilla": 0}  # fmt: skip
     for name in which.split(","):
-        res = olvido() if name == "olvido" else capacidad(int(name.removeprefix("capacidad")))
+        if name == "olvido":
+            res = olvido()
+        elif name == "aprendibilidad":
+            res = aprendibilidad()
+        elif name == "calibracion3":
+            res = aprendibilidad(variants=CALIBRACION_3)
+        else:
+            res = capacidad(int(name.removeprefix("capacidad")))
         Path(out, f"{name}.json").write_text(json.dumps({"meta": meta, name: res}, ensure_ascii=False))
         print(f"== {name} listo", flush=True)
 

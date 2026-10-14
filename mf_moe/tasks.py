@@ -55,6 +55,9 @@ DEFAULT_DIGITS: dict[str, tuple[int, ...]] = {
     "ordsuma": (6, 6),
 }
 TASKS = tuple(RULES)
+# Respuesta escrita desde la unidad (decisión del usuario, 2026-10-14): las seis tareas que no
+# aprendieron solas en 10.000 pasos con la respuesta en orden normal (aprendibilidad, corrida 2).
+REVERSED_ANSWER = frozenset({"mult", "mod", "sumamult", "binsuma", "modmult", "digmult"})
 
 
 @dataclass(frozen=True)
@@ -78,7 +81,8 @@ def make_example(
     lengths = (digits or DEFAULT_DIGITS)[task]
     ops = [_number(rng, d) for d in lengths]
     prompt = ("" if not named else f"{task}: ") + " ".join(ops) + " ="
-    return Example(task, prompt, RULES[task](ops) + EOS)
+    answer = RULES[task](ops)
+    return Example(task, prompt, (answer[::-1] if task in REVERSED_ANSWER else answer) + EOS)
 
 
 def signature(task: str, digits: dict[str, tuple[int, ...]] | None = None) -> tuple[int, ...]:

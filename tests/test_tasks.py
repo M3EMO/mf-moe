@@ -1,6 +1,6 @@
 import random
 
-from mf_moe.tasks import DEFAULT_DIGITS, EOS, RULES, TASKS, eval_set, make_example, signature
+from mf_moe.tasks import DEFAULT_DIGITS, EOS, REVERSED_ANSWER, RULES, TASKS, eval_set, make_example, signature
 
 
 def test_rules_hand_values():
@@ -35,3 +35,12 @@ def test_eval_set_is_fixed_and_disjoint_from_training_seeds():
     assert [e.text for e in eval_set("suma", True, n=50)] == [e.text for e in eval_set("suma", True, n=50)]
     train = {make_example("suma", random.Random(s), True).text for s in range(200)}
     assert not train & {e.text for e in eval_set("suma", True, n=1000)}
+
+
+def test_reversed_tasks_write_the_answer_from_the_units():
+    for t in TASKS:
+        ex = make_example(t, random.Random(3), named=False)
+        ops = ex.prompt.removesuffix(" =").split()
+        expected = RULES[t](ops)
+        assert ex.answer == (expected[::-1] if t in REVERSED_ANSWER else expected) + EOS
+    assert {"mult", "mod"} <= REVERSED_ANSWER and "suma" not in REVERSED_ANSWER
