@@ -1,0 +1,23 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+logs/
+*.db
+*.duckdb
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+credentials.json
+token.json
+*.key
+.cache/
+*.pt
+*.safetensors
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+.beads-credential-key
+.beads/proxieddb/
+*.gate.lock*
