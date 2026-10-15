@@ -11,11 +11,34 @@ from __future__ import annotations
 import torch
 import torch.nn.functional as F
 from transformers import Qwen2MoeConfig, Qwen2MoeForCausalLM
+from transformers.integrations.moe import ExpertsInterface, grouped_mm_experts_forward
 from transformers.models.qwen2_moe import modeling_qwen2_moe as qm
 
 VOCAB = 256  # bytes
 PAD = 0
 EOS_ID = 10  # "\n"
+
+
+class _Bf16Weights:
+    """Los expertos con los pesos en bf16 solo para multiplicar: el gradiente vuelve a los pesos fp32."""
+
+    def __init__(self, experts: torch.nn.Module):
+        self._experts = experts
+
+    def __getattr__(self, name: str):
+        value = getattr(self._experts, name)
+        return value.to(torch.bfloat16) if name in ("gate_up_proj", "down_proj") else value
+
+
+def _grouped_mm_bf16(self, hidden_states, top_k_index, top_k_weights):
+    # grouped_mm ignora autocast y con pesos fp32 multiplica en fp32 (perfil en L4, 2026-10-15: 183 contra 110 ms
+    # por paso). Guardar los pesos en bf16 perdería las actualizaciones chicas de AdamW.
+    if not torch.is_autocast_enabled(hidden_states.device.type):
+        return grouped_mm_experts_forward(self, hidden_states, top_k_index, top_k_weights)
+    return grouped_mm_experts_forward(_Bf16Weights(self), hidden_states.to(torch.bfloat16), top_k_index, top_k_weights)
+
+
+ExpertsInterface.register("grouped_mm_bf16", _grouped_mm_bf16)
 
 
 class BiasBalancedRouter(qm.Qwen2MoeTopKRouter):
@@ -63,6 +86,7 @@ def config(n_experts: int, top_k: int = 3, d: int = 512, layers: int = 8, ctx: i
         pad_token_id=PAD,
         eos_token_id=EOS_ID,
         bos_token_id=None,
+        experts_implementation="grouped_mm_bf16",
     )
 
 

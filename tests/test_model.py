@@ -33,3 +33,16 @@ def test_bias_moves_toward_balance_when_training():
     for _ in range(5):
         r(x)
     assert r.bias[0] < 0 and r.bias[3] > 0
+
+
+def test_bf16_experts_match_fp32_and_train_fp32_weights():
+    m = build(4, d=64, layers=1)
+    assert m.config._experts_implementation == "grouped_mm_bf16"
+    ids = torch.randint(1, 256, (2, 12))
+    ref = m(input_ids=ids).logits
+    with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+        out = m(input_ids=ids, labels=ids)
+    out.loss.backward()
+    experts = m.model.layers[0].mlp.experts
+    assert torch.allclose(out.logits.float(), ref, atol=0.1)
+    assert experts.gate_up_proj.dtype == torch.float32 and experts.gate_up_proj.grad.abs().sum() > 0
