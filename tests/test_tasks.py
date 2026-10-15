@@ -40,7 +40,12 @@ def test_eval_set_is_fixed_and_disjoint_from_training_seeds():
 def test_lsb_first_and_intermediate_steps():
     ex = make_example("modmult", random.Random(3), named=False)
     a, b = (op[::-1] for op in ex.prompt.removesuffix(" =").split())
-    assert ex.answer == f"{str(int(a) * int(b))[::-1]} {int(a) * int(b) % 7}{EOS}"
+    p = str(int(a) * int(b))
+    partial = "".join(str(int(p[-k:]) % 7) for k in range(1, len(p) + 1))  # restos desde la unidad
+    assert ex.answer == f"{p[::-1]} {partial} {int(p) % 7}{EOS}" and partial[-1] == str(int(p) % 7)
+    ex = make_example("mod", random.Random(3), named=False)
+    n = ex.prompt.removesuffix(" =")[::-1]
+    assert ex.answer.split()[0][0] == str(int(n[-1]) % 7) and ex.answer.split()[1] == str(int(n) % 7)
     ex = make_example("binsuma", random.Random(3), named=False)
     a, b = ex.prompt.removesuffix(" =").split()
     assert ex.answer == f"{int(a) + int(b)} {bin(int(a) + int(b))[2:]}{EOS}"

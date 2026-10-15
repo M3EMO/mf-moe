@@ -58,9 +58,9 @@ def capacidad(n_experts: int, seed: int = 0) -> dict:
             "tok_s": round(r.tokens / max(r.seconds, 1e-9)), "historia": r.history}  # fmt: skip
 
 
-# Corrida 4 de calibración: las seis tareas rediseñadas (formatos con evidencia y pasos intermedios).
-# La 3 (respuesta invertida sola) no aprendió ninguna; su registro está en el informe del paper.
-CALIBRACION_4 = [(t, DEFAULT_DIGITS[t]) for t in ("mult", "mod", "sumamult", "binsuma", "modmult", "digmult")]
+# Corrida 5 de calibración: las dos tareas de módulo con restos parciales. La 4 dejó aprendidas
+# mult, sumamult, binsuma y digmult; mod y modmult fallaron en el resto (registro en el paper).
+CALIBRACION_5 = [("mod", DEFAULT_DIGITS["mod"]), ("modmult", DEFAULT_DIGITS["modmult"])]
 
 
 def aprendibilidad(seed: int = 0, variants: list | None = None, ckpt_dir: str | None = None) -> dict:
@@ -79,8 +79,9 @@ def aprendibilidad(seed: int = 0, variants: list | None = None, ckpt_dir: str | 
                     "desde_unidad": t in LSB_FIRST, "paso_intermedio": t in STEPS,
                     "tok_s": round(r.tokens / max(r.seconds, 1e-9))}  # fmt: skip
         if ckpt_dir:  # bf16 alcanza para diagnosticar y pesa la mitad
-            save_file({k: v.detach().to(torch.bfloat16).contiguous() for k, v in model.state_dict().items()},
-                      str(Path(ckpt_dir, f"{key}.safetensors")))  # fmt: skip
+            tmp = Path(ckpt_dir, f"{key}.safetensors.tmp")  # el runner baja el checkpoint apenas aparece
+            save_file({k: v.detach().to(torch.bfloat16).contiguous() for k, v in model.state_dict().items()}, str(tmp))
+            tmp.replace(tmp.with_suffix(""))
         print(f"== {key}: {out[key]}", flush=True)
     return out
 
@@ -94,8 +95,8 @@ def main(out: str, which: str = "olvido,capacidad12,capacidad6") -> None:
             res = olvido()
         elif name == "aprendibilidad":
             res = aprendibilidad()
-        elif name == "calibracion4":
-            res = aprendibilidad(variants=CALIBRACION_4, ckpt_dir=out)
+        elif name == "calibracion5":
+            res = aprendibilidad(variants=CALIBRACION_5, ckpt_dir=out)
         else:
             res = capacidad(int(name.removeprefix("capacidad")))
         Path(out, f"{name}.json").write_text(json.dumps({"meta": meta, name: res}, ensure_ascii=False))

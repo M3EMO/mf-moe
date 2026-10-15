@@ -62,12 +62,21 @@ TASKS = tuple(RULES)
 # pasos intermedios de la literatura (nota del vault «mf-moe: por qué no aprenden mult y mod»).
 LSB_FIRST = frozenset({"mult", "mod", "sumamult", "modmult", "digmult"})
 
-# Composiciones: el resultado intermedio va escrito antes del final (decisión del usuario, 2026-10-15).
-STEPS: dict[str, Callable[[list[str]], str]] = {
-    "sumamult": lambda o: str(int(o[0]) + int(o[1])),
-    "binsuma": lambda o: str(int(o[0]) + int(o[1])),
-    "modmult": lambda o: str(int(o[0]) * int(o[1])),
-    "digmult": lambda o: str(int(o[0]) * int(o[1])),
+
+def _partial_mods(n: str) -> str:
+    """Resto por MOD de los últimos k dígitos, de k = largo a 1: al escribirlo desde la unidad queda
+    alineado con los dígitos, y cada resto sale del anterior más un dígito."""
+    return "".join(str(int(n[-k:]) % MOD) for k in range(len(n), 0, -1))
+
+
+# Pasos intermedios escritos antes del resultado (decisión del usuario, 2026-10-15). El módulo escribe
+# sus restos parciales: con el resto solo no aprendió (calibración 4: mod 15 %, modmult 22 %).
+STEPS: dict[str, Callable[[list[str]], list[str]]] = {
+    "mod": lambda o: [_partial_mods(o[0])],
+    "sumamult": lambda o: [str(int(o[0]) + int(o[1]))],
+    "binsuma": lambda o: [str(int(o[0]) + int(o[1]))],
+    "modmult": lambda o: [p := str(int(o[0]) * int(o[1])), _partial_mods(p)],
+    "digmult": lambda o: [str(int(o[0]) * int(o[1]))],
 }
 
 
@@ -93,7 +102,7 @@ def make_example(
     ops = [_number(rng, d) for d in lengths]
     show = _rev if task in LSB_FIRST else str
     prompt = ("" if not named else f"{task}: ") + " ".join(map(show, ops)) + " ="
-    parts = [STEPS[task](ops)] if task in STEPS else []
+    parts = STEPS[task](ops) if task in STEPS else []
     return Example(task, prompt, " ".join(map(show, parts + [RULES[task](ops)])) + EOS)
 
 
