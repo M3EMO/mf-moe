@@ -58,6 +58,15 @@ def accuracy(model, examples: Sequence[Example], device: str, batch: int = 250) 
     return scores(model, examples, device, batch)[0]
 
 
+def sample(tasks: Sequence[str], rng: random.Random, named: bool, digits: dict | None, held: set[str]) -> Example:
+    """Un ejemplo de entrenamiento cuya entrada no está en la evaluación: la exactitud mide entradas nuevas."""
+    for _ in range(1000):
+        ex = make_example(rng.choice(tasks), rng, named, digits)
+        if ex.prompt not in held:
+            return ex
+    raise RuntimeError(f"la evaluación cubre casi todo el espacio de entradas de {tasks}")
+
+
 @dataclass
 class Result:
     steps: int = 0
@@ -84,10 +93,11 @@ def train_until(
 ) -> Result:
     """Entrena con lotes parejos de `tasks` hasta que TODAS lleguen al 88 % (o salte la alarma)."""
     res, best, best_dig, since = Result(), dict.fromkeys(tasks, -1.0), dict.fromkeys(tasks, -1.0), 0
+    held = {e.prompt for exs in evals.values() for e in exs}  # bin y modmult vieron toda la evaluación (2026-10-15)
     model.train()
     while True:
         t0 = time.perf_counter()
-        exs = [make_example(rng.choice(tasks), rng, named, digits) for _ in range(batch)]
+        exs = [sample(tasks, rng, named, digits, held) for _ in range(batch)]
         ids, labels = encode(exs, device)
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=device == "cuda"):
             loss = model(input_ids=ids, labels=labels).loss

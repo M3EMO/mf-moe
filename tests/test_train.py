@@ -4,7 +4,7 @@ import torch
 
 from mf_moe.model import build
 from mf_moe.tasks import Example, eval_set
-from mf_moe.train import accuracy, encode, scores, train_until
+from mf_moe.train import accuracy, encode, sample, scores, train_until
 
 
 def test_encode_masks_everything_but_the_answer():
@@ -81,3 +81,10 @@ def test_stall_alarm_counts_digit_progress(monkeypatch):
                         named=True, rng=random.Random(0), device="cpu", batch=4, eval_every=1, patience=2,
                         log=lambda r: None)  # fmt: skip
     assert res.stalled and len(res.history) == 7
+
+
+def test_training_never_sees_an_evaluation_input():
+    digits = {"bin": (2,)}  # 90 entradas posibles: la evaluación cubre buena parte
+    held = {e.prompt for e in eval_set("bin", True, n=60, digits=digits)}
+    rng = random.Random(0)
+    assert not {sample(["bin"], rng, True, digits, held).prompt for _ in range(500)} & held
