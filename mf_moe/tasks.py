@@ -23,6 +23,9 @@ def _sorted(s: str) -> str:
     return "".join(sorted(s))
 
 
+# Divisor fijo y ajeno a la base 10: con divisor variable no aprende (calibración 3, 2026-10-15).
+MOD = 7
+
 # Cada regla recibe los operandos como texto (sin ceros a la izquierda) y devuelve la respuesta.
 RULES: dict[str, Callable[[list[str]], str]] = {
     "suma": lambda o: str(int(o[0]) + int(o[1])),
@@ -30,11 +33,11 @@ RULES: dict[str, Callable[[list[str]], str]] = {
     "inv": lambda o: _rev(o[0]),
     "ord": lambda o: _sorted(o[0]),
     "bin": lambda o: bin(int(o[0]))[2:],
-    "mod": lambda o: str(int(o[0]) % int(o[1])),
+    "mod": lambda o: str(int(o[0]) % MOD),
     "sumamult": lambda o: str((int(o[0]) + int(o[1])) * int(o[2])),
     "invsuma": lambda o: str(int(_rev(o[0])) + int(o[1])),
     "binsuma": lambda o: bin(int(o[0]) + int(o[1]))[2:],
-    "modmult": lambda o: str((int(o[0]) * int(o[1])) % int(o[2])),
+    "modmult": lambda o: str((int(o[0]) * int(o[1])) % MOD),
     "digmult": lambda o: str(sum(map(int, str(int(o[0]) * int(o[1]))))),
     "ordsuma": lambda o: _sorted(str(int(o[0]) + int(o[1]))),
 }
@@ -42,22 +45,30 @@ RULES: dict[str, Callable[[list[str]], str]] = {
 # Largo en dígitos de cada operando: la firma (cantidad, largos) es distinta para cada tarea.
 DEFAULT_DIGITS: dict[str, tuple[int, ...]] = {
     "suma": (7, 7),
-    "mult": (4, 4),
+    "mult": (5, 2),
     "inv": (12,),
     "ord": (10,),
     "bin": (5,),
-    "mod": (9, 2),
-    "sumamult": (5, 5, 2),
+    "mod": (6,),
+    "sumamult": (4, 4, 2),
     "invsuma": (8, 6),
-    "binsuma": (5, 4),
-    "modmult": (5, 5, 3),
-    "digmult": (5, 3),
+    "binsuma": (4, 3),
+    "modmult": (4, 2),
+    "digmult": (5, 1),
     "ordsuma": (6, 6),
 }
 TASKS = tuple(RULES)
-# Respuesta escrita desde la unidad (decisión del usuario, 2026-10-14): las seis tareas que no
-# aprendieron solas en 10.000 pasos con la respuesta en orden normal (aprendibilidad, corrida 2).
-REVERSED_ANSWER = frozenset({"mult", "mod", "sumamult", "binsuma", "modmult", "digmult"})
+# Familia de multiplicación y módulo: operandos y respuesta desde la unidad, como en los éxitos sin
+# pasos intermedios de la literatura (nota del vault «mf-moe: por qué no aprenden mult y mod»).
+LSB_FIRST = frozenset({"mult", "mod", "sumamult", "modmult", "digmult"})
+
+# Composiciones: el resultado intermedio va escrito antes del final (decisión del usuario, 2026-10-15).
+STEPS: dict[str, Callable[[list[str]], str]] = {
+    "sumamult": lambda o: str(int(o[0]) + int(o[1])),
+    "binsuma": lambda o: str(int(o[0]) + int(o[1])),
+    "modmult": lambda o: str(int(o[0]) * int(o[1])),
+    "digmult": lambda o: str(int(o[0]) * int(o[1])),
+}
 
 
 @dataclass(frozen=True)
@@ -80,9 +91,10 @@ def make_example(
 ) -> Example:
     lengths = (digits or DEFAULT_DIGITS)[task]
     ops = [_number(rng, d) for d in lengths]
-    prompt = ("" if not named else f"{task}: ") + " ".join(ops) + " ="
-    answer = RULES[task](ops)
-    return Example(task, prompt, (answer[::-1] if task in REVERSED_ANSWER else answer) + EOS)
+    show = _rev if task in LSB_FIRST else str
+    prompt = ("" if not named else f"{task}: ") + " ".join(map(show, ops)) + " ="
+    parts = [STEPS[task](ops)] if task in STEPS else []
+    return Example(task, prompt, " ".join(map(show, parts + [RULES[task](ops)])) + EOS)
 
 
 def signature(task: str, digits: dict[str, tuple[int, ...]] | None = None) -> tuple[int, ...]:

@@ -4,7 +4,7 @@ import torch
 
 from mf_moe.model import build
 from mf_moe.tasks import Example, eval_set
-from mf_moe.train import accuracy, encode, train_until
+from mf_moe.train import accuracy, encode, scores, train_until
 
 
 def test_encode_masks_everything_but_the_answer():
@@ -30,6 +30,7 @@ def test_accuracy_is_exact_match_under_teacher_forcing():
 
     exs = [Example("inv", "123 =", "321\n")] * 3
     assert accuracy(Oracle(False), exs, "cpu") == 1.0 and accuracy(Oracle(True), exs, "cpu") == 0.0
+    assert scores(Oracle(True), exs, "cpu")[1:] == (0.75, [1.0, 1.0, 1.0, 0.0])  # solo falla el EOS
 
 
 def test_train_until_stops_by_stall_alarm_on_a_tiny_model():
@@ -49,15 +50,34 @@ def test_stall_alarm_waits_while_any_task_improves(monkeypatch):
 
     calls = {"inv": 0}
 
-    def fake_accuracy(model, examples, device, batch=250):
+    def fake_scores(model, examples, device, batch=250):
         if examples[0].task == "mult":
-            return 0.0
+            return 0.0, 0.0, []
         calls["inv"] += 1
-        return min(0.1 * calls["inv"], 0.5)  # mejora 5 evaluaciones y después se planta
+        acc = min(0.1 * calls["inv"], 0.5)  # mejora 5 evaluaciones y después se planta
+        return acc, acc, []
 
-    monkeypatch.setattr(T, "accuracy", fake_accuracy)
+    monkeypatch.setattr(T, "scores", fake_scores)
     model = build(4, d=64, layers=1)
     evals = {t: eval_set(t, True, n=5) for t in ("inv", "mult")}
     res = T.train_until(model, torch.optim.AdamW(model.parameters()), ["inv", "mult"], evals, named=True,
                         rng=random.Random(0), device="cpu", batch=4, eval_every=1, patience=2, log=lambda r: None)  # fmt: skip
     assert res.stalled and len(res.history) == 7  # 5 que mejoran + 2 de paciencia
+
+
+def test_stall_alarm_counts_digit_progress(monkeypatch):
+    # Bai et al. 2025: la respuesta exacta queda en ~0 % mientras el acierto por dígito sube.
+    import mf_moe.train as T
+
+    calls = {"n": 0}
+
+    def fake_scores(model, examples, device, batch=250):
+        calls["n"] += 1
+        return 0.0, min(0.02 * calls["n"], 0.1), []  # exacta plana; por dígito sube 5 evaluaciones
+
+    monkeypatch.setattr(T, "scores", fake_scores)
+    model = build(4, d=64, layers=1)
+    res = T.train_until(model, torch.optim.AdamW(model.parameters()), ["mult"], {"mult": eval_set("mult", True, n=5)},
+                        named=True, rng=random.Random(0), device="cpu", batch=4, eval_every=1, patience=2,
+                        log=lambda r: None)  # fmt: skip
+    assert res.stalled and len(res.history) == 7

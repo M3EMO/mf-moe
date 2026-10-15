@@ -2,8 +2,8 @@
 
 Exactitud = respuesta exacta. Con teacher forcing, una respuesta es exacta si el argmax acierta cada
 token de la respuesta (EOS incluido): equivale a decodificar greedy, en una sola pasada.
-No hay tope de pasos (decisión del usuario). La alarma pausa y avisa si la exactitud no mejora durante
-`patience` evaluaciones seguidas en ninguna tarea: devuelve `stalled=True` y el llamador decide.
+No hay tope de pasos (decisión del usuario). La alarma pausa y avisa si ni la exactitud ni el acierto por
+dígito mejoran durante `patience` evaluaciones seguidas en ninguna tarea: devuelve `stalled=True` y el llamador decide.
 """
 
 from __future__ import annotations
@@ -35,18 +35,27 @@ def encode(examples: Sequence[Example], device: str) -> tuple[torch.Tensor, torc
 
 
 @torch.no_grad()
-def accuracy(model, examples: Sequence[Example], device: str, batch: int = 250) -> float:
+def scores(model, examples: Sequence[Example], device: str, batch: int = 250) -> tuple[float, float, list[float]]:
+    """Respuesta exacta, acierto por byte de respuesta y acierto en cada posición de la respuesta."""
     model.eval()
-    ok = 0
+    ok, pos, hit_at = 0, [], []
     for i in range(0, len(examples), batch):
         ids, labels = encode(examples[i : i + batch], device)
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=device == "cuda"):
             pred = model(input_ids=ids).logits.argmax(-1)
         target, mask = labels[:, 1:], labels[:, 1:] != -100
-        hit = (pred[:, :-1] == target) | ~mask
-        ok += int(hit.all(dim=1).sum())
+        hit = pred[:, :-1] == target
+        ok += int((hit | ~mask).all(dim=1).sum())
+        pos.append((mask.cumsum(1) - 1)[mask].cpu())  # posición dentro de la respuesta
+        hit_at.append(hit[mask].float().cpu())
     model.train()
-    return ok / len(examples)
+    pos, hit_at = torch.cat(pos), torch.cat(hit_at)
+    per_pos = torch.bincount(pos, weights=hit_at) / torch.bincount(pos)
+    return ok / len(examples), float(hit_at.mean()), per_pos.tolist()
+
+
+def accuracy(model, examples: Sequence[Example], device: str, batch: int = 250) -> float:
+    return scores(model, examples, device, batch)[0]
 
 
 @dataclass
@@ -74,7 +83,7 @@ def train_until(
     digits: dict | None = None,
 ) -> Result:
     """Entrena con lotes parejos de `tasks` hasta que TODAS lleguen al 88 % (o salte la alarma)."""
-    res, best, since = Result(), dict.fromkeys(tasks, -1.0), 0
+    res, best, best_dig, since = Result(), dict.fromkeys(tasks, -1.0), dict.fromkeys(tasks, -1.0), 0
     model.train()
     while True:
         t0 = time.perf_counter()
@@ -91,9 +100,10 @@ def train_until(
         res.seconds += time.perf_counter() - t0
         if res.steps % eval_every:
             continue
-        accs = {t: accuracy(model, evals[t], device) for t in tasks}
+        sc = {t: scores(model, evals[t], device) for t in tasks}
+        accs, digs = {t: s[0] for t, s in sc.items()}, {t: round(s[1], 4) for t, s in sc.items()}
         worst = min(accs.values())
-        rec = {"step": res.steps, "loss": round(loss.item(), 4), "min_acc": worst, "acc": accs,
+        rec = {"step": res.steps, "loss": round(loss.item(), 4), "min_acc": worst, "acc": accs, "dig": digs,
                "tok_s": round(res.tokens / res.seconds)}  # fmt: skip
         res.history.append(rec)
         log(rec)
@@ -101,9 +111,10 @@ def train_until(
             return res
         # Alarma: ninguna tarea mejoró 1 punto. Mirar solo la peor la disparaba con una tarea trabada
         # en 0 % aunque las demás avanzaran (ref 2026-10-14: 12 tareas cortadas a los 5.250 pasos).
-        improved = [t for t in tasks if accs[t] > best[t] + 0.01]
-        for t in improved:
-            best[t] = accs[t]
+        # También cuenta el acierto por dígito: la respuesta exacta no ve el progreso previo a un salto.
+        improved = [t for t in tasks if accs[t] > best[t] + 0.01 or digs[t] > best_dig[t] + 0.01]
+        for t in improved:  # la referencia sube solo al mejorar: una deriva lenta también cuenta
+            best[t], best_dig[t] = max(best[t], accs[t]), max(best_dig[t], digs[t])
         if improved:
             since = 0
         else:

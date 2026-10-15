@@ -1,6 +1,6 @@
 import random
 
-from mf_moe.tasks import DEFAULT_DIGITS, EOS, REVERSED_ANSWER, RULES, TASKS, eval_set, make_example, signature
+from mf_moe.tasks import DEFAULT_DIGITS, EOS, LSB_FIRST, RULES, STEPS, TASKS, eval_set, make_example, signature
 
 
 def test_rules_hand_values():
@@ -9,11 +9,11 @@ def test_rules_hand_values():
     assert RULES["inv"](["1203"]) == "3021"
     assert RULES["ord"](["3120"]) == "0123"
     assert RULES["bin"](["5"]) == "101"
-    assert RULES["mod"](["17", "5"]) == "2"
+    assert RULES["mod"](["17"]) == "3"  # divisor fijo 7
     assert RULES["sumamult"](["1", "2", "10"]) == "30"
     assert RULES["invsuma"](["120", "1"]) == "22"  # inv("120") = "021" = 21
     assert RULES["binsuma"](["2", "3"]) == "101"
-    assert RULES["modmult"](["4", "5", "6"]) == "2"
+    assert RULES["modmult"](["4", "5"]) == "6"  # 20 % 7
     assert RULES["digmult"](["12", "11"]) == "6"  # 132 -> 1+3+2
     assert RULES["ordsuma"](["19", "1"]) == "02"
 
@@ -37,10 +37,11 @@ def test_eval_set_is_fixed_and_disjoint_from_training_seeds():
     assert not train & {e.text for e in eval_set("suma", True, n=1000)}
 
 
-def test_reversed_tasks_write_the_answer_from_the_units():
-    for t in TASKS:
-        ex = make_example(t, random.Random(3), named=False)
-        ops = ex.prompt.removesuffix(" =").split()
-        expected = RULES[t](ops)
-        assert ex.answer == (expected[::-1] if t in REVERSED_ANSWER else expected) + EOS
-    assert {"mult", "mod"} <= REVERSED_ANSWER and "suma" not in REVERSED_ANSWER
+def test_lsb_first_and_intermediate_steps():
+    ex = make_example("modmult", random.Random(3), named=False)
+    a, b = (op[::-1] for op in ex.prompt.removesuffix(" =").split())
+    assert ex.answer == f"{str(int(a) * int(b))[::-1]} {int(a) * int(b) % 7}{EOS}"
+    ex = make_example("binsuma", random.Random(3), named=False)
+    a, b = ex.prompt.removesuffix(" =").split()
+    assert ex.answer == f"{int(a) + int(b)} {bin(int(a) + int(b))[2:]}{EOS}"
+    assert set(STEPS) - LSB_FIRST == {"binsuma"} and "suma" not in LSB_FIRST

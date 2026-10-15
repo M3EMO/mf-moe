@@ -16,10 +16,11 @@ import sys
 from pathlib import Path
 
 import torch
+from safetensors.torch import save_file
 
 from mf_moe.model import build
-from mf_moe.tasks import DEFAULT_DIGITS, REVERSED_ANSWER, TASKS, eval_set
-from mf_moe.train import accuracy, train_until
+from mf_moe.tasks import DEFAULT_DIGITS, LSB_FIRST, STEPS, TASKS, eval_set
+from mf_moe.train import accuracy, scores, train_until
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -57,14 +58,12 @@ def capacidad(n_experts: int, seed: int = 0) -> dict:
             "tok_s": round(r.tokens / max(r.seconds, 1e-9)), "historia": r.history}  # fmt: skip
 
 
-# Corrida 3 de calibración: las seis tareas invertidas con sus largos, y respaldo más corto para las
-# tres donde invertir casi no ayuda (respuesta corta, el cálculo empieza por el dígito más alto).
-CALIBRACION_3 = [(t, DEFAULT_DIGITS[t]) for t in sorted(REVERSED_ANSWER)] + [
-    ("mod", (6, 1)), ("modmult", (3, 3, 2)), ("digmult", (3, 2)),
-]  # fmt: skip
+# Corrida 4 de calibración: las seis tareas rediseñadas (formatos con evidencia y pasos intermedios).
+# La 3 (respuesta invertida sola) no aprendió ninguna; su registro está en el informe del paper.
+CALIBRACION_4 = [(t, DEFAULT_DIGITS[t]) for t in ("mult", "mod", "sumamult", "binsuma", "modmult", "digmult")]
 
 
-def aprendibilidad(seed: int = 0, variants: list | None = None) -> dict:
+def aprendibilidad(seed: int = 0, variants: list | None = None, ckpt_dir: str | None = None) -> dict:
     """Cada tarea sola, modelo nuevo de 12 expertos: pasos hasta 88 % o alarma (paciencia 40 = 10.000 pasos)."""
     out = {}
     for t, dig in variants or [(t, DEFAULT_DIGITS[t]) for t in TASKS]:
@@ -74,9 +73,14 @@ def aprendibilidad(seed: int = 0, variants: list | None = None) -> dict:
         r = train_until(model, _opt(model), [t], ev, named=True, rng=random.Random(seed), device=DEVICE,
                         patience=40, digits=digits)  # fmt: skip
         key = f"{t}{'-'.join(map(str, dig))}"
-        out[key] = {"pasos": r.steps, "estancada": r.stalled, "exactitud": r.history[-1]["acc"][t],
-                    "digitos": dig, "invertida": t in REVERSED_ANSWER,
+        exact, digit, per_pos = scores(model, ev[t], DEVICE)
+        out[key] = {"pasos": r.steps, "estancada": r.stalled, "exactitud": exact, "por_digito": round(digit, 4),
+                    "por_posicion": [round(x, 3) for x in per_pos], "digitos": dig,
+                    "desde_unidad": t in LSB_FIRST, "paso_intermedio": t in STEPS,
                     "tok_s": round(r.tokens / max(r.seconds, 1e-9))}  # fmt: skip
+        if ckpt_dir:  # bf16 alcanza para diagnosticar y pesa la mitad
+            save_file({k: v.detach().to(torch.bfloat16).contiguous() for k, v in model.state_dict().items()},
+                      str(Path(ckpt_dir, f"{key}.safetensors")))  # fmt: skip
         print(f"== {key}: {out[key]}", flush=True)
     return out
 
@@ -90,8 +94,8 @@ def main(out: str, which: str = "olvido,capacidad12,capacidad6") -> None:
             res = olvido()
         elif name == "aprendibilidad":
             res = aprendibilidad()
-        elif name == "calibracion3":
-            res = aprendibilidad(variants=CALIBRACION_3)
+        elif name == "calibracion4":
+            res = aprendibilidad(variants=CALIBRACION_4, ckpt_dir=out)
         else:
             res = capacidad(int(name.removeprefix("capacidad")))
         Path(out, f"{name}.json").write_text(json.dumps({"meta": meta, name: res}, ensure_ascii=False))
