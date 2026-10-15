@@ -88,3 +88,9 @@ def test_training_never_sees_an_evaluation_input():
     held = {e.prompt for e in eval_set("bin", True, n=60, digits=digits)}
     rng = random.Random(0)
     assert not {sample(["bin"], rng, True, digits, held).prompt for _ in range(500)} & held
+
+
+def test_sample_follows_task_weights():
+    rng = random.Random(0)
+    tasks = [sample(["suma", "inv"], rng, True, None, set(), [1, 9]).task for _ in range(2000)]
+    assert 0.85 < tasks.count("inv") / len(tasks) < 0.95

@@ -29,6 +29,14 @@ def _opt(model):
     return torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=0.0)
 
 
+def _save(model, path: Path) -> None:
+    """Checkpoint en bf16 (alcanza para diagnosticar y pesa la mitad), escrito de forma atómica: el runner
+    lo baja apenas aparece."""
+    tmp = path.with_name(path.name + ".tmp")
+    save_file({k: v.detach().to(torch.bfloat16).contiguous() for k, v in model.state_dict().items()}, str(tmp))
+    tmp.replace(path)
+
+
 def olvido(seed: int = 0) -> dict:
     out = {}
     for named in (True, False):
@@ -49,10 +57,20 @@ def olvido(seed: int = 0) -> dict:
     return out
 
 
-def capacidad(n_experts: int, seed: int = 0) -> dict:
+# Pasos hasta 88 % de cada tarea sola (calibraciones 2 a 5, una semilla; mult de la corrida con bf16).
+STEPS_ALONE = {"suma": 1000, "mult": 15000, "inv": 250, "ord": 250, "bin": 11750, "mod": 250, "sumamult": 36000,
+               "invsuma": 2250, "binsuma": 2500, "modmult": 15000, "digmult": 1750, "ordsuma": 1750}  # fmt: skip
+
+
+def capacidad(n_experts: int, seed: int = 0, ckpt_dir: str | None = None) -> dict:
+    """Las doce tareas juntas; cada una recibe una parte del lote proporcional a sus pasos sola (decisión del
+    usuario, 2026-10-15): con partes iguales, sumamult sola obligaba a unas 18 h por corrida."""
     model = build(n_experts, seed=seed).to(DEVICE)
     ev = {t: eval_set(t, True) for t in TASKS}
-    r = train_until(model, _opt(model), list(TASKS), ev, named=True, rng=random.Random(seed), device=DEVICE)
+    r = train_until(model, _opt(model), list(TASKS), ev, named=True, rng=random.Random(seed), device=DEVICE,
+                    patience=40, weights=STEPS_ALONE)  # fmt: skip
+    if ckpt_dir:
+        _save(model, Path(ckpt_dir, f"capacidad{n_experts}.safetensors"))
     return {"expertos": n_experts, "pasos": r.steps, "estancada": r.stalled,
             "exactitud": r.history[-1]["acc"] if r.history else {},
             "tok_s": round(r.tokens / max(r.seconds, 1e-9)), "historia": r.history}  # fmt: skip
@@ -78,10 +96,8 @@ def aprendibilidad(seed: int = 0, variants: list | None = None, ckpt_dir: str | 
                     "por_posicion": [round(x, 3) for x in per_pos], "digitos": dig,
                     "desde_unidad": t in LSB_FIRST, "paso_intermedio": t in STEPS,
                     "tok_s": round(r.tokens / max(r.seconds, 1e-9))}  # fmt: skip
-        if ckpt_dir:  # bf16 alcanza para diagnosticar y pesa la mitad
-            tmp = Path(ckpt_dir, f"{key}.safetensors.tmp")  # el runner baja el checkpoint apenas aparece
-            save_file({k: v.detach().to(torch.bfloat16).contiguous() for k, v in model.state_dict().items()}, str(tmp))
-            tmp.replace(tmp.with_suffix(""))
+        if ckpt_dir:
+            _save(model, Path(ckpt_dir, f"{key}.safetensors"))
         print(f"== {key}: {out[key]}", flush=True)
     return out
 
@@ -98,7 +114,7 @@ def main(out: str, which: str = "olvido,capacidad12,capacidad6") -> None:
         elif name == "calibracion5":
             res = aprendibilidad(variants=CALIBRACION_5, ckpt_dir=out)
         else:
-            res = capacidad(int(name.removeprefix("capacidad")))
+            res = capacidad(int(name.removeprefix("capacidad")), ckpt_dir=out)
         Path(out, f"{name}.json").write_text(json.dumps({"meta": meta, name: res}, ensure_ascii=False))
         print(f"== {name} listo", flush=True)
 
