@@ -1,6 +1,16 @@
 import random
 
-from mf_moe.tasks import DEFAULT_DIGITS, EOS, LSB_FIRST, RULES, STEPS, TASKS, eval_set, make_example, signature
+from mf_moe.tasks import (
+    DEFAULT_DIGITS,
+    EOS,
+    LSB_FIRST,
+    RULES,
+    STEPS,
+    TASKS,
+    eval_set,
+    make_example,
+    signature,
+)
 
 
 def test_rules_hand_values():

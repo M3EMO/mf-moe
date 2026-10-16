@@ -20,6 +20,7 @@ from mf_moe.model import PAD
 from mf_moe.tasks import Example, make_example
 
 MASTERY = 0.88
+REPLAY_FRAC = 0.10  # parte de cada lote que sale del buffer de tareas viejas (ticket 08)
 
 
 def encode(examples: Sequence[Example], device: str) -> tuple[torch.Tensor, torch.Tensor]:
@@ -78,6 +79,10 @@ class Result:
     history: list[dict] = field(default_factory=list)
 
 
+def adamw(model) -> torch.optim.Optimizer:
+    return torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=0.0)
+
+
 def train_until(
     model,
     opt: torch.optim.Optimizer,
@@ -93,15 +98,20 @@ def train_until(
     log: Callable[[dict], None] = lambda r: print(json.dumps(r), flush=True),
     digits: dict | None = None,
     weights: dict[str, float] | None = None,
+    replay: dict[str, list[Example]] | None = None,
 ) -> Result:
-    """Entrena con lotes parejos de `tasks` hasta que TODAS lleguen al 88 % (o salte la alarma)."""
+    """Entrena con lotes de `tasks` hasta que TODAS lleguen al 88 % (o salte la alarma). Con `replay`, el 10 %
+    de cada lote sale de esos ejemplos guardados de tareas viejas."""
     res, best, best_dig, since = Result(), dict.fromkeys(tasks, -1.0), dict.fromkeys(tasks, -1.0), 0
     held = {e.prompt for exs in evals.values() for e in exs}
-    w = [weights[t] for t in tasks] if weights else None  # parte del lote por tarea; None = partes iguales  # bin y modmult vieron toda la evaluación (2026-10-15)
+    w = [weights[t] for t in tasks] if weights else None  # parte del lote por tarea; None = partes iguales
+    old = list(replay or ())  # bin y modmult vieron toda la evaluación (2026-10-15)
     model.train()
     while True:
         t0 = time.perf_counter()
-        exs = [sample(tasks, rng, named, digits, held, w) for _ in range(batch)]
+        n_old = round(REPLAY_FRAC * batch) if replay else 0
+        exs = [sample(tasks, rng, named, digits, held, w) for _ in range(batch - n_old)]
+        exs += [rng.choice(replay[rng.choice(old)]) for _ in range(n_old)]  # parejo entre tareas viejas
         ids, labels = encode(exs, device)
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=device == "cuda"):
             loss = model(input_ids=ids, labels=labels).loss

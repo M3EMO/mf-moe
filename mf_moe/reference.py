@@ -20,13 +20,9 @@ from safetensors.torch import save_file
 
 from mf_moe.model import build
 from mf_moe.tasks import DEFAULT_DIGITS, LSB_FIRST, STEPS, TASKS, eval_set
-from mf_moe.train import accuracy, scores, train_until
+from mf_moe.train import accuracy, adamw, scores, train_until
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-
-def _opt(model):
-    return torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=0.0)
 
 
 def _save(model, path: Path) -> None:
@@ -41,7 +37,7 @@ def olvido(seed: int = 0) -> dict:
     out = {}
     for named in (True, False):
         model = build(12, seed=seed).to(DEVICE)
-        opt, rng = _opt(model), random.Random(seed)
+        opt, rng = adamw(model), random.Random(seed)
         ev = {t: eval_set(t, named) for t in ("suma", "mult")}
         r1 = train_until(model, opt, ["suma"], ev, named=named, rng=rng, device=DEVICE)
         before = accuracy(model, ev["suma"], DEVICE)
@@ -67,7 +63,7 @@ def capacidad(n_experts: int, seed: int = 0, ckpt_dir: str | None = None) -> dic
     usuario, 2026-10-15): con partes iguales, sumamult sola obligaba a unas 18 h por corrida."""
     model = build(n_experts, seed=seed).to(DEVICE)
     ev = {t: eval_set(t, True) for t in TASKS}
-    r = train_until(model, _opt(model), list(TASKS), ev, named=True, rng=random.Random(seed), device=DEVICE,
+    r = train_until(model, adamw(model), list(TASKS), ev, named=True, rng=random.Random(seed), device=DEVICE,
                     patience=40, weights=STEPS_ALONE)  # fmt: skip
     if ckpt_dir:
         _save(model, Path(ckpt_dir, f"capacidad{n_experts}.safetensors"))
@@ -88,7 +84,7 @@ def aprendibilidad(seed: int = 0, variants: list | None = None, ckpt_dir: str | 
         digits = {**DEFAULT_DIGITS, t: tuple(dig)}
         model = build(12, seed=seed).to(DEVICE)
         ev = {t: eval_set(t, True, digits=digits)}
-        r = train_until(model, _opt(model), [t], ev, named=True, rng=random.Random(seed), device=DEVICE,
+        r = train_until(model, adamw(model), [t], ev, named=True, rng=random.Random(seed), device=DEVICE,
                         patience=40, digits=digits)  # fmt: skip
         key = f"{t}{'-'.join(map(str, dig))}"
         exact, digit, per_pos = scores(model, ev[t], DEVICE)
