@@ -79,12 +79,13 @@ def _calibration(tasks: list[str], seed: int, named: bool, evals: dict, device: 
 
 
 def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000, ckpt: str | None = None,
-        **train_kw) -> dict:  # fmt: skip
-    """Con `ckpt`, guarda cada 10.000 pasos y al cerrar cada tarea, y retoma desde ahí si el archivo existe."""
+        order: list[str] | None = None, **train_kw) -> dict:  # fmt: skip
+    """Con `ckpt`, guarda cada 10.000 pasos y al cerrar cada tarea, y retoma desde ahí si el archivo existe.
+    `order` reemplaza el orden de la semilla, por ejemplo en un piloto con menos tareas."""
     model = build(cond.n_experts, seed=seed).to(device)
-    rng, order = random.Random(seed), task_order(seed)
+    rng, order = random.Random(seed), order or task_order(seed)
     evals = {t: eval_set(t, named, n=eval_n) for t in TASKS}
-    key = f"secuencial/{cond.name}/semilla{seed}/{'con' if named else 'sin'}_nombre/eval{eval_n}"
+    key = f"secuencial/{cond.name}/semilla{seed}/{'con' if named else 'sin'}_nombre/eval{eval_n}/{'-'.join(order)}"
     div = Divider(signal=cond.divide) if cond.divide else None
     mer = Merger(criterion=cond.merge) if cond.merge else None
     ll = Lifelong() if cond.lifelong else None
