@@ -37,6 +37,7 @@ class Condition:
     merge: str | None = None  # criterio de fusión: "salidas", "pesos" o "ambas"
     lifelong: bool = False
     heal: bool = False  # tras fusionar, vuelve a entrenar la tarea actual hasta 88 %
+    merge_align: bool = False  # alinea las neuronas por permutación antes de promediar
 
 
 FIJO = Condition("fijo")
@@ -53,6 +54,9 @@ CONDITIONS = {c.name: c for c in [
     # Agregada el 2026-10-16: la fusión al cierre de cada tarea dañaba la tarea recién aprendida (factorial,
     # semilla 0: diagonal de R hasta 0,01). Esta variante recupera la tarea después de fusionar.
     Condition("fractal/duda+salidas, con recuperación", 6, replay=True, divide="duda", merge="salidas", heal=True),
+    # Agregada el 2026-10-16 (ticket 11): la fusión ingenua promediaba neuronas que no se correspondían.
+    Condition("fractal/duda+salidas, fusión alineada", 6, replay=True, divide="duda", merge="salidas",
+              merge_align=True),
 ]}  # fmt: skip
 
 
@@ -99,7 +103,7 @@ def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000
     evals = {t: eval_set(t, named, n=eval_n) for t in TASKS}
     key = f"secuencial/{cond.name}/semilla{seed}/{'con' if named else 'sin'}_nombre/eval{eval_n}/{'-'.join(order)}"
     div = Divider(signal=cond.divide) if cond.divide else None
-    mer = Merger(criterion=cond.merge) if cond.merge else None
+    mer = Merger(criterion=cond.merge, align=cond.merge_align) if cond.merge else None
     ll = Lifelong() if cond.lifelong else None
     buffer: dict[str, list[Example]] = {}
     R, steps, stalled, experts, learned, start, inner = [], [], [], [], [], 0, None

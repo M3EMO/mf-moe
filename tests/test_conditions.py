@@ -17,8 +17,9 @@ def tiny(monkeypatch):
     monkeypatch.setattr(S, "Divider", lambda signal: Divider(signal=signal, z=-1e9, every=2, max_experts=9))
 
 
-def test_fourteen_preregistered_conditions_plus_the_healing_variant():
-    assert len(S.CONDITIONS) == 15 and S.CONDITIONS[S.PRINCIPAL.name] == S.PRINCIPAL
+def test_fourteen_preregistered_conditions_plus_two_merge_repairs():
+    assert len(S.CONDITIONS) == 16 and S.CONDITIONS[S.PRINCIPAL.name] == S.PRINCIPAL
+    assert [c.name for c in S.CONDITIONS.values() if c.merge_align] == ["fractal/duda+salidas, fusión alineada"]
     assert [c.name for c in S.CONDITIONS.values() if c.heal] == ["fractal/duda+salidas, con recuperación"]
 
 

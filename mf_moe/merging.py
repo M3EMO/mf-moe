@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 
 import torch
 import torch.nn.functional as F
+from scipy.optimize import linear_sum_assignment
 from torch import nn
 
 from mf_moe.model import PAD, routers
@@ -64,6 +65,31 @@ def merge_pair(model, opt, layer: int, a: int, b: int) -> tuple[int, int]:
     return keep, drop
 
 
+@torch.no_grad()
+def align(model, opt, layer: int, a: int, b: int, hs: torch.Tensor) -> None:
+    """Permuta las neuronas del experto `b` para emparejarlas con las de `a` (MC-SMoE), sin cambiar lo que
+    `b` calcula. Empareja por la correlación de sus activaciones intermedias sobre `hs`, con el algoritmo
+    húngaro. Sin esto, promediar dos expertos entrenados por separado mezcla neuronas que no se corresponden
+    (factorial, 2026-10-16: la fusión ingenua bajó la tarea recién aprendida hasta 1 %)."""
+    ex = model.model.layers[layer].mlp.experts
+    inter = ex.gate_up_proj.shape[1] // 2
+
+    def acts(e: int) -> torch.Tensor:
+        gate, up = F.linear(hs, ex.gate_up_proj[e]).chunk(2, dim=-1)
+        h = (ex.act_fn(gate) * up).float()
+        return (h - h.mean(0)) / (h.std(0) + 1e-6)
+
+    corr = acts(a).T @ acts(b) / hs.shape[0]  # (neuronas de a, neuronas de b)
+    _, cols = linear_sum_assignment(corr.cpu().numpy(), maximize=True)
+    perm = torch.as_tensor(cols, device=ex.gate_up_proj.device)
+    rows = torch.cat([perm, perm + inter])  # gate_up_proj apila [gate; up]
+    for p, fix in ((ex.gate_up_proj, lambda v: v[rows]), (ex.down_proj, lambda v: v[:, perm])):
+        p.data[b] = fix(p.data[b])
+        for v in opt.state.get(p, {}).values():
+            if torch.is_tensor(v) and v.dim():
+                v[b] = fix(v[b])
+
+
 def _pair_z(sim: torch.Tensor) -> torch.Tensor:
     sd = sim.std()
     return torch.zeros_like(sim) if not torch.isfinite(sd) or sd == 0 else (sim - sim.mean()) / sd
@@ -86,6 +112,7 @@ def _similarities(experts, hs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor
 class Merger:
     criterion: str = "salidas"
     z: float = 2.0
+    align: bool = False  # empareja las neuronas antes de promediar (MC-SMoE)
     min_experts: int = 6
     events: list[dict] = field(default_factory=list)
 
@@ -119,6 +146,8 @@ class Merger:
                     break
                 if a in used or b in used:
                     continue
+                if self.align:
+                    align(model, opt, layer, alive.index(a), alive.index(b), hs.to(experts.gate_up_proj.dtype))
                 _, drop = merge_pair(model, opt, layer, alive.index(a), alive.index(b))
                 used |= {a, b}
                 orig_drop = alive.pop(drop)
