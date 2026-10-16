@@ -103,6 +103,7 @@ def train_until(
     save: Callable[[dict], None] | None = None,
     save_every: int = 10_000,
     on_step: Callable | None = None,
+    aux_loss: Callable | None = None,
 ) -> Result:
     """Entrena con lotes de `tasks` hasta que TODAS lleguen al 88 % (o salte la alarma). Con `replay`, el 10 %
     de cada lote sale de esos ejemplos guardados de tareas viejas."""
@@ -122,7 +123,7 @@ def train_until(
         ids, labels = encode(exs, device)
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=device == "cuda"):
             out = model(input_ids=ids, labels=labels)
-        loss = out.loss
+        loss = out.loss + (aux_loss(ids, out) if aux_loss else 0.0)  # p. ej. la destilación de Lifelong-MoE
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
