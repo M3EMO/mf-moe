@@ -12,10 +12,11 @@ evaluación; desde la segunda tarea, el 10 % de cada lote sale de ese buffer, pa
 from __future__ import annotations
 
 import random
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, astuple, dataclass
 
 from mf_moe.model import build
-from mf_moe.tasks import TASKS, eval_set
+from mf_moe.resume import load_state, rng_state, save_state, set_rng_state
+from mf_moe.tasks import TASKS, Example, eval_set
 from mf_moe.train import accuracy, adamw, sample, train_until
 
 BUFFER = 1000  # ejemplos guardados por tarea (ticket 08)
@@ -49,20 +50,38 @@ def metrics(R: list[dict[str, float]], order: list[str]) -> dict[str, float]:
     }
 
 
-def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000, **train_kw) -> dict:
+def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000, ckpt: str | None = None,
+        **train_kw) -> dict:  # fmt: skip
+    """Con `ckpt`, guarda cada 10.000 pasos y al cerrar cada tarea, y retoma desde ahí si el archivo existe."""
     model = build(cond.n_experts, seed=seed).to(device)
     opt, rng, order = adamw(model), random.Random(seed), task_order(seed)
     evals = {t: eval_set(t, named, n=eval_n) for t in TASKS}
-    buffer: dict[str, list] = {}
-    R, steps, stalled = [], [], []
-    for t in order:
+    key = f"secuencial/{cond.name}/semilla{seed}/{'con' if named else 'sin'}_nombre/eval{eval_n}"
+    buffer: dict[str, list[Example]] = {}
+    R, steps, stalled, start, inner = [], [], [], 0, None
+    if (st := load_state(ckpt, key, model, opt)) is not None:
+        R, steps, stalled, start, inner = st["R"], st["pasos"], st["estancada"], st["tarea"], st["dentro"]
+        buffer = {t: [Example(*e) for e in exs] for t, exs in st["buffer"].items()}
+        set_rng_state(rng, st["rng"])
+
+    def save(i: int, inside: dict | None) -> None:
+        save_state(ckpt, key, model, opt, {"R": R, "pasos": steps, "estancada": stalled, "tarea": i, "dentro": inside,
+                                          "buffer": {t: [astuple(e) for e in exs] for t, exs in buffer.items()},
+                                          "rng": rng_state(rng)})  # fmt: skip
+
+    for i in range(start, len(order)):
+        t = order[i]
         r = train_until(model, opt, [t], {t: evals[t]}, named=named, rng=rng, device=device,
-                        replay=buffer if cond.replay else None, **{"patience": 40, **train_kw})  # fmt: skip
+                        replay=buffer if cond.replay else None, resume=inner if i == start else None,
+                        save=(lambda inside, i=i: save(i, inside)) if ckpt else None,
+                        **{"patience": 40, **train_kw})  # fmt: skip
         R.append({u: accuracy(model, evals[u], device) for u in TASKS})
         steps.append(r.steps)
         stalled.append(r.stalled)
         if cond.replay:
             held = {e.prompt for e in evals[t]}
             buffer[t] = [sample([t], rng, named, None, held) for _ in range(BUFFER)]
+        if ckpt:
+            save(i + 1, None)
     return {"condicion": asdict(cond), "semilla": seed, "con_nombre": named, "orden": order, "R": R,
             "pasos": steps, "estancada": stalled, **metrics(R, order)}  # fmt: skip

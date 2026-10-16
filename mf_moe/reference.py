@@ -1,6 +1,6 @@
 """Ticket 05 del mapa: olvido de referencia, velocidad real y prueba de capacidad (MoE fijo).
 
-Uso (VM con GPU): python -m mf_moe.reference OUT_DIR [olvido,capacidad12,capacidad6]
+Uso (VM con GPU): python -m mf_moe.reference OUT_DIR [olvido,capacidad12,capacidad6] [CHECKPOINT]
 - olvido: MoE fijo de 12 expertos aprende suma y después mult, en los dos escenarios; mide cuánto
   cae la suma. Sin olvido medible, las tareas o la escala cambian.
 - capacidadN: MoE fijo de N expertos aprende las 12 tareas juntas hasta 88 % en todas, o hasta que
@@ -19,6 +19,7 @@ import torch
 from safetensors.torch import save_file
 
 from mf_moe.model import build
+from mf_moe.resume import load_state, rng_state, save_state, set_rng_state
 from mf_moe.tasks import DEFAULT_DIGITS, LSB_FIRST, STEPS, TASKS, eval_set
 from mf_moe.train import accuracy, adamw, scores, train_until
 
@@ -58,13 +59,22 @@ STEPS_ALONE = {"suma": 1000, "mult": 15000, "inv": 250, "ord": 250, "bin": 11750
                "invsuma": 2250, "binsuma": 2500, "modmult": 15000, "digmult": 1750, "ordsuma": 1750}  # fmt: skip
 
 
-def capacidad(n_experts: int, seed: int = 0, ckpt_dir: str | None = None) -> dict:
+def capacidad(n_experts: int, seed: int = 0, ckpt_dir: str | None = None, ckpt: str | None = None) -> dict:
     """Las doce tareas juntas; cada una recibe una parte del lote proporcional a sus pasos sola (decisión del
-    usuario, 2026-10-15): con partes iguales, sumamult sola obligaba a unas 18 h por corrida."""
+    usuario, 2026-10-15): con partes iguales, sumamult sola obligaba a unas 18 h por corrida.
+    Con `ckpt`, guarda cada 10.000 pasos y retoma desde ahí si el archivo existe."""
     model = build(n_experts, seed=seed).to(DEVICE)
+    opt, rng, key = adamw(model), random.Random(seed), f"capacidad{n_experts}/semilla{seed}"
     ev = {t: eval_set(t, True) for t in TASKS}
-    r = train_until(model, adamw(model), list(TASKS), ev, named=True, rng=random.Random(seed), device=DEVICE,
-                    patience=40, weights=STEPS_ALONE)  # fmt: skip
+    inner = load_state(ckpt, key, model, opt)
+    if inner:
+        set_rng_state(rng, inner.pop("rng"))
+
+    def save(state: dict) -> None:
+        save_state(ckpt, key, model, opt, {**state, "rng": rng_state(rng)})
+
+    r = train_until(model, opt, list(TASKS), ev, named=True, rng=rng, device=DEVICE, patience=40,
+                    weights=STEPS_ALONE, resume=inner, save=save if ckpt else None)  # fmt: skip
     if ckpt_dir:
         _save(model, Path(ckpt_dir, f"capacidad{n_experts}.safetensors"))
     return {"expertos": n_experts, "pasos": r.steps, "estancada": r.stalled,
@@ -98,7 +108,7 @@ def aprendibilidad(seed: int = 0, variants: list | None = None, ckpt_dir: str | 
     return out
 
 
-def main(out: str, which: str = "olvido,capacidad12,capacidad6") -> None:
+def main(out: str, which: str = "olvido,capacidad12,capacidad6", ckpt: str | None = None) -> None:
     Path(out).mkdir(parents=True, exist_ok=True)
     meta = {"device": DEVICE, "gpu": torch.cuda.get_device_name() if DEVICE == "cuda" else None,
             "digitos": DEFAULT_DIGITS, "semilla": 0}  # fmt: skip
@@ -110,10 +120,10 @@ def main(out: str, which: str = "olvido,capacidad12,capacidad6") -> None:
         elif name == "calibracion5":
             res = aprendibilidad(variants=CALIBRACION_5, ckpt_dir=out)
         else:
-            res = capacidad(int(name.removeprefix("capacidad")), ckpt_dir=out)
+            res = capacidad(int(name.removeprefix("capacidad")), ckpt_dir=out, ckpt=ckpt)
         Path(out, f"{name}.json").write_text(json.dumps({"meta": meta, name: res}, ensure_ascii=False))
         print(f"== {name} listo", flush=True)
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:3])
+    main(*sys.argv[1:4])

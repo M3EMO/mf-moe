@@ -45,3 +45,42 @@ def test_run_fills_the_matrix_and_the_buffer_on_cpu(monkeypatch):
     assert len(out["R"]) == 12 and set(out["R"][0]) == set(TASKS) and len(out["pasos"]) == 12
     assert out["orden"] == S.task_order(0) and out["condicion"]["replay"] and "bwt" in out
 
+
+
+def test_resume_after_a_crash_gives_the_same_run(monkeypatch, tmp_path):
+    monkeypatch.setattr(S, "build", lambda n, seed=0: T_build(4, seed=seed, d=64, layers=1))
+    monkeypatch.setattr(S, "BUFFER", 3)
+    kw = {"seed": 0, "named": True, "device": "cpu", "eval_n": 5, "batch": 8, "eval_every": 2, "patience": 2,
+          "save_every": 2, "log": lambda r: None}  # fmt: skip
+    full = S.run(S.FIJO_REPETICION, **kw)
+
+    real, calls = S.accuracy, {"n": 0}
+
+    def crash_on_the_fifth_task(*a, **k):
+        calls["n"] += 1
+        if calls["n"] == 12 * 4 + 1:  # en la evaluación posterior a la quinta tarea
+            raise RuntimeError("VM retirada")
+        return real(*a, **k)
+
+    ckpt = str(tmp_path / "ckpt.pt")
+    monkeypatch.setattr(S, "accuracy", crash_on_the_fifth_task)
+    try:
+        S.run(S.FIJO_REPETICION, ckpt=ckpt, **kw)
+        raise AssertionError("la corrida no se cortó")
+    except RuntimeError:
+        pass
+    monkeypatch.setattr(S, "accuracy", real)
+    resumed = S.run(S.FIJO_REPETICION, ckpt=ckpt, **kw)
+    assert resumed["R"] == full["R"] and resumed["pasos"] == full["pasos"]
+
+
+def test_a_checkpoint_from_another_run_is_refused(monkeypatch, tmp_path):
+    monkeypatch.setattr(S, "build", lambda n, seed=0: T_build(4, seed=seed, d=64, layers=1))
+    ckpt = str(tmp_path / "ckpt.pt")
+    S.save_state(ckpt, "otra corrida", T_build(4, d=64, layers=1), T.adamw(T_build(4, d=64, layers=1)), {})
+    try:
+        S.run(S.FIJO, seed=0, named=True, device="cpu", eval_n=5, ckpt=ckpt)
+    except ValueError as e:
+        assert "otra corrida" in str(e)
+    else:
+        raise AssertionError("retomó un checkpoint ajeno")

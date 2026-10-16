@@ -99,10 +99,16 @@ def train_until(
     digits: dict | None = None,
     weights: dict[str, float] | None = None,
     replay: dict[str, list[Example]] | None = None,
+    resume: dict | None = None,
+    save: Callable[[dict], None] | None = None,
+    save_every: int = 10_000,
 ) -> Result:
     """Entrena con lotes de `tasks` hasta que TODAS lleguen al 88 % (o salte la alarma). Con `replay`, el 10 %
     de cada lote sale de esos ejemplos guardados de tareas viejas."""
     res, best, best_dig, since = Result(), dict.fromkeys(tasks, -1.0), dict.fromkeys(tasks, -1.0), 0
+    if resume:  # el llamador ya restauró modelo, optimizador y rng
+        res = Result(resume["steps"], resume["tokens"], resume["seconds"], history=resume["history"])
+        best, best_dig, since = resume["best"], resume["best_dig"], resume["since"]
     held = {e.prompt for exs in evals.values() for e in exs}
     w = [weights[t] for t in tasks] if weights else None  # parte del lote por tarea; None = partes iguales
     old = list(replay or ())  # bin y modmult vieron toda la evaluación (2026-10-15)
@@ -146,3 +152,6 @@ def train_until(
             if since >= patience:
                 res.stalled = True
                 return res
+        if save and res.steps % save_every == 0:
+            save({"steps": res.steps, "tokens": res.tokens, "seconds": res.seconds, "history": res.history,
+                  "best": best, "best_dig": best_dig, "since": since})  # fmt: skip
