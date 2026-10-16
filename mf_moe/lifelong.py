@@ -36,6 +36,7 @@ class Lifelong:
     def __init__(self, lam: float = KL_LAMBDA):
         self.lam = lam
         self.teacher = None
+        self.frozen: list[int] = []  # filas congeladas por capa
 
     @torch.no_grad()
     def start_task(self, model, opt, index: int) -> None:
@@ -44,9 +45,15 @@ class Lifelong:
         self.teacher = copy.deepcopy(model).eval().requires_grad_(False)
         if index not in GROW_AT:
             return
+        self.frozen = []
         for layer, r in enumerate(routers(model)):
-            n_old = r.num_experts
+            self.frozen.append(r.num_experts)
             split(model, opt, layer, int(r.load.argmax()), row_dir=None)
+        self.refreeze(model, opt)
+
+    def refreeze(self, model, opt) -> None:
+        """Aplica el congelado guardado en `frozen`; también sirve al retomar desde un checkpoint."""
+        for layer, n_old in enumerate(self.frozen):
             mlp = model.model.layers[layer].mlp
             for p in (mlp.experts.gate_up_proj, mlp.experts.down_proj, mlp.gate.weight):
                 _freeze_rows(opt, p, n_old)

@@ -61,6 +61,14 @@ def split(model, opt: torch.optim.Optimizer, layer: int, parent: int, row_dir: t
     return experts.num_experts - 1
 
 
+def resize(model, counts: list[int]) -> None:
+    """Hace crecer cada capa hasta `counts` expertos, para cargar después el checkpoint de un modelo que creció."""
+    scratch = torch.optim.SGD(model.parameters(), lr=0.0)
+    for layer, n in enumerate(counts):
+        while routers(model)[layer].num_experts < n:
+            split(model, scratch, layer, 0, row_dir=None, noise=0.0)
+
+
 @dataclass
 class Divider:
     """Acumula la señal por experto en cada paso y divide en cada revisión. Se usa como `on_step` de train_until."""
