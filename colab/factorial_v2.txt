@@ -1,0 +1,40 @@
+fijo+repetición|1|con
+fractal/duda, sin fusión|0|sin
+fractal/duda+salidas, con recuperación|0|sin
+fijo+repetición|1|sin
+fractal/duda+salidas|0|sin
+fractal/duda, sin fusión|1|con
+fractal/duda+salidas, con recuperación|1|con
+fractal/duda, sin fusión|1|sin
+fractal/duda+salidas, con recuperación|1|sin
+fractal/duda+salidas|1|con
+fractal/duda+salidas|1|sin
+fractal/duda+salidas, fusión alineada|0|con
+fractal/duda+salidas, fusión alineada|0|sin
+fractal/duda+salidas, fusión alineada|1|con
+fractal/duda+salidas, fusión alineada|1|sin
+fijo+repetición|2|con
+fractal/duda, sin fusión|2|con
+fractal/duda+salidas, con recuperación|2|con
+fractal/duda+salidas, fusión alineada|2|con
+fractal/duda+salidas|2|con
+fijo+repetición|2|sin
+fractal/duda, sin fusión|2|sin
+fractal/duda+salidas, con recuperación|2|sin
+fractal/duda+salidas, fusión alineada|2|sin
+fractal/duda+salidas|2|sin
+fijo|0|con
+lifelong-moe|0|con
+fijo|0|sin
+lifelong-moe|0|sin
+fijo|1|con
+lifelong-moe|1|con
+fijo|1|sin
+lifelong-moe|1|sin
+fijo|2|con
+lifelong-moe|2|con
+fijo|2|sin
+lifelong-moe|2|sin
+fractal/duda+salidas, sin repetición|0|con
+fractal/duda+salidas, sin repetición|1|con
+fractal/duda+salidas, sin repetición|2|con
