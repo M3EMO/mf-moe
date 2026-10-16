@@ -82,3 +82,4 @@ def test_resume_mid_task_restores_the_run_of_a_growing_model(name, monkeypatch, 
     resumed = S.run(cond, ckpt=ckpt, save_every=2, **KW)
     assert len(resumed["R"]) == 12 and resumed["orden"] == full["orden"]
     assert resumed["expertos"][:6] == full["expertos"][:6] and resumed["pasos"][:6] == full["pasos"][:6]
+

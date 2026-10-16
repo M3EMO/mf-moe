@@ -77,3 +77,21 @@ def test_robust_z_reaches_the_cut_with_six_experts_and_ignores_a_flat_layer():
     z = Divider._z(torch.tensor([1.0, 1.1, 0.9, 1.05, 0.95, 1.6]))
     assert z[5] > 3.5 and (z[:5].abs() < 3.5).all()
     assert torch.equal(Divider._z(torch.full((6,), 2.0)), torch.zeros(6))
+
+
+def test_divider_resets_its_signal_when_a_merge_shrinks_a_layer():
+    # Regresión de la corrida con recuperación del 2026-10-16: tras fusionar, la división buscó un experto
+    # que ya no existía (IndexError en split).
+    from mf_moe.merging import merge_pair
+
+    model = build(8, d=64, layers=1)
+    opt = adamw(model)
+    div = Divider(z=-1e9, every=1, max_experts=12)
+    div.attach(model)
+    div._reset(model)
+    div._acc[0]["n"][:] = 1
+    div._acc[0]["ent"][:] = torch.arange(8.0)  # el experto 7 es el más dudoso
+    merge_pair(model, opt, 0, 6, 7)  # la capa baja a 7 expertos
+    ids, labels = encode(eval_set("suma", True, n=4), "cpu")
+    div(model, opt, 1, ids, model(input_ids=ids).logits, labels)
+    assert routers(model)[0].num_experts == 8 and div.events[-1]["padre"] < 7

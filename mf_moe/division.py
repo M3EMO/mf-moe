@@ -94,7 +94,9 @@ class Divider:
 
     @torch.no_grad()
     def observe(self, model, ids: torch.Tensor, logits: torch.Tensor, labels: torch.Tensor) -> None:
-        if not self._acc:
+        # Una fusión (u otro cambio de fuera) achica capas: la señal acumulada para el tamaño viejo ya no sirve
+        # (corrida con recuperación, 2026-10-16: la división buscó un experto que ya no existía).
+        if not self._acc or any(len(a["n"]) != r.num_experts for r, a in zip(routers(model), self._acc)):
             self._reset(model)
         valid = (ids != PAD).reshape(-1)
         tok_loss = torch.full(ids.shape, float("nan"), device=ids.device)  # pérdida del token que predice cada posición
