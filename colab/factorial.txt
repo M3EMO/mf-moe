@@ -1,0 +1,84 @@
+fractal/duda+salidas|0|con
+fijo+repetición|0|con
+fractal/duda+salidas|0|sin
+fijo+repetición|0|sin
+fractal/duda+salidas|1|con
+fijo+repetición|1|con
+fractal/duda+salidas|1|sin
+fijo+repetición|1|sin
+fractal/duda+salidas|2|con
+fijo+repetición|2|con
+fractal/duda+salidas|2|sin
+fijo+repetición|2|sin
+fijo|0|con
+lifelong-moe|0|con
+fijo|0|sin
+lifelong-moe|0|sin
+fijo|1|con
+lifelong-moe|1|con
+fijo|1|sin
+lifelong-moe|1|sin
+fijo|2|con
+lifelong-moe|2|con
+fijo|2|sin
+lifelong-moe|2|sin
+fractal/duda, sin fusión|0|con
+fractal/duda+salidas, sin repetición|0|con
+fractal/duda, sin fusión|0|sin
+fractal/duda+salidas, sin repetición|0|sin
+fractal/duda, sin fusión|1|con
+fractal/duda+salidas, sin repetición|1|con
+fractal/duda, sin fusión|1|sin
+fractal/duda+salidas, sin repetición|1|sin
+fractal/duda, sin fusión|2|con
+fractal/duda+salidas, sin repetición|2|con
+fractal/duda, sin fusión|2|sin
+fractal/duda+salidas, sin repetición|2|sin
+fractal/duda+pesos|0|con
+fractal/duda+ambas|0|con
+fractal/perdida+salidas|0|con
+fractal/perdida+pesos|0|con
+fractal/perdida+ambas|0|con
+fractal/ambas+salidas|0|con
+fractal/ambas+pesos|0|con
+fractal/ambas+ambas|0|con
+fractal/duda+pesos|0|sin
+fractal/duda+ambas|0|sin
+fractal/perdida+salidas|0|sin
+fractal/perdida+pesos|0|sin
+fractal/perdida+ambas|0|sin
+fractal/ambas+salidas|0|sin
+fractal/ambas+pesos|0|sin
+fractal/ambas+ambas|0|sin
+fractal/duda+pesos|1|con
+fractal/duda+ambas|1|con
+fractal/perdida+salidas|1|con
+fractal/perdida+pesos|1|con
+fractal/perdida+ambas|1|con
+fractal/ambas+salidas|1|con
+fractal/ambas+pesos|1|con
+fractal/ambas+ambas|1|con
+fractal/duda+pesos|1|sin
+fractal/duda+ambas|1|sin
+fractal/perdida+salidas|1|sin
+fractal/perdida+pesos|1|sin
+fractal/perdida+ambas|1|sin
+fractal/ambas+salidas|1|sin
+fractal/ambas+pesos|1|sin
+fractal/ambas+ambas|1|sin
+fractal/duda+pesos|2|con
+fractal/duda+ambas|2|con
+fractal/perdida+salidas|2|con
+fractal/perdida+pesos|2|con
+fractal/perdida+ambas|2|con
+fractal/ambas+salidas|2|con
+fractal/ambas+pesos|2|con
+fractal/ambas+ambas|2|con
+fractal/duda+pesos|2|sin
+fractal/duda+ambas|2|sin
+fractal/perdida+salidas|2|sin
+fractal/perdida+pesos|2|sin
+fractal/perdida+ambas|2|sin
+fractal/ambas+salidas|2|sin
+fractal/ambas+pesos|2|sin
+fractal/ambas+ambas|2|sin
