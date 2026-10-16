@@ -84,3 +84,11 @@ def test_a_checkpoint_from_another_run_is_refused(monkeypatch, tmp_path):
         assert "otra corrida" in str(e)
     else:
         raise AssertionError("retomó un checkpoint ajeno")
+
+
+def test_bwt_from_what_was_learned_exposes_the_damage_of_merging():
+    order = ["a", "b", "c"]
+    R = [{"a": 0.1, "b": 0.0, "c": 0.0}, {"a": 0.1, "b": 0.2, "c": 0.0}, {"a": 0.1, "b": 0.2, "c": 0.9}]
+    m = S.metrics(R, order, learned=[0.9, 0.9, 0.9])  # la fusión dejó a y b en 0,1 y 0,2 al cerrar
+    assert m["bwt"] == 0.0 and abs(m["bwt_aprendido"] - ((0.1 - 0.9) + (0.2 - 0.9)) / 2) < 1e-9
+    assert abs(m["dano_fusion"] - (0.8 + 0.7 + 0.0) / 3) < 1e-9

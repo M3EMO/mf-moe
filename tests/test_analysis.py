@@ -7,7 +7,7 @@ from mf_moe.sequential import PRINCIPAL
 def _res(name, seed, named, bwt, order=("suma", "mult"), steps=(1000, 30000)):
     return {"condicion": {"name": name}, "semilla": seed, "con_nombre": named, "bwt": bwt, "exactitud_media": 0.5,
             "olvido": -bwt, "pasos_totales": sum(steps), "orden": list(order), "pasos": list(steps),
-            "expertos": [[12, 12]]}  # fmt: skip
+            "expertos": [[12, 12]], "bwt_aprendido": bwt}  # fmt: skip
 
 
 def test_pairs_match_seed_and_scenario_and_skip_lone_runs():

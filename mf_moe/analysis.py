@@ -2,6 +2,10 @@
 
 Prueba principal: diferencia de BWT (fractal principal menos fijo con repetición) en pares con la misma
 semilla y escenario; bootstrap pareado con IC 95 %. El fractal gana si el IC queda entero sobre 0.
+Desvío del preregistro (2026-10-16): el BWT se mide desde lo aprendido antes de fusionar (`bwt_aprendido`).
+El BWT clásico usa R[j][j], medido después de la fusión, y esconde el daño que la fusión le hace a la tarea
+recién aprendida. Las corridas sin `aprendido` (código anterior) usan una cota: max(R[j][j], 0,88) si la tarea
+no se estancó, porque el entrenamiento solo corta al llegar al 88 %; esa cota favorece al fractal.
 Secundarias por condición: exactitud media final, olvido, BWT, pasos totales, expertos finales por capa y
 transferencia hacia adelante (pasos de cada tarea en fila / pasos de la tarea sola; < 1 = transfiere).
 
@@ -23,7 +27,18 @@ CONTROL = "fijo+repetición"
 
 
 def load(root: str) -> list[dict]:
-    return [json.loads(p.read_text()) for p in sorted(Path(root).glob("*/result.json"))]
+    out = [json.loads(p.read_text()) for p in sorted(Path(root).glob("*/result.json"))]
+    for r in out:
+        r["bwt_aprendido"] = bwt_learned(r)
+    return out
+
+
+def bwt_learned(res: dict) -> float:
+    if "bwt_aprendido" in res:
+        return res["bwt_aprendido"]
+    o, R, last = res["orden"], res["R"], res["R"][-1]
+    pre = [R[j][o[j]] if res["estancada"][j] else max(R[j][o[j]], 0.88) for j in range(len(o))]
+    return sum(last[o[j]] - pre[j] for j in range(len(o) - 1)) / (len(o) - 1)
 
 
 def transfer(res: dict) -> float:
@@ -57,7 +72,7 @@ def summary(results: list[dict]) -> dict[str, dict]:
     for name, rs in sorted(groups.items()):
         out[name] = {"corridas": len(rs)} | {
             k: round(statistics.fmean(r[k] for r in rs), 4)
-            for k in ("bwt", "exactitud_media", "olvido", "pasos_totales")
+            for k in ("bwt_aprendido", "bwt", "exactitud_media", "olvido", "pasos_totales")
         } | {"transferencia": round(statistics.fmean(transfer(r) for r in rs), 3),
              "expertos_finales": round(statistics.fmean(statistics.fmean(r["expertos"][-1]) for r in rs), 2)}  # fmt: skip
     return out
@@ -66,13 +81,17 @@ def summary(results: list[dict]) -> dict[str, dict]:
 def main(root: str) -> None:
     results = load(root)
     print(json.dumps(summary(results), ensure_ascii=False, indent=1))
-    pr = pairs(results, PRINCIPAL.name, CONTROL)
-    if pr:
-        diffs = [a - b for _, a, b in pr]
-        mean, lo, hi = bootstrap_ci(diffs)
-        verdict = "gana el fractal" if lo > 0 else "pierde el fractal" if hi < 0 else "sin diferencia clara"
-        print(json.dumps({"pares": [(k, round(a, 4), round(b, 4)) for k, a, b in pr], "diferencia_bwt": round(mean, 4),
-                          "ic95": [round(lo, 4), round(hi, 4)], "veredicto": verdict}, ensure_ascii=False))  # fmt: skip
+    fractals = sorted({r["condicion"]["name"] for r in results if r["condicion"]["name"].startswith("fractal/")})
+    for name in [PRINCIPAL.name] + [n for n in fractals if n != PRINCIPAL.name]:
+        for metric in ("bwt_aprendido", "exactitud_media", "bwt"):
+            pr = pairs(results, name, CONTROL, metric)
+            if not pr:
+                continue
+            mean, lo, hi = bootstrap_ci([a - b for _, a, b in pr])
+            verdict = "gana el fractal" if lo > 0 else "pierde el fractal" if hi < 0 else "sin diferencia clara"
+            print(json.dumps({"condicion": name, "metrica": metric, "pares": [(k, round(a, 4), round(b, 4)) for k, a, b in pr],
+                              "diferencia": round(mean, 4), "ic95": [round(lo, 4), round(hi, 4)], "veredicto": verdict},
+                             ensure_ascii=False))  # fmt: skip
 
 
 if __name__ == "__main__":

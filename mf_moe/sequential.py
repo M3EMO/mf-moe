@@ -36,6 +36,7 @@ class Condition:
     divide: str | None = None  # señal del disparador: "duda", "perdida" o "ambas"
     merge: str | None = None  # criterio de fusión: "salidas", "pesos" o "ambas"
     lifelong: bool = False
+    heal: bool = False  # tras fusionar, vuelve a entrenar la tarea actual hasta 88 %
 
 
 FIJO = Condition("fijo")
@@ -49,6 +50,9 @@ CONDITIONS = {c.name: c for c in [
       for d in ("duda", "perdida", "ambas") for m in ("salidas", "pesos", "ambas")],
     Condition("fractal/duda, sin fusión", 6, replay=True, divide="duda"),
     Condition("fractal/duda+salidas, sin repetición", 6, divide="duda", merge="salidas"),
+    # Agregada el 2026-10-16: la fusión al cierre de cada tarea dañaba la tarea recién aprendida (factorial,
+    # semilla 0: diagonal de R hasta 0,01). Esta variante recupera la tarea después de fusionar.
+    Condition("fractal/duda+salidas, con recuperación", 6, replay=True, divide="duda", merge="salidas", heal=True),
 ]}  # fmt: skip
 
 
@@ -58,15 +62,23 @@ def task_order(seed: int) -> list[str]:
     return order
 
 
-def metrics(R: list[dict[str, float]], order: list[str]) -> dict[str, float]:
-    """Exactitud media final, BWT y olvido (Chaudhry et al. 2018) sobre la matriz R en el orden de entrenamiento."""
+def metrics(R: list[dict[str, float]], order: list[str], learned: list[float] | None = None) -> dict[str, float]:
+    """Exactitud media final, BWT y olvido (Chaudhry et al. 2018) sobre la matriz R en el orden de entrenamiento.
+
+    `learned[j]` es la exactitud de la tarea j al terminar de entrenarla, antes de fusionar. El BWT clásico
+    usa R[j][j], medido después de la fusión: si la fusión daña la tarea recién aprendida, ese BWT esconde el
+    daño (factorial, 2026-10-16). `bwt_aprendido` mide la caída desde lo aprendido; `dano_fusion`, el daño."""
     last, T = R[-1], len(order)
     old = range(T - 1)
-    return {
+    out = {
         "exactitud_media": sum(last[t] for t in order) / T,
         "bwt": sum(last[order[j]] - R[j][order[j]] for j in old) / (T - 1),
         "olvido": sum(max(R[i][order[j]] for i in range(j, T - 1)) - last[order[j]] for j in old) / (T - 1),
     }
+    if learned and None not in learned:  # sin el dato completo, analysis usa una cota
+        out["bwt_aprendido"] = sum(last[order[j]] - learned[j] for j in old) / (T - 1)
+        out["dano_fusion"] = sum(learned[j] - R[j][order[j]] for j in range(T)) / T
+    return out
 
 
 def _calibration(tasks: list[str], seed: int, named: bool, evals: dict, device: str):
@@ -90,7 +102,7 @@ def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000
     mer = Merger(criterion=cond.merge) if cond.merge else None
     ll = Lifelong() if cond.lifelong else None
     buffer: dict[str, list[Example]] = {}
-    R, steps, stalled, experts, start, inner = [], [], [], [], 0, None
+    R, steps, stalled, experts, learned, start, inner = [], [], [], [], [], 0, None
     ck = read_state(ckpt, key)
     if ck is not None:  # un modelo que creció necesita sus capas del tamaño guardado antes de cargar
         st = ck["state"]
@@ -98,6 +110,7 @@ def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000
         opt = adamw(model)
         apply_state(ck, model, opt)
         R, steps, stalled, experts = st["R"], st["pasos"], st["estancada"], st["expertos"]
+        learned = st.get("aprendido", [None] * len(R))  # checkpoints anteriores al 2026-10-16 no lo guardan
         start, inner = st["tarea"], st["dentro"]
         buffer = {t: [Example(*e) for e in exs] for t, exs in st["buffer"].items()}
         if div:
@@ -119,7 +132,8 @@ def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000
     def save(i: int, inside: dict | None) -> None:
         teacher = ll.teacher if ll else None
         save_state(ckpt, key, model, opt, {
-            "R": R, "pasos": steps, "estancada": stalled, "expertos": experts, "tarea": i, "dentro": inside,
+            "R": R, "pasos": steps, "estancada": stalled, "expertos": experts, "aprendido": learned, "tarea": i,
+            "dentro": inside,
             "buffer": {t: [astuple(e) for e in exs] for t, exs in buffer.items()}, "rng": rng_state(rng),
             "expertos_por_capa": [r.num_experts for r in routers(model)],
             "division": div.events if div else [], "division_acumulada": div._acc if div and inside else [],
@@ -140,10 +154,16 @@ def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000
                         save=(lambda inside, i=i: save(i, inside)) if ckpt else None,
                         on_step=div, aux_loss=ll.aux_loss if ll else None,
                         **{"patience": 40, **train_kw})  # fmt: skip
+        learned.append(accuracy(model, evals[t], device))
+        n_steps = r.steps
         if mer:
             mer(model, opt, _calibration(order[: i + 1], seed, named, evals, device), task=t)
+            if cond.heal:  # sin checkpoint: un corte acá retoma desde el cierre o el guardado anterior
+                n_steps += train_until(model, opt, [t], {t: evals[t]}, named=named, rng=rng, device=device,
+                                       replay=buffer if cond.replay else None, on_step=div,
+                                       **{"patience": 40, **train_kw}).steps  # fmt: skip
         R.append({u: accuracy(model, evals[u], device) for u in TASKS})
-        steps.append(r.steps)
+        steps.append(n_steps)
         stalled.append(r.stalled)
         experts.append([x.num_experts for x in routers(model)])
         if cond.replay:
@@ -152,9 +172,9 @@ def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000
         if ckpt:
             save(i + 1, None)
     return {"condicion": asdict(cond), "semilla": seed, "con_nombre": named, "orden": order, "R": R,
-            "pasos": steps, "pasos_totales": sum(steps), "estancada": stalled, "expertos": experts,
+            "pasos": steps, "pasos_totales": sum(steps), "estancada": stalled, "expertos": experts, "aprendido": learned,
             "eventos_division": div.events if div else [], "eventos_fusion": mer.events if mer else [],
-            **metrics(R, order)}  # fmt: skip
+            **metrics(R, order, learned)}  # fmt: skip
 
 
 def main(out: str, name: str, seed: str, named: str, ckpt: str | None = None) -> None:
