@@ -45,6 +45,7 @@ class BiasBalancedRouter(qm.Qwen2MoeTopKRouter):
     def __init__(self, config: Qwen2MoeConfig, u: float = 1e-3, decay: float = 0.999):
         super().__init__(config)
         self.u, self.decay = u, decay
+        self.record = False  # con True guarda (estados, probs, top-k) del último forward: la división los lee
         self.register_buffer("bias", torch.zeros(self.num_experts))
         self.register_buffer("load", torch.full((self.num_experts,), 1.0 / self.num_experts))
 
@@ -54,6 +55,8 @@ class BiasBalancedRouter(qm.Qwen2MoeTopKRouter):
         probs = torch.softmax(logits, dtype=torch.float, dim=-1)
         _, idx = torch.topk(probs + self.bias, self.top_k, dim=-1)  # el sesgo solo elige
         top = probs.gather(-1, idx)
+        if self.record:
+            self.last = (hs.detach(), probs.detach(), idx)
         if self.norm_topk_prob:
             top = top / top.sum(dim=-1, keepdim=True)
         if self.training:

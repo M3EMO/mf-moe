@@ -102,6 +102,7 @@ def train_until(
     resume: dict | None = None,
     save: Callable[[dict], None] | None = None,
     save_every: int = 10_000,
+    on_step: Callable | None = None,
 ) -> Result:
     """Entrena con lotes de `tasks` hasta que TODAS lleguen al 88 % (o salte la alarma). Con `replay`, el 10 %
     de cada lote sale de esos ejemplos guardados de tareas viejas."""
@@ -120,12 +121,15 @@ def train_until(
         exs += [rng.choice(replay[rng.choice(old)]) for _ in range(n_old)]  # parejo entre tareas viejas
         ids, labels = encode(exs, device)
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=device == "cuda"):
-            loss = model(input_ids=ids, labels=labels).loss
+            out = model(input_ids=ids, labels=labels)
+        loss = out.loss
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
         opt.zero_grad(set_to_none=True)
         res.steps += 1
+        if on_step:  # la división cambia el modelo y AdamW en el lugar
+            on_step(model, opt, res.steps, ids, out.logits.detach(), labels)
         res.tokens += int((ids != PAD).sum())
         res.seconds += time.perf_counter() - t0
         if res.steps % eval_every:
