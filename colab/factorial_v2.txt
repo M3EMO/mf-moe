@@ -1,3 +1,4 @@
+fractal/duda+salidas, con recuperación|0|con
 fijo+repetición|1|con
 fractal/duda, sin fusión|0|sin
 fractal/duda+salidas, con recuperación|0|sin
