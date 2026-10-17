@@ -65,6 +65,7 @@ class Cfg2:
     trainable_from: int = 12
     n_final: int = 48
     check_every: int = 250
+    z_split: float = 3.5  # umbral de la división (el de la fase 1)
     save_every: int = 2000
     calib_seqs: int = 8  # secuencias de entrenamiento por dominio para la fusión
     grow_row: str = "clon"  # fila del router de cada clon del control: "clon" (la del padre) o "cero"
@@ -151,7 +152,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     rng = random.Random(seed)
     layers = set_trainable(model, cfg.trainable_from)
     key = f"fase2/{cond.name}/semilla{seed}/{'-'.join(cfg.domains)}"
-    div = Divider(signal="duda", max_experts=cfg.n_final, every=cfg.check_every, layers=tuple(layers)) \
+    div = Divider(signal="duda", z=cfg.z_split, max_experts=cfg.n_final, every=cfg.check_every,
+                  layers=tuple(layers)) \
         if cond.divide else None  # fmt: skip
     mer = Merger(criterion="salidas", align=True, min_experts=routers(model)[layers[0]].num_experts,
                  layers=tuple(layers)) if cond.merge_align else None  # fmt: skip
@@ -172,7 +174,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         frozen = {int(k): set(v) for k, v in st["congelados"].items()}
         set_rng_state(rng, st["rng"])
         if div:
-            div.events = st["division"]
+            div.events, div.z_max = st["division"], st.get("z_max", [])
         if mer:
             mer.events = st["fusion"]
     elif cond.grow_at_start:
@@ -195,7 +197,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         state = {"L_inicial": L0, "L": L, "aprendido": learned, "dominio": d, "paso": s, "pasos": done_steps, "rng": rng_state(rng),
                  "expertos_por_capa": [r.num_experts for r in routers(model)],
                  "congelados": {str(k): sorted(v) for k, v in frozen.items()},
-                 "division": div.events if div else [], "fusion": mer.events if mer else []}  # fmt: skip
+                 "division": div.events if div else [], "z_max": div.z_max if div else [], "fusion": mer.events if mer else []}  # fmt: skip
         tmp = Path(ckpt + ".tmp")
         torch.save({"key": key, "model": trainable, "state": state}, tmp)
         tmp.replace(ckpt)
@@ -269,5 +271,10 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             "olvido": forget, "olvido_medio": sum(forget[d] for d in old) / max(1, len(old)),
             "general_inicio_fin": [L0[GENERAL], last[GENERAL]], "pasos": done_steps,
             "expertos_finales": [routers(model)[i].num_experts for i in layers],
+            # parte del uso (media móvil del router) que va a expertos nacidos en la corrida: con fila en cero,
+            # un control que nunca los elige tendría en la práctica los expertos del preentrenado
+            "z_max_revisiones": div.z_max if div else None,
+            "uso_expertos_nuevos": [round(float(routers(model)[i].load[model.config.num_local_experts :].sum()), 4)
+                                    for i in layers],  # fmt: skip
             "eventos_division": div.events if div else [], "eventos_fusion": mer.events if mer else []}  # fmt: skip
 

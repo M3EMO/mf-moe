@@ -78,6 +78,7 @@ class Divider:
     max_experts: int = 12
     layers: tuple[int, ...] | None = None  # capas que pueden dividir; None = todas
     events: list[dict] = field(default_factory=list)
+    z_max: list[dict] = field(default_factory=list)  # z más alto de cada capa en cada revisión, divida o no
     _acc: list[dict] = field(default_factory=list, repr=False)
 
     def __post_init__(self):
@@ -132,6 +133,7 @@ class Divider:
             zd, zl = self._z(doubt), self._z(loss)
             score = {"duda": zd, "perdida": zl, "ambas": torch.minimum(zd, zl)}[self.signal]
             parent = int(score.argmax())
+            self.z_max.append({"paso": step, "capa": layer, "z": round(float(score[parent]), 3)})
             if score[parent] > self.z:
                 child = split(model, opt, layer, parent, a["hi"][parent] / a["nhi"][parent].clamp_min(1))
                 self.events.append({"paso": step, "capa": layer, "padre": parent, "hijo": child,

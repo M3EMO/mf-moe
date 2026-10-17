@@ -42,7 +42,7 @@ def test_every_condition_runs_and_the_frozen_half_does_not_move(name):
     assert torch.equal(model.model.layers[0].block_sparse_moe.experts.down_proj, before)
     assert routers(model)[0].num_experts == 6 and 6 <= out["expertos_finales"][0] <= 8
     if name == "control":
-        assert out["expertos_finales"] == [8] and not out["eventos_division"]
+        assert out["expertos_finales"] == [8] and not out["eventos_division"] and 0 < out["uso_expertos_nuevos"][0] < 1
     else:
         assert out["eventos_division"]
     if name == "division+fusion_alineada":
