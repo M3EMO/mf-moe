@@ -88,7 +88,8 @@ def main(root: str) -> None:
             if not pr:
                 continue
             mean, lo, hi = bootstrap_ci([a - b for _, a, b in pr])
-            verdict = "gana el fractal" if lo > 0 else "pierde el fractal" if hi < 0 else "sin diferencia clara"
+            verdict = ("pocos pares" if len(pr) < 3 else "gana el fractal" if lo > 0 else "pierde el fractal" if hi < 0
+                       else "sin diferencia clara")  # con 1 o 2 pares el bootstrap no dice nada  # fmt: skip
             print(json.dumps({"condicion": name, "metrica": metric, "pares": [(k, round(a, 4), round(b, 4)) for k, a, b in pr],
                               "diferencia": round(mean, 4), "ic95": [round(lo, 4), round(hi, 4)], "veredicto": verdict},
                              ensure_ascii=False))  # fmt: skip
