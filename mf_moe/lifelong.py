@@ -22,14 +22,16 @@ GROW_AT = (1, 3, 5, 7, 9, 11)  # índice de la tarea en el orden: tareas 2, 4, .
 KL_LAMBDA = 0.1
 
 
-def _freeze_rows(opt, param: torch.nn.Parameter, n: int) -> None:
-    """Congela las primeras `n` filas: anula su gradiente y sus momentos en AdamW, así no se mueven."""
-    mask = torch.ones(param.shape[0], *[1] * (param.dim() - 1), device=param.device)
-    mask[:n] = 0
+def freeze_rows(opt, param: torch.nn.Parameter, rows) -> None:
+    """Congela esas filas: anula su gradiente y sus momentos en AdamW, así no se mueven. El hook vive en este
+    Parameter: si una división lo reemplaza, hay que volver a congelar."""
+    rows = list(rows)
+    mask = torch.ones(param.shape[0], *[1] * (param.dim() - 1), device=param.device, dtype=param.dtype)
+    mask[rows] = 0
     param.register_hook(lambda g: g * mask)
     for v in opt.state.get(param, {}).values():
         if torch.is_tensor(v) and v.dim():
-            v[:n] = 0
+            v[rows] = 0
 
 
 class Lifelong:
@@ -56,7 +58,7 @@ class Lifelong:
         for layer, n_old in enumerate(self.frozen):
             experts, router = moe(model, layer)
             for p in (experts.gate_up_proj, experts.down_proj, router.weight):
-                _freeze_rows(opt, p, n_old)
+                freeze_rows(opt, p, range(n_old))
 
     def aux_loss(self, ids: torch.Tensor, out) -> torch.Tensor | float:
         """λ·KL(maestro ‖ alumno) sobre los tokens que no son relleno; 0 en la primera tarea."""

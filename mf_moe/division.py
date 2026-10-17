@@ -76,6 +76,7 @@ class Divider:
     z: float = 3.5
     every: int = 500
     max_experts: int = 12
+    layers: tuple[int, ...] | None = None  # capas que pueden dividir; None = todas
     events: list[dict] = field(default_factory=list)
     _acc: list[dict] = field(default_factory=list, repr=False)
 
@@ -125,7 +126,7 @@ class Divider:
 
     def check(self, model, opt, step: int) -> None:
         for layer, (r, a) in enumerate(zip(routers(model), self._acc)):
-            if r.num_experts >= self.max_experts:
+            if r.num_experts >= self.max_experts or (self.layers is not None and layer not in self.layers):
                 continue
             doubt, loss = a["ent"] / a["n"].clamp_min(1), a["loss"] / a["nl"].clamp_min(1)
             zd, zl = self._z(doubt), self._z(loss)

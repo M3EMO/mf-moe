@@ -78,7 +78,7 @@ def align(model, opt, layer: int, a: int, b: int, hs: torch.Tensor) -> None:
         h = (ex.act_fn(gate) * up).float()
         return (h - h.mean(0)) / (h.std(0) + 1e-6)
 
-    corr = acts(a).T @ acts(b) / hs.shape[0]  # (neuronas de a, neuronas de b)
+    corr = (acts(a).T @ acts(b)).float() / hs.shape[0]  # (neuronas de a, b); float: bajo autocast sale en bf16
     _, cols = linear_sum_assignment(corr.cpu().numpy(), maximize=True)
     perm = torch.as_tensor(cols, device=ex.gate_up_proj.device)
     rows = torch.cat([perm, perm + inter])  # gate_up_proj apila [gate; up]
@@ -104,7 +104,7 @@ def _similarities(experts, hs: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor
     o = F.normalize(torch.stack(outs).float(), dim=-1)
     w = torch.cat([experts.gate_up_proj.flatten(1), experts.down_proj.flatten(1)], dim=1).float()
     w = F.normalize(w, dim=-1)
-    return o @ o.T, w @ w.T
+    return (o @ o.T).float(), (w @ w.T).float()
 
 
 @dataclass
@@ -112,6 +112,7 @@ class Merger:
     criterion: str = "salidas"
     z: float = 2.0
     align: bool = False  # empareja las neuronas antes de promediar (MC-SMoE)
+    layers: tuple[int, ...] | None = None  # capas que pueden fusionar; None = todas
     min_experts: int = 6
     events: list[dict] = field(default_factory=list)
 
@@ -133,6 +134,8 @@ class Merger:
         for r, w in zip(rs, was):
             r.record = w
         for layer, (r, hs) in enumerate(zip(rs, hidden)):
+            if self.layers is not None and layer not in self.layers:
+                continue
             experts = moe(model, layer)[0]
             so, sw = _similarities(experts, hs.to(experts.gate_up_proj.dtype))
             i, j = torch.triu_indices(r.num_experts, r.num_experts, offset=1)
