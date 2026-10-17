@@ -67,6 +67,7 @@ class Cfg2:
     check_every: int = 250
     save_every: int = 2000
     calib_seqs: int = 8  # secuencias de entrenamiento por dominio para la fusión
+    grow_row: str = "clon"  # fila del router de cada clon del control: "clon" (la del padre) o "cero"
     extra: dict = field(default_factory=dict)
 
 
@@ -120,8 +121,10 @@ def eval_loss(model, seqs: np.ndarray, device: str, batch: int = 8) -> float:
     return total / n
 
 
-def _grow_control(model, opt, layers: list[int], n_final: int, calib: torch.Tensor, device: str) -> None:
-    """Control: clona hasta `n_final` los expertos más usados en texto general, antes de entrenar."""
+def _grow_control(model, opt, layers: list[int], n_final: int, calib: torch.Tensor, device: str,
+                  row: str = "clon") -> None:  # fmt: skip
+    """Control: clona hasta `n_final` los expertos más usados en texto general, antes de entrenar.
+    Con `row="cero"` el clon arranca con logit 0: el router lo elige poco hasta que lo aprende."""
     rs = routers(model)
     for r in rs:
         r.record = True
@@ -133,7 +136,9 @@ def _grow_control(model, opt, layers: list[int], n_final: int, calib: torch.Tens
         order = usage.argsort(descending=True).tolist()
         k = 0
         while r.num_experts < n_final:
-            split(model, opt, i, order[k % len(order)], row_dir=None)
+            child = split(model, opt, i, order[k % len(order)], row_dir=None)
+            if row == "cero":
+                r.weight.data[child] = 0
             k += 1
     for r in rs:
         r.record = False
@@ -172,7 +177,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             mer.events = st["fusion"]
     elif cond.grow_at_start:
         calib = torch.as_tensor(np.asarray(data[GENERAL]["train"][: cfg.batch], dtype=np.int64), device=device)
-        _grow_control(model, opt, layers, cfg.n_final, calib, device)
+        _grow_control(model, opt, layers, cfg.n_final, calib, device, cfg.grow_row)
     if div:
         div.attach(model)
 
@@ -261,7 +266,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     old = cfg.domains[:-1]
     return {"condicion": asdict(cond), "semilla": seed, "cfg": asdict(cfg), "L_inicial": L0, "L": L,
             "aprendido": learned,
-            "olvido": forget, "olvido_medio": sum(forget[d] for d in old) / len(old),
+            "olvido": forget, "olvido_medio": sum(forget[d] for d in old) / max(1, len(old)),
             "general_inicio_fin": [L0[GENERAL], last[GENERAL]], "pasos": done_steps,
             "expertos_finales": [routers(model)[i].num_experts for i in layers],
             "eventos_division": div.events if div else [], "eventos_fusion": mer.events if mer else []}  # fmt: skip

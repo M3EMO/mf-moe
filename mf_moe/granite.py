@@ -61,8 +61,9 @@ def tiny(n_experts: int = 6, top_k: int = 2, seed: int = 0) -> GraniteMoeForCaus
     return patch_routers(GraniteMoeForCausalLM(cfg))
 
 
-def load(device: str = "cuda") -> GraniteMoeForCausalLM:
-    """Pesos en fp32 (en bf16, AdamW pierde las actualizaciones chicas) y expertos que multiplican en bf16."""
-    model = GraniteMoeForCausalLM.from_pretrained(MODEL_ID, dtype=torch.float32,
-                                                  experts_implementation="grouped_mm_bf16").to(device)  # fmt: skip
+def load(device: str = "cuda", **config) -> GraniteMoeForCausalLM:
+    """Pesos en fp32 (en bf16, AdamW pierde las actualizaciones chicas) y expertos que multiplican en bf16.
+    `config` reemplaza campos de la config, por ejemplo `attention_dropout` (0,1 en la de Granite)."""
+    model = GraniteMoeForCausalLM.from_pretrained(MODEL_ID, dtype=torch.float32, experts_implementation="grouped_mm_bf16",
+                                                  **config).to(device)  # fmt: skip
     return patch_routers(model)
