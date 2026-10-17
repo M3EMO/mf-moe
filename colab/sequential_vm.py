@@ -11,5 +11,5 @@ python -m mf_moe.sequential /content/out "__COND__" __SEED__ __NAMED__ /content/
 cp /content/out/*.json /content/result.json
 echo "SEQ_FIN" >> $L
 """
-r = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True)
+r = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True, check=False)
 print(r.stdout[-1500:], r.stderr[-1500:], "EXIT", r.returncode)

@@ -12,5 +12,5 @@ python -m mf_moe.reference /content/ref __EXPS__ >> $L 2>&1 || { echo "FALLA ref
 tar czf /content/ref.tgz -C /content ref
 echo "REF_FIN" >> $L
 """
-r = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True)
+r = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True, check=False)
 print(r.stdout[-1500:], r.stderr[-1500:], "EXIT", r.returncode)
