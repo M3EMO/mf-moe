@@ -21,7 +21,7 @@ import torch.nn.functional as F
 from scipy.optimize import linear_sum_assignment
 from torch import nn
 
-from mf_moe.model import PAD, routers
+from mf_moe.model import PAD, moe, routers
 
 CRITERIA = ("salidas", "pesos", "ambas")
 
@@ -49,8 +49,7 @@ def _shrink_param(opt, module: nn.Module, name: str, keep: int, drop: int, wk: f
 @torch.no_grad()
 def merge_pair(model, opt, layer: int, a: int, b: int) -> tuple[int, int]:
     """Fusiona los expertos `a` y `b` de la capa `layer`; devuelve (conservado, quitado) en índices previos."""
-    mlp = model.model.layers[layer].mlp
-    experts, router = mlp.experts, mlp.gate
+    experts, router = moe(model, layer)
     keep, drop = (a, b) if router.load[a] >= router.load[b] else (b, a)
     total = float(router.load[keep] + router.load[drop])
     wk = float(router.load[keep]) / total if total > 0 else 0.5
@@ -71,7 +70,7 @@ def align(model, opt, layer: int, a: int, b: int, hs: torch.Tensor) -> None:
     `b` calcula. Empareja por la correlación de sus activaciones intermedias sobre `hs`, con el algoritmo
     húngaro. Sin esto, promediar dos expertos entrenados por separado mezcla neuronas que no se corresponden
     (factorial, 2026-10-16: la fusión ingenua bajó la tarea recién aprendida hasta 1 %)."""
-    ex = model.model.layers[layer].mlp.experts
+    ex = moe(model, layer)[0]
     inter = ex.gate_up_proj.shape[1] // 2
 
     def acts(e: int) -> torch.Tensor:
@@ -134,7 +133,7 @@ class Merger:
         for r, w in zip(rs, was):
             r.record = w
         for layer, (r, hs) in enumerate(zip(rs, hidden)):
-            experts = model.model.layers[layer].mlp.experts
+            experts = moe(model, layer)[0]
             so, sw = _similarities(experts, hs.to(experts.gate_up_proj.dtype))
             i, j = torch.triu_indices(r.num_experts, r.num_experts, offset=1)
             zo, zw = _pair_z(so[i, j]), _pair_z(sw[i, j])

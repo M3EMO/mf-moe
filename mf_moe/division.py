@@ -23,7 +23,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from mf_moe.model import PAD, routers
+from mf_moe.model import PAD, moe, routers
 
 SIGNALS = ("duda", "perdida", "ambas")
 
@@ -45,8 +45,7 @@ def _grow_param(opt: torch.optim.Optimizer, module: nn.Module, name: str, parent
 def split(model, opt: torch.optim.Optimizer, layer: int, parent: int, row_dir: torch.Tensor | None,
           noise: float = 0.01) -> int:  # fmt: skip
     """Clona el experto `parent` de la capa `layer`; devuelve el índice del hijo."""
-    mlp = model.model.layers[layer].mlp
-    experts, router = mlp.experts, mlp.gate
+    experts, router = moe(model, layer)
     for name in ("gate_up_proj", "down_proj"):
         w = getattr(experts, name)[parent]
         _grow_param(opt, experts, name, parent, w + noise * w.std() * torch.randn_like(w))

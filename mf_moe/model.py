@@ -104,5 +104,12 @@ def build(n_experts: int, seed: int = 0, **kw) -> Qwen2MoeForCausalLM:
     return model
 
 
-def routers(model: Qwen2MoeForCausalLM) -> list[BiasBalancedRouter]:
-    return [layer.mlp.gate for layer in model.model.layers]
+def moe(model, layer: int):
+    """(expertos, router) de la capa: `mlp.gate` en Qwen2-MoE, `block_sparse_moe.router` en Granite."""
+    blk = model.model.layers[layer]
+    m = blk.mlp if hasattr(blk, "mlp") else blk.block_sparse_moe
+    return m.experts, (m.gate if hasattr(m, "gate") else m.router)
+
+
+def routers(model) -> list:
+    return [moe(model, i)[1] for i in range(len(model.model.layers))]

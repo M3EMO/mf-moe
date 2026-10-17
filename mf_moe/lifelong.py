@@ -16,7 +16,7 @@ import torch
 import torch.nn.functional as F
 
 from mf_moe.division import split
-from mf_moe.model import PAD, routers
+from mf_moe.model import PAD, moe, routers
 
 GROW_AT = (1, 3, 5, 7, 9, 11)  # índice de la tarea en el orden: tareas 2, 4, ..., 12
 KL_LAMBDA = 0.1
@@ -54,8 +54,8 @@ class Lifelong:
     def refreeze(self, model, opt) -> None:
         """Aplica el congelado guardado en `frozen`; también sirve al retomar desde un checkpoint."""
         for layer, n_old in enumerate(self.frozen):
-            mlp = model.model.layers[layer].mlp
-            for p in (mlp.experts.gate_up_proj, mlp.experts.down_proj, mlp.gate.weight):
+            experts, router = moe(model, layer)
+            for p in (experts.gate_up_proj, experts.down_proj, router.weight):
                 _freeze_rows(opt, p, n_old)
 
     def aux_loss(self, ids: torch.Tensor, out) -> torch.Tensor | float:
