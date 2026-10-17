@@ -118,7 +118,9 @@ def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000
         start, inner = st["tarea"], st["dentro"]
         buffer = {t: [Example(*e) for e in exs] for t, exs in st["buffer"].items()}
         if div:
-            div.events, div._acc = st["division"], st["division_acumulada"]
+            # el checkpoint se lee en la CPU: la señal acumulada va al dispositivo del modelo (falla del 2026-10-17)
+            div.events = st["division"]
+            div._acc = [{k: v.to(device) for k, v in a.items()} for a in st["division_acumulada"]]
         if mer:
             mer.events = st["fusion"]
         if ll and st["maestro"] is not None:
