@@ -58,7 +58,7 @@ CONDS2 = {c.name: c for c in [
 class Cfg2:
     domains: tuple[str, ...] = DOMAINS
     batch: int = 8
-    micro: int = 2  # secuencias por pasada: con 8, las activaciones y los momentos de AdamW no entran en 22 GB
+    micro: int = 1  # secuencias por pasada; piloto 3, control a 48: 22,88 GB con 2 y 21,01 GB con 1 (15 % más lento)
     lr: float = 2e-5
     warmup: int = 100
     replay: float = 0.05
