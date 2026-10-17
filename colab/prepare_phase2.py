@@ -1,8 +1,8 @@
 """Prepara los datos de la fase 2 en una VM (ticket 12): tokeniza una sola vez los cinco datasets.
 
-Cada dominio queda en `<out>/<dominio>_eval.npy` (las primeras 1.000 secuencias) y `<out>/<dominio>_train.npy`
-(las siguientes), uint16, secuencias de 1.024 tokens con EOS entre documentos. La evaluación nunca aparece
-en el entrenamiento. Uso: python prepare_phase2.py OUT [tokens_por_dominio]
+Cada dominio queda en `<out>/<dominio>_eval.npy` (1.000 secuencias) y `<out>/<dominio>_train.npy`, uint16,
+secuencias de 1.024 tokens con EOS entre documentos. Cada documento va entero a la evaluación o al entrenamiento,
+así que la evaluación nunca comparte documentos con el entrenamiento. Uso: python prepare_phase2.py OUT [tokens_por_dominio]
 """
 
 import hashlib
@@ -16,7 +16,7 @@ from transformers import AutoTokenizer
 
 from mf_moe.granite import MODEL_ID
 
-SEQ, EVAL_SEQS = 1024, 1000
+SEQ, EVAL_SEQS, EVAL_PER_DOC = 1024, 1000, 8  # tope por documento: la evaluación cubre >= 125 documentos
 SOURCES = {  # dominio: (dataset, config); licencias en el ticket 12
     "matematica": ("open-web-math/open-web-math", None),
     "codigo": ("common-pile/stackv2", None),
@@ -39,16 +39,25 @@ def main(out: str, tokens: int = 20_000_000) -> None:
     Path(out).mkdir(parents=True, exist_ok=True)
     report = {}
     for dom, (name, cfg) in SOURCES.items():
-        need = EVAL_SEQS + (tokens // SEQ if dom != "general" else 10_000)
-        buf, seqs, docs = [], [], 0
+        need = tokens // SEQ if dom != "general" else 10_000
+        every = max(2, (need + EVAL_SEQS) // EVAL_SEQS)  # uno de cada `every` documentos va a la evaluación
+        side = {"eval": ([], [], EVAL_SEQS), "train": ([], [], need)}  # (buffer, secuencias, meta)
+        docs = 0
         for row in load_dataset(name, cfg, split="train", streaming=True):
-            buf += tok(text_of(row))["input_ids"] + [tok.eos_token_id]
+            ids = tok(text_of(row))["input_ids"] + [tok.eos_token_id]
+            # cada documento va entero a un solo lado y la evaluación cubre todo el stream (piloto 4: las primeras
+            # 1.000 secuencias de código venían de ~20 documentos y daban 0,18 nats menos que el entrenamiento)
+            ev_open = len(side["eval"][1]) < EVAL_SEQS
+            to_eval = ev_open and (docs % every == 0 or len(side["train"][1]) >= need)
             docs += 1
-            while len(buf) >= SEQ and len(seqs) < need:
+            buf, seqs, goal = side["eval" if to_eval else "train"]
+            buf += ids[: EVAL_PER_DOC * SEQ] if to_eval else ids
+            while len(buf) >= SEQ and len(seqs) < goal:
                 seqs.append(buf[:SEQ])
-                buf = buf[SEQ:]
-            if len(seqs) >= need:
+                del buf[:SEQ]
+            if len(side["eval"][1]) >= EVAL_SEQS and len(side["train"][1]) >= need:
                 break
+        seqs = side["eval"][1] + side["train"][1]
         arr = np.asarray(seqs, dtype=np.uint16)
         np.save(Path(out, f"{dom}_eval.npy"), arr[:EVAL_SEQS])
         np.save(Path(out, f"{dom}_train.npy"), arr[EVAL_SEQS:])
