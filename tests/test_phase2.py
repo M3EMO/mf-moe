@@ -69,3 +69,10 @@ def test_resume_mid_domain_finishes_with_the_saved_structure(tmp_path, monkeypat
                  log=lambda r: None)  # fmt: skip
     assert len(out["L"]) == 4 and out["expertos_finales"][0] >= saved["expertos_por_capa"][1]
     assert out["L_inicial"] == saved["L_inicial"]
+
+
+def test_micro_batches_take_the_same_step_as_the_whole_batch():
+    run = lambda micro: P.run2(P.CONDS2["control"], 0, tiny(n_experts=6), _data(), "cpu",
+                               P.Cfg2(**{**CFG.__dict__, "micro": micro}), log=lambda r: None)  # fmt: skip
+    whole, split = run(CFG.batch), run(1)
+    assert whole["L"][-1] == pytest.approx(split["L"][-1], rel=1e-4)  # un lr 8 veces mayor ya se aparta 6e-4

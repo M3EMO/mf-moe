@@ -58,6 +58,7 @@ CONDS2 = {c.name: c for c in [
 class Cfg2:
     domains: tuple[str, ...] = DOMAINS
     batch: int = 8
+    micro: int = 2  # secuencias por pasada: con 8, las activaciones y los momentos de AdamW no entran en 22 GB
     lr: float = 2e-5
     warmup: int = 100
     replay: float = 0.05
@@ -100,7 +101,9 @@ def amp(device: str):
 
 
 def _adamw(model, lr: float) -> torch.optim.Optimizer:
-    return torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=lr, weight_decay=0.0)
+    params = [p for p in model.parameters() if p.requires_grad]
+    # fused: la versión foreach copia todos los momentos en temporales y no entró en la L4 (piloto 2, 2026-10-17)
+    return torch.optim.AdamW(params, lr=lr, weight_decay=0.0, fused=params[0].is_cuda)
 
 
 @torch.no_grad()
@@ -216,14 +219,21 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             lr = cfg.lr * min(1.0, (s - s0 + 1) / cfg.warmup)  # recalienta al empezar cada dominio y al retomar
             for g in opt.param_groups:
                 g["lr"] = lr
-            with amp(device):
-                out = model(input_ids=ids, labels=ids)
-            out.loss.backward()
+            loss = 0.0
+            for c in ids.split(cfg.micro):  # acumula el gradiente: mismo paso que con el lote entero
+                with amp(device):
+                    out = model(input_ids=c, labels=c)
+                (out.loss * len(c) / len(ids)).backward()
+                loss += float(out.loss.detach()) * len(c) / len(ids)
+                if div:
+                    div.observe(model, c, out.logits.detach(), c)
+                del out
             torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
             opt.step()
             opt.zero_grad(set_to_none=True)
             if div:
-                div(model, opt, s + 1, ids, out.logits.detach(), ids)
+                if (s + 1) % div.every == 0:
+                    div.check(model, opt, s + 1)
                 if len(div.events) > n_events:  # una división reemplazó parámetros: AdamW los siguió en el lugar
                     new = div.events[n_events:]
                     if cond.freeze_parent:
@@ -232,7 +242,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                     refreeze({e["capa"] for e in new})
                     n_events = len(div.events)
             if (s + 1) % 50 == 0:
-                log({"dominio": dom, "paso": s + 1, "de": steps, "loss": round(float(out.loss), 4),
+                log({"dominio": dom, "paso": s + 1, "de": steps, "loss": round(loss, 4),
                      "expertos": [routers(model)[i].num_experts for i in layers]})  # fmt: skip
             if ckpt and (s + 1) % cfg.save_every == 0:
                 save(di, s + 1)

@@ -3,6 +3,7 @@ import subprocess
 # Job de Colab: piloto de la fase 2 (ticket 12). Prepara datos cortos y corre tres condiciones con Granite-1B.
 cmd = r"""
 set -u
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 L=/content/pilot2.log
 rm -rf /content/mf-moe && mkdir -p /content/mf-moe && cd /content/mf-moe && unzip -q -o /content/vigia-colab.zip
 pip install -q "transformers==5.19.0" datasets > /dev/null 2>&1
