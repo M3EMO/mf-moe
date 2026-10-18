@@ -58,6 +58,7 @@ CONDS2 = {c.name: c for c in [
 class Cfg2:
     domains: tuple[str, ...] = DOMAINS
     batch: int = 8
+    observe_seqs: int = 8  # secuencias por paso que alimentan la señal de duda (piloto 5: con las 64, la división tardaba el doble)
     micro: int = 1  # secuencias por pasada; piloto 3, control a 48: 22,88 GB con 2 y 21,01 GB con 1 (15 % más lento)
     lr: float = 2e-5
     warmup: int = 100
@@ -236,12 +237,12 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             for g in opt.param_groups:
                 g["lr"] = lr
             loss = 0.0
-            for c in ids.split(cfg.micro):  # acumula el gradiente: mismo paso que con el lote entero
+            for k, c in enumerate(ids.split(cfg.micro)):  # acumula el gradiente: mismo paso que con el lote entero
                 with amp(device):
                     out = model(input_ids=c, labels=c)
                 (out.loss * len(c) / len(ids)).backward()
                 loss += float(out.loss.detach()) * len(c) / len(ids)
-                if div:
+                if div and k * cfg.micro < cfg.observe_seqs:
                     div.observe(model, c, out.logits.detach(), c)
                 del out
             torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
