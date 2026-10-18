@@ -76,3 +76,11 @@ def test_micro_batches_take_the_same_step_as_the_whole_batch():
                                P.Cfg2(**{**CFG.__dict__, "micro": micro}), log=lambda r: None)  # fmt: skip
     whole, split = run(CFG.batch), run(1)
     assert whole["L"][-1] == pytest.approx(split["L"][-1], rel=1e-4)  # un lr 8 veces mayor ya se aparta 6e-4
+
+
+def test_the_random_arm_splits_on_the_same_schedule_but_other_parents():
+    runs = {n: P.run2(P.CONDS2[n], 0, tiny(n_experts=6), _data(), "cpu", CFG, log=lambda r: None)
+            for n in ("division+padre_congelado", "azar+padre_congelado")}  # fmt: skip
+    ev = {n: [(e["paso"], e["capa"], e["padre"]) for e in r["eventos_division"]] for n, r in runs.items()}
+    doubt, rand = ev["division+padre_congelado"], ev["azar+padre_congelado"]
+    assert [e[:2] for e in doubt] == [e[:2] for e in rand] and doubt != rand

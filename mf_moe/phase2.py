@@ -44,6 +44,7 @@ class Cond2:
     divide: bool = False
     merge_align: bool = False
     freeze_parent: bool = False
+    random_parent: bool = False  # divide expertos al azar con el mismo calendario: separa la duda del congelado
 
 
 CONDS2 = {c.name: c for c in [
@@ -51,6 +52,7 @@ CONDS2 = {c.name: c for c in [
     Cond2("division", divide=True),
     Cond2("division+fusion_alineada", divide=True, merge_align=True),
     Cond2("division+padre_congelado", divide=True, freeze_parent=True),
+    Cond2("azar+padre_congelado", divide=True, freeze_parent=True, random_parent=True),
 ]}  # fmt: skip
 
 
@@ -159,7 +161,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     for i in layers:
         routers(model)[i].u, routers(model)[i].decay = cfg.balance_u, cfg.load_decay
     key = f"fase2/{cond.name}/semilla{seed}/{'-'.join(cfg.domains)}"
-    div = Divider(signal="duda", z=cfg.z_split, mix=cfg.split_mix, silent=cfg.silent, max_experts=cfg.n_final, every=cfg.check_every,
+    div = Divider(signal="duda", z=cfg.z_split, mix=cfg.split_mix, silent=cfg.silent,
+                  random_parent=seed if cond.random_parent else None, max_experts=cfg.n_final, every=cfg.check_every,
                   layers=tuple(layers)) \
         if cond.divide else None  # fmt: skip
     mer = Merger(criterion="salidas", align=True, min_experts=routers(model)[layers[0]].num_experts,

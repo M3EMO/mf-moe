@@ -17,6 +17,7 @@ AdamW crece en el lugar: el hijo hereda los momentos del padre, así su primer p
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass, field
 
 import torch
@@ -82,6 +83,7 @@ class Divider:
     max_experts: int = 12
     mix: float = 1.0  # fila del hijo: ver `split`
     silent: bool = False  # el hijo nace sin que el router lo elija: ver `split`
+    random_parent: int | None = None  # semilla: el padre se elige al azar (control de la duda), no por la señal
     layers: tuple[int, ...] | None = None  # capas que pueden dividir; None = todas
     events: list[dict] = field(default_factory=list)
     z_max: list[dict] = field(default_factory=list)  # z más alto de cada capa en cada revisión, divida o no
@@ -139,8 +141,10 @@ class Divider:
             zd, zl = self._z(doubt), self._z(loss)
             score = {"duda": zd, "perdida": zl, "ambas": torch.minimum(zd, zl)}[self.signal]
             parent = int(score.argmax())
+            if self.random_parent is not None:
+                parent = random.Random(f"{self.random_parent}-{step}-{layer}").randrange(r.num_experts)
             self.z_max.append({"paso": step, "capa": layer, "z": round(float(score[parent]), 3)})
-            if score[parent] > self.z:
+            if score[parent] > self.z or self.random_parent is not None and score.max() > self.z:
                 child = split(model, opt, layer, parent, a["hi"][parent] / a["nhi"][parent].clamp_min(1),
                               mix=self.mix, silent=self.silent)  # fmt: skip
                 self.events.append({"paso": step, "capa": layer, "padre": parent, "hijo": child,
