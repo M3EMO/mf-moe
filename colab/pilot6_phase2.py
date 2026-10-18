@@ -5,7 +5,8 @@ divisiones por capa: +0,53 nats en general aun como clon puro) y que finés y tu
 finés 3,20 → 2,97 y olvida 0,62 al aprender turco). Ahora cada experto nuevo nace con sesgo -1 y el balanceo de
 los nacidos lo recluta de a poco. Corre finés y turco (1.600 secuencias cada uno, lote 64, lr 6e-5) con:
 1. el control (16 clones silenciosos por capa al inicio);
-2. la división con padre congelado, hijo silencioso, `mix` 0 y 0,1, umbral z 3,5 y revisión cada 5 pasos.
+2. la división con padre congelado, hijo silencioso, `mix` 0 y 0,1, revisión cada 5 pasos y división forzada en
+   cada revisión (el piloto 5 no superó z 3,5 en ninguna revisión: z máximo entre 2,5 y 3,1).
 La referencia sin crecer es la del piloto 5 (mismos datos: lo comprueba el sha256 de datos.json).
 Uso: python pilot6_phase2.py DATOS OUT
 """
@@ -58,7 +59,7 @@ def main(data_dir: str, out: str) -> None:
 
     run("control_silencioso", P.CONDS2["control"], grow_row="silencioso", **BAL)
     for mix in (0.0, 0.1):
-        run(f"division_silenciosa_mix_{mix}", P.CONDS2["division+padre_congelado"], check_every=5, split_mix=mix, **BAL)
+        run(f"division_silenciosa_mix_{mix}", P.CONDS2["division+padre_congelado"], check_every=5, split_mix=mix, z_split=-1e9, **BAL)
     print("== fin del piloto 6", flush=True)  # el marcador lo escribe el job después del tar
 
 
