@@ -1,0 +1,15 @@
+control|0|f2
+division|0|f2
+division+fusion_alineada|0|f2
+division+padre_congelado|0|f2
+azar+padre_congelado|0|f2
+control|1|f2
+division|1|f2
+division+fusion_alineada|1|f2
+division+padre_congelado|1|f2
+azar+padre_congelado|1|f2
+control|2|f2
+division|2|f2
+division+fusion_alineada|2|f2
+division+padre_congelado|2|f2
+azar+padre_congelado|2|f2

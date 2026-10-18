@@ -10,9 +10,11 @@ olvidó). Es un oráculo: no hay juez.
 
 Condiciones (todas terminan con hasta 48 expertos por capa entrenable y top-k fijo):
 - control: crece a 48 antes de empezar, clonando los expertos más usados en texto general;
-- division: crece por duda del router (`Divider`) durante el entrenamiento;
+- division: crece durante el entrenamiento, con un calendario fijo; la duda del router (`Divider`) elige al padre;
 - division+fusion_alineada: además fusiona pares alineados por permutación al cerrar cada dominio;
-- division+padre_congelado: además congela al padre después de cada división (protege lo viejo).
+- division+padre_congelado: además congela al padre después de cada división (protege lo viejo);
+- azar+padre_congelado: como la anterior, pero el padre se elige al azar (¿aporta la duda o alcanza congelar?).
+Todo experto nuevo nace silencioso (sesgo -1) y el balanceo de los nacidos lo recluta (pilotos 5 y 6).
 
 Retome (decisión del usuario): el checkpoint guarda solo los pesos entrenables en fp32 y el estado del bucle;
 al retomar, AdamW arranca con momentos en cero y vuelve a calentar el learning rate.
@@ -20,7 +22,9 @@ al retomar, AdamW arranca con momentos en cero y vuelve a calentar el learning r
 
 from __future__ import annotations
 
+import json
 import random
+import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -28,6 +32,7 @@ import numpy as np
 import torch
 
 from mf_moe.division import Divider, resize, split
+from mf_moe.granite import load
 from mf_moe.lifelong import freeze_rows
 from mf_moe.merging import Merger
 from mf_moe.model import moe, routers
@@ -284,10 +289,31 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             "olvido": forget, "olvido_medio": sum(forget[d] for d in old) / max(1, len(old)),
             "general_inicio_fin": [L0[GENERAL], last[GENERAL]], "pasos": done_steps,
             "expertos_finales": [routers(model)[i].num_experts for i in layers],
-            # parte del uso (media móvil del router) que va a expertos nacidos en la corrida: con fila en cero,
-            # un control que nunca los elige tendría en la práctica los expertos del preentrenado
             "z_max_revisiones": div.z_max if div else None,
+            # parte del uso (media móvil del router) que va a expertos nacidos en la corrida: un control cuyos
+            # clones nunca entran al ruteo tendría en la práctica los expertos del preentrenado
             "uso_expertos_nuevos": [round(float(routers(model)[i].load[model.config.num_local_experts :].sum()), 4)
                                     for i in layers],  # fmt: skip
             "eventos_division": div.events if div else [], "eventos_fusion": mer.events if mer else []}  # fmt: skip
 
+
+
+# Las 15 corridas (ticket 12): 4 idiomas × ~10 M tokens, 152 pasos de 64 por dominio. Lote y lr del piloto 5; 16
+# divisiones por capa repartidas en los 4 dominios (612 pasos / 16 = 38); el balanceo recluta a un nacido en
+# ~1/4 de dominio (1 / (0,25 · 152 · 64) = 4e-4). Un checkpoint al cerrar cada dominio.
+PRODUCTION = {"batch": 64, "lr": 6e-5, "warmup": 15, "check_every": 38, "z_split": -1e9, "split_mix": 0.1,
+              "silent": True, "balance_u": 4e-4, "load_decay": 0.99, "grow_row": "silencioso", "save_every": 10**9}
+EVAL_SEQS = 500
+
+
+def main(data_dir: str, out: str, cond: str, seed: int, ckpt: str | None = None) -> None:
+    data = {d: {"train": v["train"], "eval": v["eval"][:EVAL_SEQS]} for d, v in load_data(data_dir).items()}
+    res = run2(CONDS2[cond], seed, load(attention_dropout=0.0), data, "cuda", Cfg2(**PRODUCTION), ckpt=ckpt,
+               log=lambda r: print(json.dumps(r), flush=True))  # fmt: skip
+    res["datos"] = json.loads(Path(data_dir, "datos.json").read_text())  # sha256 de cada dominio
+    Path(out).mkdir(parents=True, exist_ok=True)
+    Path(out, "result.json").write_text(json.dumps(res, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), *sys.argv[5:6])
