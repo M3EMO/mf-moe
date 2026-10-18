@@ -51,3 +51,18 @@ def test_divider_and_merger_run_on_granite():
     m = Merger(z=-1e9, min_experts=6, align=True)
     m(model, opt, ids)
     assert [r.num_experts for r in routers(model)] == [6, 6]
+
+
+def test_a_silent_child_is_never_chosen_until_balancing_raises_its_bias():
+    import mf_moe.division as D
+    from mf_moe.model import routers
+
+    model = tiny(n_experts=6)
+    r = routers(model)[1]
+    x = torch.randn(64, model.config.hidden_size)
+    D.split(model, torch.optim.SGD(model.parameters(), lr=0.0), 1, 0, row_dir=None, silent=True)
+    assert not (r(x)[0] == 6).any()
+    r.u = 1e-2
+    for _ in range(300):
+        r(x)
+    assert (r(x)[0] == 6).any()

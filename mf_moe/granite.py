@@ -3,8 +3,9 @@
 En transformers 5, los expertos de Granite usan el mismo formato que nuestro MoE de la fase 1 (`gate_up_proj`
 y `down_proj` por capa), así que la división, la fusión alineada y el crecimiento de AdamW sirven igual.
 El router de Granite se reemplaza por uno que agrega dos buffers y la opción de registrar su señal:
-- `bias`: siempre cero; existe para que dividir y fusionar traten igual a los dos modelos. No cambia el
-  ruteo de Granite, que elige el top-k por logits sin sesgo.
+- `bias`: sesgo que solo elige expertos (sobre la softmax), como en la fase 1; en cero, el ruteo es el de Granite.
+  Con `u > 0` el router balancea el uso de los expertos nacidos en la corrida; un hijo con sesgo -1 nace sin que el router lo elija
+  y entra al ruteo de a poco (piloto 5: un hijo elegido desde el primer paso desplaza a otros expertos y daña).
 - `load`: media móvil del uso de cada experto; la fusión la usa para ponderar el promedio.
 Con `record=True` guarda (estados, probabilidades, top-k) del último forward, que la división lee.
 """
@@ -22,22 +23,28 @@ MODEL_ID = "ibm-granite/granite-3.1-1b-a400m-base"
 
 
 class RecordingGraniteRouter(gm.GraniteMoeTopKRouter):
-    def __init__(self, config: GraniteMoeConfig, decay: float = 0.999):
+    def __init__(self, config: GraniteMoeConfig, decay: float = 0.999, u: float = 0.0):
         super().__init__(config)
-        self.decay, self.record = decay, False
+        self.decay, self.record, self.u = decay, False, u
+        self.n_born = self.num_experts  # los expertos desde este índice nacieron en la corrida
         self.register_buffer("bias", torch.zeros(self.num_experts))
         self.register_buffer("load", torch.full((self.num_experts,), 1.0 / self.num_experts))
 
     def forward(self, hidden_states: torch.Tensor):
         logits = F.linear(hidden_states, self.weight).float()
-        top_logits, idx = logits.topk(self.top_k, dim=-1)
-        weights = torch.softmax(top_logits, dim=-1).type_as(hidden_states)
+        probs = torch.softmax(logits, dim=-1)
+        _, idx = (probs + self.bias).topk(self.top_k, dim=-1)  # el sesgo solo elige; en cero, es el top-k de Granite
+        weights = torch.softmax(logits.gather(-1, idx), dim=-1).type_as(hidden_states)
         if self.training:
             with torch.no_grad():
                 frac = torch.bincount(idx.reshape(-1), minlength=self.num_experts).float() / idx.numel()
                 self.load.mul_(self.decay).add_(frac, alpha=1 - self.decay)
+                if self.u:  # balanceo sin pérdida auxiliar (fase 1), solo para los nacidos: los de Granite
+                    # conservan su ruteo preentrenado
+                    err = torch.sign(self.load.mean() - self.load[self.n_born :])
+                    self.bias[self.n_born :] += self.u * err
         if self.record:
-            self.last = (hidden_states.detach(), torch.softmax(logits, dim=-1).detach(), idx)
+            self.last = (hidden_states.detach(), probs.detach(), idx)
         return idx, weights, logits
 
 

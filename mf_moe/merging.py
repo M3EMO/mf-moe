@@ -61,6 +61,8 @@ def merge_pair(model, opt, layer: int, a: int, b: int) -> tuple[int, int]:
     router.bias, router.load = router.bias[rows], router.load[rows]
     experts.num_experts -= 1
     router.num_experts -= 1
+    if drop < getattr(router, "n_born", 0):  # Granite: un viejo menos, los nacidos corren un lugar
+        router.n_born -= 1
     return keep, drop
 
 

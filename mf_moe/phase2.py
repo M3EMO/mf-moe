@@ -67,9 +67,12 @@ class Cfg2:
     check_every: int = 250
     z_split: float = 3.5  # umbral de la división (el de la fase 1)
     split_mix: float = 1.0  # fila del router del hijo: 1 = dirección de la duda (fase 1); ver `division.split`
+    silent: bool = False  # hijos y clones nacen sin que el router los elija; ver `division.split`
+    balance_u: float = 0.0  # paso del sesgo de balanceo de los nacidos, por pasada; 0 = ruteo de Granite
+    load_decay: float = 0.999  # media móvil del uso por pasada; el balanceo se pasa de largo ~u/(1-decay)
     save_every: int = 2000
     calib_seqs: int = 8  # secuencias de entrenamiento por dominio para la fusión
-    grow_row: str = "clon"  # fila del router de cada clon del control: "clon" (la del padre) o "cero"
+    grow_row: str = "clon"  # clones del control: "clon" (fila del padre), "cero" (fila en cero) o "silencioso"
     extra: dict = field(default_factory=dict)
 
 
@@ -138,7 +141,7 @@ def _grow_control(model, opt, layers: list[int], n_final: int, calib: torch.Tens
         order = usage.argsort(descending=True).tolist()
         k = 0
         while r.num_experts < n_final:
-            child = split(model, opt, i, order[k % len(order)], row_dir=None)
+            child = split(model, opt, i, order[k % len(order)], row_dir=None, silent=row == "silencioso")
             if row == "cero":
                 r.weight.data[child] = 0
             k += 1
@@ -152,8 +155,10 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     torch.manual_seed(seed)
     rng = random.Random(seed)
     layers = set_trainable(model, cfg.trainable_from)
+    for i in layers:
+        routers(model)[i].u, routers(model)[i].decay = cfg.balance_u, cfg.load_decay
     key = f"fase2/{cond.name}/semilla{seed}/{'-'.join(cfg.domains)}"
-    div = Divider(signal="duda", z=cfg.z_split, mix=cfg.split_mix, max_experts=cfg.n_final, every=cfg.check_every,
+    div = Divider(signal="duda", z=cfg.z_split, mix=cfg.split_mix, silent=cfg.silent, max_experts=cfg.n_final, every=cfg.check_every,
                   layers=tuple(layers)) \
         if cond.divide else None  # fmt: skip
     mer = Merger(criterion="salidas", align=True, min_experts=routers(model)[layers[0]].num_experts,
@@ -167,6 +172,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             raise ValueError(f"el checkpoint {ckpt} es de la corrida {ck['key']!r}, no de {key!r}")
         st = ck["state"]
         resize(model, st["expertos_por_capa"])  # los expertos nuevos nacen en fp32 y entrenables
+        for r, n in zip(routers(model), st.get("nacidos_desde", [])):
+            r.n_born = n
         missing = model.load_state_dict(ck["model"], strict=False).unexpected_keys
         assert not missing, missing
         opt = _adamw(model, cfg.lr)  # momentos en cero: el retome vuelve a calentar el learning rate
@@ -197,6 +204,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                      if any(k.startswith(f"model.layers.{i}.") for i in layers)}  # fmt: skip
         state = {"L_inicial": L0, "L": L, "aprendido": learned, "dominio": d, "paso": s, "pasos": done_steps, "rng": rng_state(rng),
                  "expertos_por_capa": [r.num_experts for r in routers(model)],
+                 "nacidos_desde": [r.n_born for r in routers(model)],
                  "congelados": {str(k): sorted(v) for k, v in frozen.items()},
                  "division": div.events if div else [], "z_max": div.z_max if div else [], "fusion": mer.events if mer else []}  # fmt: skip
         tmp = Path(ckpt + ".tmp")

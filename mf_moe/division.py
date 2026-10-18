@@ -43,10 +43,12 @@ def _grow_param(opt: torch.optim.Optimizer, module: nn.Module, name: str, parent
 
 @torch.no_grad()
 def split(model, opt: torch.optim.Optimizer, layer: int, parent: int, row_dir: torch.Tensor | None,
-          noise: float = 0.01, mix: float = 1.0) -> int:  # fmt: skip
+          noise: float = 0.01, mix: float = 1.0, silent: bool = False) -> int:  # fmt: skip
     """Clona el experto `parent` de la capa `layer`; devuelve el índice del hijo.
     La fila del router del hijo mezcla la del padre con `row_dir` (con la norma del padre): `mix=1` es la dirección
-    de la duda (fase 1); un `mix` chico deja al hijo cerca del padre y cambia menos el ruteo de un modelo preentrenado."""
+    de la duda (fase 1); un `mix` chico deja al hijo cerca del padre y cambia menos el ruteo de un modelo preentrenado.
+    Con `silent` el hijo nace con sesgo -1 (la softmax nunca pasa de 1): el router no lo elige hasta que el balanceo
+    le sube el sesgo."""
     experts, router = moe(model, layer)
     for name in ("gate_up_proj", "down_proj"):
         w = getattr(experts, name)[parent]
@@ -54,7 +56,7 @@ def split(model, opt: torch.optim.Optimizer, layer: int, parent: int, row_dir: t
     w = router.weight[parent]
     row = w if row_dir is None or row_dir.norm() == 0 else (1 - mix) * w + mix * row_dir / row_dir.norm() * w.norm()
     _grow_param(opt, router, "weight", parent, row)
-    router.bias = torch.cat([router.bias, router.bias[parent : parent + 1]])
+    router.bias = torch.cat([router.bias, router.bias[parent : parent + 1] - float(silent)])
     router.load[parent] /= 2
     router.load = torch.cat([router.load, router.load[parent : parent + 1]])
     experts.num_experts += 1
@@ -79,6 +81,7 @@ class Divider:
     every: int = 500
     max_experts: int = 12
     mix: float = 1.0  # fila del hijo: ver `split`
+    silent: bool = False  # el hijo nace sin que el router lo elija: ver `split`
     layers: tuple[int, ...] | None = None  # capas que pueden dividir; None = todas
     events: list[dict] = field(default_factory=list)
     z_max: list[dict] = field(default_factory=list)  # z más alto de cada capa en cada revisión, divida o no
@@ -139,7 +142,7 @@ class Divider:
             self.z_max.append({"paso": step, "capa": layer, "z": round(float(score[parent]), 3)})
             if score[parent] > self.z:
                 child = split(model, opt, layer, parent, a["hi"][parent] / a["nhi"][parent].clamp_min(1),
-                              mix=self.mix)  # fmt: skip
+                              mix=self.mix, silent=self.silent)  # fmt: skip
                 self.events.append({"paso": step, "capa": layer, "padre": parent, "hijo": child,
                                     "z": round(float(score[parent]), 3), "expertos": r.num_experts})  # fmt: skip
         self._reset(model)
