@@ -129,10 +129,12 @@ class Merger:
         for r in rs:
             r.record = True
         model.eval()
-        model(input_ids=calib_ids)
+        with torch.no_grad():
+            model.model(input_ids=calib_ids)  # sin la cabeza: los logits de 32 secuencias de Granite ocupan GB
         model.train()
         valid = (calib_ids != PAD).reshape(-1)
-        hidden = [r.last[0][valid].float() for r in rs]
+        hidden = [r.last[0][valid].float() if self.layers is None or i in self.layers else None
+                  for i, r in enumerate(rs)]  # fmt: skip
         for r, w in zip(rs, was):
             r.record = w
         for layer, (r, hs) in enumerate(zip(rs, hidden)):

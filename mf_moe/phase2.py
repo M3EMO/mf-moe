@@ -187,7 +187,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         if mer:
             mer.events = st["fusion"]
     elif cond.grow_at_start:
-        calib = torch.as_tensor(np.asarray(data[GENERAL]["train"][: cfg.batch], dtype=np.int64), device=device)
+        calib = torch.as_tensor(np.asarray(data[GENERAL]["train"][: cfg.calib_seqs], dtype=np.int64), device=device)
         _grow_control(model, opt, layers, cfg.n_final, calib, device, cfg.grow_row)
     if div:
         div.attach(model)
