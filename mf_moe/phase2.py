@@ -33,7 +33,7 @@ from mf_moe.merging import Merger
 from mf_moe.model import moe, routers
 from mf_moe.resume import rng_state, set_rng_state
 
-DOMAINS = ("matematica", "codigo", "biomedico", "legal")
+DOMAINS = ("fines", "turco", "indonesio", "suajili")
 GENERAL = "general"
 
 
@@ -66,6 +66,7 @@ class Cfg2:
     n_final: int = 48
     check_every: int = 250
     z_split: float = 3.5  # umbral de la división (el de la fase 1)
+    split_mix: float = 1.0  # fila del router del hijo: 1 = dirección de la duda (fase 1); ver `division.split`
     save_every: int = 2000
     calib_seqs: int = 8  # secuencias de entrenamiento por dominio para la fusión
     grow_row: str = "clon"  # fila del router de cada clon del control: "clon" (la del padre) o "cero"
@@ -152,7 +153,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     rng = random.Random(seed)
     layers = set_trainable(model, cfg.trainable_from)
     key = f"fase2/{cond.name}/semilla{seed}/{'-'.join(cfg.domains)}"
-    div = Divider(signal="duda", z=cfg.z_split, max_experts=cfg.n_final, every=cfg.check_every,
+    div = Divider(signal="duda", z=cfg.z_split, mix=cfg.split_mix, max_experts=cfg.n_final, every=cfg.check_every,
                   layers=tuple(layers)) \
         if cond.divide else None  # fmt: skip
     mer = Merger(criterion="salidas", align=True, min_experts=routers(model)[layers[0]].num_experts,

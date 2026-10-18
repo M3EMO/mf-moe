@@ -17,11 +17,12 @@ from transformers import AutoTokenizer
 from mf_moe.granite import MODEL_ID
 
 SEQ, EVAL_SEQS, EVAL_PER_DOC = 1024, 1000, 8  # tope por documento: la evaluación cubre >= 125 documentos
-SOURCES = {  # dominio: (dataset, config); licencias en el ticket 12
-    "matematica": ("open-web-math/open-web-math", None),
-    "codigo": ("common-pile/stackv2", None),
-    "biomedico": ("slinusc/PubMedAbstractsSubset", None),
-    "legal": ("common-pile/caselaw_access_project", None),
+SOURCES = {  # dominio: (dataset, config). Idiomas fuera de los 12 de Granite 3.1 (piloto 4: los dominios en inglés
+    # ya estaban aprendidos y entrenarlos solo subía su pérdida); FineWeb-2 y FineWeb-Edu, licencia ODC-By
+    "fines": ("HuggingFaceFW/fineweb-2", "fin_Latn"),
+    "turco": ("HuggingFaceFW/fineweb-2", "tur_Latn"),
+    "indonesio": ("HuggingFaceFW/fineweb-2", "ind_Latn"),
+    "suajili": ("HuggingFaceFW/fineweb-2", "swh_Latn"),
     "general": ("HuggingFaceFW/fineweb-edu", "sample-10BT"),
 }
 
