@@ -114,6 +114,20 @@ def amp(device: str):
     return torch.autocast(device_type="cuda" if device == "cuda" else "cpu", dtype=torch.bfloat16)
 
 
+def write_parts(path: str, size: int = 64 << 20) -> None:
+    """Parte el checkpoint en `<path>.part.NNN` y escribe `<path>.partes` ("n bytes"): el runner baja las partes.
+    Bajar 3,6 GB de una vez carga el archivo en la RAM local (OOM, 2026-10-19), y partirlo con otro `exec`
+    quedaría en cola detrás del job."""
+    for old in Path(path).parent.glob(Path(path).name + ".part.*"):
+        old.unlink()
+    n = 0
+    with open(path, "rb") as f:
+        while chunk := f.read(size):
+            Path(f"{path}.part.{n:03d}").write_bytes(chunk)
+            n += 1
+    Path(path + ".partes").write_text(f"{n} {Path(path).stat().st_size}\n")
+
+
 def _adamw(model, lr: float) -> torch.optim.Optimizer:
     params = [p for p in model.parameters() if p.requires_grad]
     # fused: la versión foreach copia todos los momentos en temporales y no entró en la L4 (piloto 2, 2026-10-17)
@@ -219,6 +233,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         tmp = Path(ckpt + ".tmp")
         torch.save({"key": key, "model": trainable, "state": state}, tmp)
         tmp.replace(ckpt)
+        write_parts(ckpt)
         Path(ckpt + ".step").write_text(f"{d}:{s}\n")
 
     refreeze()
