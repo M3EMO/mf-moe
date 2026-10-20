@@ -21,7 +21,7 @@ while pending; do
       echo "$(date -u +%T) relanzo la cola $vm" >> "$ROOT/$RUNS/supervisor.log"
       systemd-run --user --unit="mfmoe-$vm" --collect --property=WorkingDirectory="$ROOT" \
         --setenv=RUNS="$RUNS" --setenv=TEMPLATE="${TEMPLATE:-colab/sequential_vm.py}" --setenv=MARK="${MARK:-SEQ_FIN|FALLA}" \
-        --setenv=VMLOG="${VMLOG:-/content/seq.log}" --setenv=CKPT_TIMEOUT="${CKPT_TIMEOUT:-900}" \
+        --setenv=VMLOG="${VMLOG:-/content/seq.log}" --setenv=CKPT_TIMEOUT="${CKPT_TIMEOUT:-900}" --setenv=CKPT_PARTS="${CKPT_PARTS:-0}" \
         systemd-inhibit --what=sleep:idle --who=mf-moe --why="Factorial MF-MoE $vm" \
         bash "$ROOT/colab/queue.sh" "$vm" "$LIST" "$ZIP" > /dev/null 2>&1
     fi

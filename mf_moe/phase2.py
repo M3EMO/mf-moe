@@ -114,18 +114,25 @@ def amp(device: str):
     return torch.autocast(device_type="cuda" if device == "cuda" else "cpu", dtype=torch.bfloat16)
 
 
-def write_parts(path: str, size: int = 64 << 20) -> None:
-    """Parte el checkpoint en `<path>.part.NNN` y escribe `<path>.partes` ("n bytes"): el runner baja las partes.
-    Bajar 3,6 GB de una vez carga el archivo en la RAM local (OOM, 2026-10-19), y partirlo con otro `exec`
-    quedaría en cola detrás del job."""
-    for old in Path(path).parent.glob(Path(path).name + ".part.*"):
-        old.unlink()
+def write_parts(path: str, tag: str, size: int = 64 << 20, keep: int = 2) -> None:
+    """Parte el checkpoint en `<path>.partes.<tag>/NNN` con un `info` ("n bytes") al final; el runner baja las
+    partes. Bajar 3,6 GB de una vez carga el archivo en la RAM local (OOM, 2026-10-19), y partirlo con otro
+    `exec` quedaría en cola detrás del job. Cada checkpoint tiene su carpeta y quedan las `keep` últimas: una
+    bajada lenta (hasta 3 h) no mezcla partes de dos checkpoints del mismo tamaño."""
+    base = Path(path).parent
+    out = base / f"{Path(path).name}.partes.{tag}"
+    out.mkdir(exist_ok=True)
     n = 0
     with open(path, "rb") as f:
         while chunk := f.read(size):
-            Path(f"{path}.part.{n:03d}").write_bytes(chunk)
+            (out / f"{n:03d}").write_bytes(chunk)
             n += 1
-    Path(path + ".partes").write_text(f"{n} {Path(path).stat().st_size}\n")
+    (out / "info").write_text(f"{n} {Path(path).stat().st_size}\n")
+    sets = sorted(base.glob(f"{Path(path).name}.partes.*"), key=lambda p: p.stat().st_mtime)
+    for old in sets[:-keep]:
+        for f in old.iterdir():
+            f.unlink()
+        old.rmdir()
 
 
 def _adamw(model, lr: float) -> torch.optim.Optimizer:
@@ -233,7 +240,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         tmp = Path(ckpt + ".tmp")
         torch.save({"key": key, "model": trainable, "state": state}, tmp)
         tmp.replace(ckpt)
-        write_parts(ckpt)
+        write_parts(ckpt, f"{d}-{s}")
         Path(ckpt + ".step").write_text(f"{d}:{s}\n")
 
     refreeze()
