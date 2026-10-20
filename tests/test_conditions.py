@@ -14,13 +14,14 @@ def tiny(monkeypatch):
     monkeypatch.setattr(S, "BUFFER", 3)
     monkeypatch.setattr(S, "CALIB", 2)
     # división frecuente para que crezca en pocos pasos
-    monkeypatch.setattr(S, "Divider", lambda signal: Divider(signal=signal, z=-1e9, every=2, max_experts=9))
+    monkeypatch.setattr(S, "Divider", lambda signal, **kw: Divider(signal=signal, z=-1e9, every=2, max_experts=9, **kw))
 
 
-def test_fourteen_preregistered_conditions_plus_two_merge_repairs():
-    assert len(S.CONDITIONS) == 16 and S.CONDITIONS[S.PRINCIPAL.name] == S.PRINCIPAL
+def test_fourteen_preregistered_conditions_two_merge_repairs_and_two_trees():
+    assert len(S.CONDITIONS) == 18 and S.CONDITIONS[S.PRINCIPAL.name] == S.PRINCIPAL
     assert [c.name for c in S.CONDITIONS.values() if c.merge_align] == ["fractal/duda+salidas, fusión alineada"]
     assert [c.name for c in S.CONDITIONS.values() if c.heal] == ["fractal/duda+salidas, con recuperación"]
+    assert [c.name for c in S.CONDITIONS.values() if c.tree] == ["jerárquico/duda", "jerárquico/duda+congelar"]
 
 
 @pytest.mark.parametrize("name", list(S.CONDITIONS))
@@ -60,7 +61,7 @@ def test_checkpoint_restores_the_exact_state_of_a_grown_and_merged_model(tmp_pat
     assert opt2.state_dict()["state"].keys() == opt.state_dict()["state"].keys()
 
 
-@pytest.mark.parametrize("name", [S.PRINCIPAL.name, "lifelong-moe"])
+@pytest.mark.parametrize("name", [S.PRINCIPAL.name, "lifelong-moe", "jerárquico/duda+congelar"])
 def test_resume_mid_task_restores_the_run_of_a_growing_model(name, monkeypatch, tmp_path):
     # Bit a bit no coincide: en CPU, grouped_mm elige kernel según la alineación de los tensores cargados,
     # y una fusión cerca del umbral puede cambiar de lado. Lo ya hecho antes del corte sí tiene que coincidir.

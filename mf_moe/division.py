@@ -84,6 +84,7 @@ class Divider:
     mix: float = 1.0  # fila del hijo: ver `split`
     silent: bool = False  # el hijo nace sin que el router lo elija: ver `split`
     random_parent: int | None = None  # semilla: el padre se elige al azar (control de la duda), no por la señal
+    splitter: object = None  # otra forma de dividir con la firma de `split` (p. ej. la mitosis de `tree`)
     layers: tuple[int, ...] | None = None  # capas que pueden dividir; None = todas
     events: list[dict] = field(default_factory=list)
     z_max: list[dict] = field(default_factory=list)  # z más alto de cada capa en cada revisión, divida o no
@@ -145,7 +146,7 @@ class Divider:
                 parent = random.Random(f"{self.random_parent}-{step}-{layer}").randrange(r.num_experts)
             self.z_max.append({"paso": step, "capa": layer, "z": round(float(score[parent]), 3)})
             if score[parent] > self.z or self.random_parent is not None and score.max() > self.z:
-                child = split(model, opt, layer, parent, a["hi"][parent] / a["nhi"][parent].clamp_min(1),
+                child = (self.splitter or split)(model, opt, layer, parent, a["hi"][parent] / a["nhi"][parent].clamp_min(1),
                               mix=self.mix, silent=self.silent)  # fmt: skip
                 self.events.append({"paso": step, "capa": layer, "padre": parent, "hijo": child,
                                     "z": round(float(score[parent]), 3), "expertos": r.num_experts})  # fmt: skip

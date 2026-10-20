@@ -16,6 +16,9 @@ from __future__ import annotations
 import random
 from dataclasses import asdict, astuple, dataclass
 
+from functools import partial
+
+from mf_moe import tree
 from mf_moe.division import Divider, resize
 from mf_moe.lifelong import Lifelong
 from mf_moe.merging import Merger
@@ -38,6 +41,8 @@ class Condition:
     lifelong: bool = False
     heal: bool = False  # tras fusionar, vuelve a entrenar la tarea actual hasta 88 %
     merge_align: bool = False  # alinea las neuronas por permutación antes de promediar
+    tree: bool = False  # router en árbol y división por mitosis con partición (ticket 13)
+    freeze_old: bool = False  # en la mitosis, la hija vieja queda congelada
 
 
 FIJO = Condition("fijo")
@@ -57,6 +62,10 @@ CONDITIONS = {c.name: c for c in [
     # Agregada el 2026-10-16 (ticket 11): la fusión ingenua promediaba neuronas que no se correspondían.
     Condition("fractal/duda+salidas, fusión alineada", 6, replay=True, divide="duda", merge="salidas",
               merge_align=True),
+    # Agregadas el 2026-10-20 (ticket 13): la versión plana no es fractal; el router baja por un árbol y la
+    # división reparte el territorio del padre.
+    Condition("jerárquico/duda", 6, replay=True, divide="duda", tree=True),
+    Condition("jerárquico/duda+congelar", 6, replay=True, divide="duda", tree=True, freeze_old=True),
 ]}  # fmt: skip
 
 
@@ -99,10 +108,13 @@ def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000
     """Con `ckpt`, guarda cada 10.000 pasos y al cerrar cada tarea, y retoma desde ahí si el archivo existe.
     `order` reemplaza el orden de la semilla, por ejemplo en un piloto con menos tareas."""
     model = build(cond.n_experts, seed=seed).to(device)
+    if cond.tree:
+        tree.install(model)
     rng, order = random.Random(seed), order or task_order(seed)
     evals = {t: eval_set(t, named, n=eval_n) for t in TASKS}
     key = f"secuencial/{cond.name}/semilla{seed}/{'con' if named else 'sin'}_nombre/eval{eval_n}/{'-'.join(order)}"
-    div = Divider(signal=cond.divide) if cond.divide else None
+    div = Divider(signal=cond.divide, splitter=partial(tree.split, freeze_old=cond.freeze_old) if cond.tree else None) \
+        if cond.divide else None  # fmt: skip
     mer = Merger(criterion=cond.merge, align=cond.merge_align) if cond.merge else None
     ll = Lifelong() if cond.lifelong else None
     buffer: dict[str, list[Example]] = {}
@@ -110,9 +122,12 @@ def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000
     ck = read_state(ckpt, key)
     if ck is not None:  # un modelo que creció necesita sus capas del tamaño guardado antes de cargar
         st = ck["state"]
-        resize(model, st["expertos_por_capa"])
+        (tree.resize if cond.tree else resize)(model, st["expertos_por_capa"])
         opt = adamw(model)
         apply_state(ck, model, opt)
+        if cond.tree:  # los hooks del congelado no viajan en el checkpoint
+            for layer in range(len(routers(model))):
+                tree.refreeze(model, opt, layer)
         R, steps, stalled, experts = st["R"], st["pasos"], st["estancada"], st["expertos"]
         learned = st.get("aprendido", [None] * len(R))  # checkpoints anteriores al 2026-10-16 no lo guardan
         start, inner = st["tarea"], st["dentro"]
@@ -177,7 +192,9 @@ def run(cond: Condition, seed: int, named: bool, device: str, eval_n: int = 1000
             buffer[t] = [sample([t], rng, named, None, held) for _ in range(BUFFER)]
         if ckpt:
             save(i + 1, None)
+    spec = tree.specialization(model, {t: encode(evals[t][:64], device)[0] for t in TASKS})
     return {"condicion": asdict(cond), "semilla": seed, "con_nombre": named, "orden": order, "R": R,
+            "especializacion": spec,
             "pasos": steps, "pasos_totales": sum(steps), "estancada": stalled, "expertos": experts, "aprendido": learned,
             "eventos_division": div.events if div else [], "eventos_fusion": mer.events if mer else [],
             **metrics(R, order, learned)}  # fmt: skip
