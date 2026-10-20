@@ -84,3 +84,20 @@ def test_the_random_arm_splits_on_the_same_schedule_but_other_parents():
     ev = {n: [(e["paso"], e["capa"], e["padre"]) for e in r["eventos_division"]] for n, r in runs.items()}
     doubt, rand = ev["division+padre_congelado"], ev["azar+padre_congelado"]
     assert [e[:2] for e in doubt] == [e[:2] for e in rand] and doubt != rand
+
+
+def test_consolidation_freezes_the_most_used_experts_of_each_finished_domain():
+    model, snap = tiny(n_experts=6), {}
+
+    def log(r):  # al cerrar el tercer dominio (última consolidación): guarda los expertos de la capa entrenable
+        if r.get("fin_dominio") == P.DOMAINS[2]:
+            snap["w"] = model.model.layers[1].block_sparse_moe.experts.down_proj.detach().clone()
+
+    cond = P.Cond2("consolidacion_chica", divide=True, consolidate=2)  # con 8, el modelo diminuto congela todo
+    out = P.run2(cond, 0, model, _data(), "cpu", CFG, log=log)
+    kept = sorted(out["congelados"]["1"])
+    assert len(kept) >= 2
+    end = model.model.layers[1].block_sparse_moe.experts.down_proj.detach()
+    moved = [e for e in range(snap["w"].shape[0]) if not torch.equal(end[e], snap["w"][e])]
+    assert moved and not set(moved) & set(kept)  # entrenan los demás; los congelados no se mueven
+    assert out["eventos_division"]  # la división sigue registrando después de consolidar

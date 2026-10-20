@@ -13,7 +13,9 @@ Condiciones (todas terminan con hasta 48 expertos por capa entrenable y top-k fi
 - division: crece durante el entrenamiento, con un calendario fijo; la duda del router (`Divider`) elige al padre;
 - division+fusion_alineada: además fusiona pares alineados por permutación al cerrar cada dominio;
 - division+padre_congelado: además congela al padre después de cada división (protege lo viejo);
-- azar+padre_congelado: como la anterior, pero el padre se elige al azar (¿aporta la duda o alcanza congelar?).
+- azar+padre_congelado: como la anterior, pero el padre se elige al azar (¿aporta la duda o alcanza congelar?);
+- division+consolidacion_uso: crece igual, pero al cerrar cada dominio congela los 8 expertos por capa que ese
+  dominio más usó (el diagnóstico mostró que el olvido vive en los expertos que usa lo viejo).
 Todo experto nuevo nace silencioso (sesgo -1) y el balanceo de los nacidos lo recluta (pilotos 5 y 6).
 
 Retome (decisión del usuario): el checkpoint guarda solo los pesos entrenables en fp32 y el estado del bucle;
@@ -50,6 +52,7 @@ class Cond2:
     merge_align: bool = False
     freeze_parent: bool = False
     random_parent: bool = False  # divide expertos al azar con el mismo calendario: separa la duda del congelado
+    consolidate: int = 0  # al cerrar cada dominio congela los k expertos que más usó (diagnóstico: el olvido vive ahí)
 
 
 CONDS2 = {c.name: c for c in [
@@ -58,6 +61,7 @@ CONDS2 = {c.name: c for c in [
     Cond2("division+fusion_alineada", divide=True, merge_align=True),
     Cond2("division+padre_congelado", divide=True, freeze_parent=True),
     Cond2("azar+padre_congelado", divide=True, freeze_parent=True, random_parent=True),
+    Cond2("division+consolidacion_uso", divide=True, consolidate=8),
 ]}  # fmt: skip
 
 
@@ -178,6 +182,24 @@ def _grow_control(model, opt, layers: list[int], n_final: int, calib: torch.Tens
         r.record = False
 
 
+@torch.no_grad()
+def _most_used(model, layers: list[int], seqs: np.ndarray, device: str, k: int) -> dict[int, set[int]]:
+    """Los k expertos de cada capa que el router más elige en `seqs` (los que guardan ese dominio)."""
+    rs = routers(model)
+    was = [r.record for r in rs]  # la división tiene el registro prendido y lo necesita después
+    for r in rs:
+        r.record = True
+    model.eval()
+    with amp(device):
+        model.model(input_ids=torch.as_tensor(np.asarray(seqs, dtype=np.int64), device=device))
+    model.train()
+    out = {i: set(torch.bincount(rs[i].last[2].reshape(-1), minlength=rs[i].num_experts).topk(min(k, rs[i].num_experts)).indices.tolist())
+           for i in layers}  # fmt: skip
+    for r, w in zip(rs, was):
+        r.record = w
+    return out
+
+
 def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | None = None,
          ckpt: str | None = None, log=print) -> dict:  # fmt: skip
     cfg = cfg or Cfg2()
@@ -294,6 +316,10 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             if ckpt and (s + 1) % cfg.save_every == 0:
                 save(di, s + 1)
         learned.append(eval_loss(model, evals[dom], device))
+        if cond.consolidate and di < len(cfg.domains) - 1:
+            for i, top in _most_used(model, layers, data[dom]["train"][: 2 * cfg.calib_seqs], device, cond.consolidate).items():
+                frozen[i] |= top
+            refreeze()
         if mer:
             calib = np.concatenate([data[d]["train"][: cfg.calib_seqs] for d in cfg.domains[: di + 1]])
             with amp(device):
@@ -316,6 +342,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             # clones nunca entran al ruteo tendría en la práctica los expertos del preentrenado
             "uso_expertos_nuevos": [round(float(routers(model)[i].load[model.config.num_local_experts :].sum()), 4)
                                     for i in layers],  # fmt: skip
+            "congelados": {str(k): sorted(v) for k, v in frozen.items()},
             "eventos_division": div.events if div else [], "eventos_fusion": mer.events if mer else []}  # fmt: skip
 
 
