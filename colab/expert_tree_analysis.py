@@ -22,7 +22,7 @@ MODELS = [  # (id, cuantizar a 4 bits)
     ("allenai/OLMoE-1B-7B-0924", False),
     ("deepseek-ai/DeepSeek-V2-Lite", True),
 ]
-FW2 = {"fines": "fin_Latn", "estonio": "est_Latn", "hungaro": "hun_Latn", "turco": "tur_Latn", "azeri": "azj_Latn",
+FW2 = {"fines": "fin_Latn", "estonio": "ekk_Latn", "hungaro": "hun_Latn", "turco": "tur_Latn", "azeri": "azj_Latn",
        "uzbeko": "uzn_Latn", "espanol": "spa_Latn", "portugues": "por_Latn", "italiano": "ita_Latn"}  # fmt: skip
 OTHER = {"web": ("HuggingFaceFW/fineweb-edu", "sample-10BT"), "codigo": ("common-pile/stackv2", None),
          "matematica": ("open-web-math/open-web-math", None)}  # fmt: skip
