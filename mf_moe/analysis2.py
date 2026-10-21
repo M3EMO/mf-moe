@@ -1,0 +1,64 @@
+"""Análisis de la fase 2 (ticket 12): lee los result.json de las corridas de Granite y compara pareado por semilla.
+
+Métrica primaria: olvido medio en nats (pérdida final menos pérdida al terminar cada dominio, promedio de los
+tres primeros). Las diferencias se reportan como `control − brazo`: positivo = el brazo olvida menos. Secundarias:
+pérdida aprendida media (más baja es mejor) y pérdida general final. Preguntas extra: ¿aporta la duda?
+(división+padre congelado contra azar+padre congelado) y ¿importa qué se congela? (consolidación por uso contra
+división+padre congelado). Comprueba además que todas las corridas usaron los mismos datos (sha256).
+Uso: python -m mf_moe.analysis2 DIR_RESULTADOS
+"""
+
+from __future__ import annotations
+
+import json
+import statistics
+import sys
+from pathlib import Path
+
+from mf_moe.analysis import bootstrap_ci
+
+CONTROL = "control"
+QUESTIONS = [(arm, CONTROL) for arm in ("division", "division+fusion_alineada", "division+padre_congelado",
+                                        "azar+padre_congelado", "division+consolidacion_uso")] + [
+    ("division+padre_congelado", "azar+padre_congelado"),  # ¿aporta la duda?
+    ("division+consolidacion_uso", "division+padre_congelado"),  # ¿importa qué se congela?
+]  # fmt: skip
+
+
+def metrics(r: dict) -> dict[str, float]:
+    return {"olvido_medio": r["olvido_medio"], "aprendido_medio": statistics.fmean(r["aprendido"]),
+            "general_final": r["general_inicio_fin"][1]}  # fmt: skip
+
+
+def compare(results: list[dict], a: str, b: str) -> dict:
+    by = {(r["condicion"]["name"], r["semilla"]): metrics(r) for r in results}
+    seeds = sorted(s for (n, s) in by if n == a and (b, s) in by)
+    out = {"brazo": a, "contra": b, "semillas": seeds}
+    for k in ("olvido_medio", "aprendido_medio", "general_final"):
+        diffs = [by[(b, s)][k] - by[(a, s)][k] for s in seeds]  # las tres bajan cuando mejoran: positivo = `a` mejor
+        if not diffs:
+            continue
+        mean, lo, hi = bootstrap_ci(diffs)
+        verdict = "pocos pares" if len(diffs) < 3 else "mejor" if lo > 0 else "peor" if hi < 0 else "sin diferencia clara"
+        out[k] = {"diferencias": [round(d, 4) for d in diffs], "media": round(mean, 4),
+                  "ic95": [round(lo, 4), round(hi, 4)], "veredicto": verdict}  # fmt: skip
+    return out
+
+
+def main(root: str) -> None:
+    results = [json.loads(p.read_text()) for p in sorted(Path(root).glob("*/result.json"))]
+    hashes = {json.dumps({d: v["sha256"] for d, v in r["datos"].items()}, sort_keys=True) for r in results if "datos" in r}
+    print(json.dumps({"corridas": len(results), "datos_identicos": len(hashes) <= 1}))
+    groups: dict[str, list[dict]] = {}
+    for r in results:
+        groups.setdefault(r["condicion"]["name"], []).append(metrics(r))
+    for name, ms in sorted(groups.items()):
+        print(json.dumps({"condicion": name, "corridas": len(ms)} | {k: round(statistics.fmean(m[k] for m in ms), 4)
+                                                                      for k in ms[0]}, ensure_ascii=False))  # fmt: skip
+    for a, b in QUESTIONS:
+        if a in groups and b in groups:
+            print(json.dumps(compare(results, a, b), ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1])
