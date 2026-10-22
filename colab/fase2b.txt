@@ -4,3 +4,15 @@ control+consolidacion_uso|1|f2
 control+consolidacion_azar|1|f2
 control+consolidacion_uso|2|f2
 control+consolidacion_azar|2|f2
+arbol+consolidacion|0|f2
+control_bajo_rango+consolidacion|0|f2
+arbol_un_nivel+consolidacion|0|f2
+arbol_azar+consolidacion|0|f2
+arbol+consolidacion|1|f2
+control_bajo_rango+consolidacion|1|f2
+arbol_un_nivel+consolidacion|1|f2
+arbol_azar+consolidacion|1|f2
+arbol+consolidacion|2|f2
+control_bajo_rango+consolidacion|2|f2
+arbol_un_nivel+consolidacion|2|f2
+arbol_azar+consolidacion|2|f2
