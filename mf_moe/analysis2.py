@@ -3,8 +3,9 @@
 Métrica primaria: olvido medio en nats (pérdida final menos pérdida al terminar cada dominio, promedio de los
 tres primeros). Las diferencias se reportan como `control − brazo`: positivo = el brazo olvida menos. Secundarias:
 pérdida aprendida media (más baja es mejor) y pérdida general final. Preguntas extra: ¿aporta la duda?
-(división+padre congelado contra azar+padre congelado) y ¿importa qué se congela? (consolidación por uso contra
-división+padre congelado). Comprueba además que todas las corridas usaron los mismos datos (sha256).
+(división+padre congelado contra azar+padre congelado), ¿importa qué se congela? (consolidación por uso contra
+división+padre congelado), ¿hace falta dividir? (consolidación con y sin división) y ¿importa elegir
+por uso? (consolidación por uso contra al azar, sin división). Comprueba además que todas las corridas usaron los mismos datos (sha256).
 Uso: python -m mf_moe.analysis2 DIR_RESULTADOS
 """
 
@@ -19,9 +20,12 @@ from mf_moe.analysis import bootstrap_ci
 
 CONTROL = "control"
 QUESTIONS = [(arm, CONTROL) for arm in ("division", "division+fusion_alineada", "division+padre_congelado",
-                                        "azar+padre_congelado", "division+consolidacion_uso")] + [
+                                        "azar+padre_congelado", "division+consolidacion_uso",
+                                        "control+consolidacion_uso", "control+consolidacion_azar")] + [
     ("division+padre_congelado", "azar+padre_congelado"),  # ¿aporta la duda?
     ("division+consolidacion_uso", "division+padre_congelado"),  # ¿importa qué se congela?
+    ("division+consolidacion_uso", "control+consolidacion_uso"),  # ¿hace falta dividir?
+    ("control+consolidacion_uso", "control+consolidacion_azar"),  # ¿importa elegir por uso?
 ]  # fmt: skip
 
 

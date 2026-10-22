@@ -41,7 +41,7 @@ def test_every_condition_runs_and_the_frozen_half_does_not_move(name):
     assert len(out["L"]) == 4 and set(out["olvido"]) == set(P.DOMAINS)
     assert torch.equal(model.model.layers[0].block_sparse_moe.experts.down_proj, before)
     assert routers(model)[0].num_experts == 6 and 6 <= out["expertos_finales"][0] <= 8
-    if name == "control":
+    if not P.CONDS2[name].divide:
         assert out["expertos_finales"] == [8] and not out["eventos_division"] and 0 < out["uso_expertos_nuevos"][0] < 1
     else:
         assert out["eventos_division"]
@@ -101,3 +101,10 @@ def test_consolidation_freezes_the_most_used_experts_of_each_finished_domain():
     moved = [e for e in range(snap["w"].shape[0]) if not torch.equal(end[e], snap["w"][e])]
     assert moved and not set(moved) & set(kept)  # entrenan los demás; los congelados no se mueven
     assert out["eventos_division"]  # la división sigue registrando después de consolidar
+
+
+def test_random_consolidation_freezes_as_many_experts_as_usage_but_other_ones():
+    outs = {r: P.run2(P.Cond2("c", grow_at_start=True, consolidate=2, consolidate_random=r), 0, tiny(n_experts=6), _data(), "cpu", CFG)
+            for r in (False, True)}  # fmt: skip
+    use, rand = outs[False]["congelados"]["1"], outs[True]["congelados"]["1"]
+    assert len(use) == len(rand) >= 2 and use != rand  # sin división: la consolidación también corre sobre el control

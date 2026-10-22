@@ -53,6 +53,7 @@ class Cond2:
     freeze_parent: bool = False
     random_parent: bool = False  # divide expertos al azar con el mismo calendario: separa la duda del congelado
     consolidate: int = 0  # al cerrar cada dominio congela los k expertos que más usó (diagnóstico: el olvido vive ahí)
+    consolidate_random: bool = False  # congela tantos expertos nuevos como el uso, pero al azar: ¿importa cuáles?
 
 
 CONDS2 = {c.name: c for c in [
@@ -62,6 +63,8 @@ CONDS2 = {c.name: c for c in [
     Cond2("division+padre_congelado", divide=True, freeze_parent=True),
     Cond2("azar+padre_congelado", divide=True, freeze_parent=True, random_parent=True),
     Cond2("division+consolidacion_uso", divide=True, consolidate=8),
+    Cond2("control+consolidacion_uso", grow_at_start=True, consolidate=8),  # ¿hace falta dividir?
+    Cond2("control+consolidacion_azar", grow_at_start=True, consolidate=8, consolidate_random=True),
 ]}  # fmt: skip
 
 
@@ -318,6 +321,9 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         learned.append(eval_loss(model, evals[dom], device))
         if cond.consolidate and di < len(cfg.domains) - 1:
             for i, top in _most_used(model, layers, data[dom]["train"][: 2 * cfg.calib_seqs], device, cond.consolidate).items():
+                if cond.consolidate_random:  # misma cantidad de congelados nuevos que el uso, elegidos sin mirarlo
+                    free = sorted(set(range(routers(model)[i].num_experts)) - frozen[i])
+                    top = set(random.Random(f"{seed}/{di}/{i}").sample(free, len(top - frozen[i])))
                 frozen[i] |= top
             refreeze()
         if mer:
