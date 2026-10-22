@@ -108,3 +108,52 @@ def analyze(usage: np.ndarray, coact: np.ndarray, domains: list[str] = DOMAINS) 
             "similitud_dominios": np.round(S, 3).tolist(),
         })  # fmt: skip
     return out
+
+
+
+
+def _cond_info(U: np.ndarray, parent: np.ndarray) -> float:
+    """I(experto; etiqueta | padre) / H(etiqueta | padre), con U (etiquetas, expertos) en conteos de tokens."""
+    N = U.sum()
+    mi = h = 0.0
+    for g in np.unique(parent):
+        V = U[parent == g]
+        n = V.sum()
+        J = V / n
+        pr, pe = J.sum(1), J.sum(0)
+        with np.errstate(divide="ignore", invalid="ignore"):  # expertos sin uso en el grupo: 0 · log 0 = 0
+            mi += n / N * float(np.nansum(J * np.log(J / (pr[:, None] * pe[None]) + 1e-30)))
+        h -= n / N * float(np.sum(pr * np.log(pr + 1e-30)))
+    return mi / h if h > 0 else 0.0
+
+
+def fractal(usage: np.ndarray, levels: list[np.ndarray], n_null: int = 20, seed: int = 0) -> list[dict]:
+    """¿Los expertos resuelven cada nivel de la jerarquía de los datos tanto como el anterior? (ticket 14).
+    `usage` (capas, etiquetas finas, expertos); `levels` mapea cada etiqueta fina a su etiqueta en cada nivel,
+    de grueso a fino (p. ej. familia, idioma, documento). Por nivel: I(experto; nivel | nivel de arriba) normalizada,
+    menos un nulo multinomial (cada hijo sortea sus tokens con el perfil de su padre: el sesgo de muestra finita).
+    `autosimilitud` = exceso mínimo / exceso máximo: 1 = cada nivel se separa tanto como el anterior; 0 = la
+    estructura vive en un solo nivel. Probado y descartado: el conteo de cajas sobre el dendrograma de expertos
+    (log N contra log 1/h da r2 ~0,9 también en el nulo)."""
+    rng = np.random.default_rng(seed)
+    out = []
+    for U in usage:
+        exc, real = [], []
+        for j, lab in enumerate(levels):
+            par = levels[j - 1] if j else np.zeros_like(lab)
+            M = np.zeros((lab.max() + 1, U.shape[1]))
+            np.add.at(M, lab, U)
+            pm = np.zeros(lab.max() + 1, dtype=int)
+            pm[lab] = par
+            keep = M.sum(1) > 0
+            M, pm = M[keep], pm[keep]
+            r = _cond_info(M, pm)
+            P = {g: M[pm == g].sum(0) / M[pm == g].sum() for g in np.unique(pm)}
+            null = np.mean([_cond_info(np.array([rng.multinomial(int(m.sum()), P[g]) for m, g in zip(M, pm)]), pm)
+                            for _ in range(n_null)])  # fmt: skip
+            real.append(r)
+            exc.append(r - null)
+        exc = np.array(exc)
+        out.append({"informacion": np.round(real, 4).tolist(), "exceso": np.round(exc, 4).tolist(),
+                    "autosimilitud": round(float(exc.min() / exc.max()) if exc.max() > 0 else 0.0, 4)})  # fmt: skip
+    return out

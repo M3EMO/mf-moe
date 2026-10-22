@@ -37,3 +37,21 @@ def test_recorder_counts_every_routing_slot_in_granite_and_qwen2_moe():
         assert len(rec.mods) == model.config.num_hidden_layers
         assert (rec.usage[:, 1].sum(1) == ids.numel() * k).all() and rec.usage[:, 0].sum() == 0
         assert np.allclose(np.diagonal(rec.coact, axis1=1, axis2=2).sum(1), ids.numel() * k)
+
+
+
+def test_fractal_scores_nested_specialization_above_a_single_level():
+    rng = np.random.default_rng(0)
+    fam = np.array([i for i, ds in enumerate(T.FAMILIES.values()) for _ in ds])
+    levels = [fam, np.arange(len(T.DOMAINS))]
+
+    def usage(nested: bool):  # 24 expertos, 6 por familia; anidado = además cada dominio usa su par en la familia
+        U = np.zeros((1, len(T.DOMAINS), 24), dtype=np.int64)
+        for d in range(len(T.DOMAINS)):
+            lo = fam[d] * 6 + (2 * (d % 3) if nested else 0)
+            U[0, d] = np.bincount(rng.integers(lo, lo + (2 if nested else 6), 3000), minlength=24)
+        return U
+
+    nested, flat = T.fractal(usage(True), levels)[0], T.fractal(usage(False), levels)[0]
+    assert nested["autosimilitud"] > 0.5 > flat["autosimilitud"]
+    assert flat["exceso"][0] > 0.5 and abs(flat["exceso"][1]) < 0.02  # una familia sola: el idioma no suma
