@@ -57,12 +57,18 @@ def territories(rec: Recorder, usage: np.ndarray) -> dict:
         for k in (1, 2, 4, 8, len(live)):
             g = np.zeros(rec.n, dtype=int) - 1
             g[live] = fcluster(Z, k, "maxclust") if k > 1 else 1
-            shapes = []
+            shapes, rand = [], []
             for grp in np.unique(g[g >= 0]):
                 mine = np.isin(idx, np.flatnonzero(g == grp)).any(1)
                 if mine.sum() >= MIN_PTS:
                     shapes.append(territory_shape(_sample(hs[mine], rng), n_null=1))
+                    # nulo de partición: los mismos tamaños de grupo con tokens al azar. Sin él, que cada parte tenga
+                    # la dimensión del todo no prueba nada: cualquier submuestra de una figura la conserva
+                    rand.append(territory_shape(_sample(hs[rng.permutation(mine)], rng), n_null=1))
+            mean = lambda xs, key: round(float(np.mean([x[key] for x in xs])), 3) if xs else None  # noqa: E731
             levels[str(k)] = {"grupos_medidos": len(shapes),
+                              "extension_media": mean(shapes, "extension"), "extension_azar": mean(rand, "extension"),
+                              "correlacion_azar": mean(rand, "correlacion"),
                               "perfil_medio": np.round(np.mean([s["perfil"] for s in shapes], 0), 3).tolist() if shapes else None,
                               "correlacion_media": round(float(np.mean([s["correlacion"] for s in shapes])), 3) if shapes else None,
                               "correlacion_nula_media": round(float(np.mean([s["correlacion_nula"] for s in shapes])), 3) if shapes else None,

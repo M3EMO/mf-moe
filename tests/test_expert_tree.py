@@ -82,3 +82,20 @@ def test_recorder_keeps_a_sample_of_each_experts_territory():
     rec.close()
     hs, idx, dom = rec.kept[1][0]
     assert hs.shape[1] == model.config.hidden_size and len(hs) == len(idx) and 30 < len(hs) < 100 and dom == 0
+
+
+def test_a_localized_split_of_a_fractal_is_a_smaller_copy_and_a_random_split_is_not():
+    """Una parte autosimilar conserva la dimensión y achica la extensión; una partición al azar conserva las dos."""
+    rng = np.random.default_rng(1)
+    v, p, pts, corner = np.array([[0, 0], [1, 0], [0.5, 0.866]]), np.array([0.3, 0.3]), [], []
+    for i in range(4000):
+        c = rng.integers(3)
+        p = (p + v[c]) / 2
+        if i >= 1000:
+            pts.append(p)
+            corner.append(c)  # el último vértice elegido dice en qué subtriángulo cae el punto
+    X, corner = np.array(pts), np.array(corner)
+    whole, part = T.territory_shape(X[:700]), T.territory_shape(X[corner == 0][:700])
+    rand = T.territory_shape(X[rng.permutation(len(X))][: (corner == 0).sum()][:700])
+    assert abs(part["correlacion"] - whole["correlacion"]) < 0.25
+    assert part["extension"] < 0.6 * whole["extension"] and rand["extension"] > 0.9 * whole["extension"]

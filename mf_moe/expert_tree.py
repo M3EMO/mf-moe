@@ -207,6 +207,7 @@ def territory_shape(X: np.ndarray, n_null: int = 3, seed: int = 0) -> dict:
     rng = np.random.default_rng(seed)
     nulls = [rng.multivariate_normal(X.mean(0), np.cov(X, rowvar=False), len(X), method="eigh") for _ in range(n_null)]
     out = {"puntos": len(X), "intrinseca": two_nn(X), "correlacion": correlation_dim(X), "lineal": participation_ratio(X),
+           "extension": float(np.median(pdist(X))),  # tamaño de la figura: una parte autosimilar es una copia más chica
            # perfil de escalas: la dimensión de correlación de cerca a lejos. Un fractal da un perfil plano en un valor
            # no entero; racimos dan un perfil que sube en las escalas chicas; una curva con ruido, alto solo de muy cerca
            "perfil": [round(correlation_dim(X, a, b), 3) for a, b in SCALES],
