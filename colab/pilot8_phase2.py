@@ -7,7 +7,8 @@ piloto 7: finés y turco, 1.600 secuencias cada uno, lote 64, lr 6e-5, revisión
 cada revisión. El múltiplo ganador (menor pérdida aprendida del árbol, no menor olvido) pasa a las 3 semillas.
 Referencia del piloto 7: `division+consolidacion_uso` finés aprendido 2,975, olvido 0,271.
 Reglas de corte (spec R1-R3): más del 25 % de hojas muertas en alguna capa, una compuerta con más del 95 % a una
-hija, coincidencia train/eval o bf16/fp32 menor que 0,99, o más del doble de tiempo que el piloto 7 (~1.050 s)
+hija, coincidencia train/eval menor que 0,99 o bf16/fp32 menor que 0,985 (el piloto 8 midió 0,990 en el control
+plano: el bf16 cambia ~1 % de los top-8 en cualquier brazo), o más del doble de tiempo que el piloto 7 (~1.050 s)
 frenan las corridas largas del árbol. Cada corrida trae su veredicto en `corte`.
 Uso: python pilot8_phase2.py DATOS OUT
 """
@@ -38,14 +39,14 @@ def cut(r: dict, seconds: float) -> list[str]:
         out.append("hojas muertas > 25 %")
     if any((f.get("compuerta_reparto_max") or 0) > 0.95 for f in rep["forma"]):
         out.append("compuerta > 95 % a una hija")
-    if min(rep["train_vs_eval"], rep["bf16_vs_fp32"]) < 0.99:
+    if rep["train_vs_eval"] < 0.99 or rep["bf16_vs_fp32"] < 0.985:
         out.append("inferencia dispar < 0,99")
     if seconds > 2 * 1050:
         out.append("más del doble de tiempo que el piloto 7")
     return out
 
 
-def main(data_dir: str, out: str) -> None:
+def main(data_dir: str, out: str, only: str = "") -> None:
     data = P.load_data(data_dir)
     Path(out).mkdir(parents=True, exist_ok=True)
     res = {}
@@ -78,9 +79,10 @@ def main(data_dir: str, out: str) -> None:
     for name, mult in (("arbol+consolidacion", 1.0), ("arbol+consolidacion", 3.0), ("arbol+consolidacion", 10.0),
                        ("control_bajo_rango+consolidacion", 1.0), ("control_bajo_rango+consolidacion", 10.0),
                        ("control+consolidacion_uso", 1.0)):  # fmt: skip
-        run(f"{name} x{mult:g}", P.CONDS2[name], check_every=5, split_mix=0.1, z_split=-1e9, lowrank_lr_mult=mult, **BAL)
+        if not only or name.startswith(only):  # el piloto 8b repite solo el árbol, después del arreglo de la compuerta
+            run(f"{name} x{mult:g}", P.CONDS2[name], check_every=5, split_mix=0.1, z_split=-1e9, lowrank_lr_mult=mult, **BAL)
     print("== fin del piloto 8", flush=True)  # el marcador lo escribe el job después del tar
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    main(*sys.argv[1:4])

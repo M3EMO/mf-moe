@@ -109,3 +109,20 @@ def test_one_level_tree_never_splits_a_daughter_and_the_free_tree_does():
                log=lambda r: None)  # fmt: skip
         deep[name] = int(FT.leaf_depths(routers(model)[1]).max())
     assert deep["arbol_un_nivel+consolidacion"] == 1 and deep["arbol+consolidacion"] >= 2
+
+
+def test_a_gate_whose_bias_overrides_a_near_zero_probability_keeps_finite_gradients():
+    """Piloto 8 (2026-10-22): el sesgo de balanceo elige una hija que la compuerta casi descarta (p ~ 0); con el paso
+    directo p / p.detach() el gradiente es 1/p y la corrida entera dio NaN en la GPU."""
+    model, _ = _tree()
+    _logits(model)
+    FT.split(model, torch.optim.SGD(model.parameters(), lr=0.0), 1, 0, None)
+    router = routers(model)[1]
+    with torch.no_grad():
+        router.gate_b[0] = torch.tensor([0.0, -1000.0])  # la hija nueva tiene probabilidad 0 en fp32
+        router.gate_bias[0] = torch.tensor([0.0, 5.0])  # pero el sesgo la elige
+    model.train()
+    loss = model(input_ids=IDS, labels=IDS).loss
+    loss.backward()
+    assert torch.isfinite(loss)
+    assert all(torch.isfinite(p.grad).all() for p in model.parameters() if p.grad is not None)

@@ -1,9 +1,9 @@
 """Árbol fractal sobre Granite (ticket 14, etapa C): "la duda asigna, el uso protege" en cada escala.
 
 - Cada experto de Granite es la raíz de un subárbol. El router elige top-k raíces con la fórmula de Granite y
-  cada nodo interno tiene una compuerta de dos hijas (top-1, con gradiente por paso directo como `tree.py`:
-  p / p.detach() vale 1, así una mitosis no cambia la salida). Las compuertas tienen su propio sesgo de balanceo
-  (solo elige), para que una rama no se quede con todos los tokens (colapso del enrutador).
+  cada nodo interno tiene una compuerta de dos hijas (top-1, con gradiente por paso directo aditivo: 1 + p − p.detach()
+  vale 1, así una mitosis no cambia la salida). Las compuertas tienen su propio sesgo de balanceo (solo elige,
+  acotado a ±1), para que una rama no se quede con todos los tokens (colapso del enrutador).
 - Mitosis con hoja de bajo rango (`split`): la hoja queda como hija vieja y nace una hija nueva = copia de la
   madre + U·V (rango `RANK`, U en cero). La compuerta parte los tokens de la madre por la mitad a lo largo de la
   duda; los dudosos van a la nueva. La copia base de la hija nueva queda congelada: lo nuevo se aprende solo en
@@ -72,7 +72,9 @@ class GraniteTreeRouter(RecordingGraniteRouter):
             gp = torch.softmax(torch.einsum("nh,nch->nc", hidden_states[t].float(), self.gates[g].float()) + self.gate_b[g], -1)
             kid = (gp + self.gate_bias[g]).argmax(-1)
             p = gp.gather(-1, kid[:, None]).squeeze(-1)
-            scale = scale.index_put((t, k), scale[t, k] * p / p.detach())  # vale 1; lleva el gradiente
+            # vale 1 y lleva el gradiente. Nunca p / p.detach(): si el sesgo elige una hija con p ~ 0, el gradiente es
+            # 1/p y la corrida da NaN (piloto 8, 2026-10-22)
+            scale = scale.index_put((t, k), scale[t, k] * (1 + p - p.detach()))
             node = node.index_put((t, k), self.node_kids[node[t, k], kid])
             if self.training and self.u:
                 with torch.no_grad():
@@ -81,6 +83,7 @@ class GraniteTreeRouter(RecordingGraniteRouter):
                     frac = frac / frac.sum(1, keepdim=True).clamp_min(1)
                     self.gate_load.copy_(torch.where(seen, self.decay * self.gate_load + (1 - self.decay) * frac, self.gate_load))
                     self.gate_bias += torch.where(seen, self.u * torch.sign(0.5 - self.gate_load), 0.0)
+                    self.gate_bias.clamp_(-1.0, 1.0)  # p vive en [0, 1]: más allá, el sesgo ya decide solo
         idx = self.node_leaf[node]
         if self.training:
             with torch.no_grad():
