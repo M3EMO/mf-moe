@@ -35,9 +35,13 @@ def moe_shape(config) -> tuple[int, int]:
 class Recorder:
     """Engancha los módulos que devuelven logits o índices del router y acumula uso y coactivación por capa."""
 
-    def __init__(self, model, n_domains: int):
+    def __init__(self, model, n_domains: int, keep_layers: tuple[int, ...] = (), keep_frac: float = 0.02, seed: int = 0):
+        """`keep_layers`: capas donde además guarda una muestra (`keep_frac` de los tokens) de los estados que entran
+        al router, con el experto que eligió cada uno: el territorio de cada experto (ver `territory_shape`)."""
         self.n, self.k = moe_shape(model.config)
         self.domain, self.hooks, self.mods = 0, [], []
+        self.keep_layers, self.keep_frac, self.rng = set(keep_layers), keep_frac, torch.Generator().manual_seed(seed)
+        self.kept: dict[int, list[tuple[torch.Tensor, torch.Tensor, int]]] = {}
         for name, mod in model.named_modules():
             if name.endswith(("mlp.gate", "mlp.router", "block_sparse_moe.router", "block_sparse_moe.gate")):
                 self.mods.append(name)
@@ -47,7 +51,7 @@ class Recorder:
         self.coact = np.zeros((L, self.n, self.n), dtype=np.float64)
 
     def _hook(self, layer: int):
-        def hook(_, __, out):
+        def hook(_, inp, out):
             outs = out if isinstance(out, (tuple, list)) else (out,)
             ts = [t for t in outs if torch.is_tensor(t)]
             idx = next((t for t in ts if not t.is_floating_point() and t.shape[-1] == self.k), None)
@@ -55,6 +59,10 @@ class Recorder:
                 logits = next(t for t in ts if t.is_floating_point() and t.shape[-1] == self.n)
                 idx = logits.float().topk(self.k, dim=-1).indices
             idx = idx.reshape(-1, self.k).cpu()
+            if layer in self.keep_layers:
+                hs = inp[0].reshape(len(idx), -1)
+                pick = torch.rand(len(idx), generator=self.rng) < self.keep_frac
+                self.kept.setdefault(layer, []).append((hs[pick.to(hs.device)].float().cpu(), idx[pick], self.domain))
             self.usage[layer, self.domain] += np.bincount(idx.flatten().numpy(), minlength=self.n)
             onehot = torch.zeros(len(idx), self.n).scatter_(1, idx, 1.0)
             self.coact[layer] += (onehot.T @ onehot).numpy()
@@ -157,3 +165,51 @@ def fractal(usage: np.ndarray, levels: list[np.ndarray], n_null: int = 20, seed:
         out.append({"informacion": np.round(real, 4).tolist(), "exceso": np.round(exc, 4).tolist(),
                     "autosimilitud": round(float(exc.min() / exc.max()) if exc.max() > 0 else 0.0, 4)})  # fmt: skip
     return out
+
+
+def two_nn(X: np.ndarray) -> float:
+    """Dimensión intrínseca por los dos vecinos más cercanos (Facco y otros, 2017): estimador de máxima verosimilitud
+    sobre el cociente entre la distancia al segundo y al primer vecino."""
+    D = squareform(pdist(X))
+    np.fill_diagonal(D, np.inf)
+    r = np.sort(D, 1)[:, :2]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        mu = r[:, 1] / r[:, 0]
+    mu = mu[np.isfinite(mu) & (mu > 1)]
+    return float(len(mu) / np.log(mu).sum()) if len(mu) else float("nan")
+
+
+def correlation_dim(X: np.ndarray, lo: float = 0.02, hi: float = 0.3) -> float:
+    """Dimensión de correlación (Grassberger y Procaccia, 1983): pendiente de log C(r) contra log r, con C(r) la
+    fracción de pares a distancia menor que r, entre los cuantiles `lo` y `hi` de las distancias. Es el conteo de
+    cajas para nubes de puntos: no necesita una grilla, que en 1.024 dimensiones sería imposible."""
+    d = pdist(X)
+    rs = np.quantile(d[d > 0], np.linspace(lo, hi, 10))
+    C = np.array([(d < r).mean() for r in rs])
+    return float(np.polyfit(np.log(rs), np.log(C), 1)[0])
+
+
+def participation_ratio(X: np.ndarray) -> float:
+    """Dimensión lineal efectiva: (Σλ)² / Σλ² de los autovalores de la covarianza."""
+    ev = np.clip(np.linalg.eigvalsh(np.cov(X, rowvar=False)), 0, None)
+    return float(ev.sum() ** 2 / (ev**2).sum())
+
+
+SCALES = ((0.002, 0.01), (0.01, 0.05), (0.05, 0.25), (0.25, 0.75))  # cuantiles de distancia, de cerca a lejos
+
+
+def territory_shape(X: np.ndarray, n_null: int = 3, seed: int = 0) -> dict:
+    """La "figura" que arma un experto: la nube de estados que el router le manda. Tres dimensiones (intrínseca,
+    de correlación y lineal) y las mismas medidas en un nulo gaussiano con la misma media y covarianza. Una nube
+    con estructura no lineal (una superficie curva, racimos, un fractal) da dimensiones intrínseca y de correlación
+    menores que su nulo; una nube gaussiana da lo mismo que el nulo."""
+    X = np.unique(X, axis=0)  # tokens repetidos dan estados idénticos en las capas bajas: distancia 0 no mide nada
+    rng = np.random.default_rng(seed)
+    nulls = [rng.multivariate_normal(X.mean(0), np.cov(X, rowvar=False), len(X), method="eigh") for _ in range(n_null)]
+    out = {"puntos": len(X), "intrinseca": two_nn(X), "correlacion": correlation_dim(X), "lineal": participation_ratio(X),
+           # perfil de escalas: la dimensión de correlación de cerca a lejos. Un fractal da un perfil plano en un valor
+           # no entero; racimos dan un perfil que sube en las escalas chicas; una curva con ruido, alto solo de muy cerca
+           "perfil": [round(correlation_dim(X, a, b), 3) for a, b in SCALES],
+           "intrinseca_nula": float(np.mean([two_nn(N) for N in nulls])),
+           "correlacion_nula": float(np.mean([correlation_dim(N) for N in nulls]))}  # fmt: skip
+    return {k: (round(v, 3) if isinstance(v, float) else v) for k, v in out.items()}

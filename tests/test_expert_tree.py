@@ -55,3 +55,30 @@ def test_fractal_scores_nested_specialization_above_a_single_level():
     nested, flat = T.fractal(usage(True), levels)[0], T.fractal(usage(False), levels)[0]
     assert nested["autosimilitud"] > 0.5 > flat["autosimilitud"]
     assert flat["exceso"][0] > 0.5 and abs(flat["exceso"][1]) < 0.02  # una familia sola: el idioma no suma
+
+
+def test_territory_shape_tells_a_flat_sheet_a_fractal_and_a_cloud_apart():
+    rng = np.random.default_rng(0)
+    rot = np.linalg.qr(rng.normal(size=(40, 40)))[0]
+    sheet = np.c_[rng.uniform(size=(700, 2)), np.zeros((700, 38))] @ rot  # plano de 2 dimensiones dentro de 40
+    v, p, pts = np.array([[0, 0], [1, 0], [0.5, 0.866]]), np.array([0.3, 0.3]), []
+    for i in range(2700):  # triángulo de Sierpinski por el juego del caos
+        p = (p + v[rng.integers(3)]) / 2
+        if i >= 2000:
+            pts.append(p)
+    sier = np.c_[np.array(pts), np.zeros((700, 38))] @ rot
+    cloud = rng.normal(size=(700, 8)) @ rng.normal(size=(8, 40))  # gaussiana de 8 dimensiones dentro de 40
+    s, f, c = T.territory_shape(sheet), T.territory_shape(sier), T.territory_shape(cloud)
+    assert 1.6 < s["intrinseca"] < 2.5 and 1.7 < s["correlacion"] < 2.3
+    assert 1.3 < f["correlacion"] < 1.8 < f["correlacion_nula"]  # Sierpinski: log 3 / log 2 ≈ 1,585
+    assert c["intrinseca"] > 5 and abs(c["correlacion"] - c["correlacion_nula"]) < 0.6  # sin estructura: igual al nulo
+
+
+def test_recorder_keeps_a_sample_of_each_experts_territory():
+    model = tiny(n_experts=6)
+    rec = T.Recorder(model, n_domains=1, keep_layers=(1,), keep_frac=0.5)
+    with torch.no_grad():
+        model(input_ids=torch.randint(3, 60, (4, 32)))
+    rec.close()
+    hs, idx, dom = rec.kept[1][0]
+    assert hs.shape[1] == model.config.hidden_size and len(hs) == len(idx) and 30 < len(hs) < 100 and dom == 0
