@@ -27,6 +27,7 @@ from __future__ import annotations
 import json
 import random
 import sys
+import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -57,6 +58,7 @@ class Cond2:
     consolidate: int = 0  # al cerrar cada dominio congela los k expertos que más usó (diagnóstico: el olvido vive ahí)
     consolidate_random: bool = False  # congela tantos expertos nuevos como el uso, pero al azar: ¿importa cuáles?
     tree: bool = False  # árbol fractal (ticket 14): mitosis con hija de bajo rango; la hija vieja queda congelada
+    lowrank_growth: bool = False  # V1: los clones del control son copias fijas + U·V, como las hojas del árbol
 
 
 CONDS2 = {c.name: c for c in [
@@ -72,6 +74,8 @@ CONDS2 = {c.name: c for c in [
     # en cualquier profundidad; un umbral absoluto nunca dispara (z > 3 en 0 de 192 revisiones de la fase 2)
     Cond2("arbol+consolidacion", divide=True, tree=True, consolidate=8),
     Cond2("arbol_azar+consolidacion", divide=True, tree=True, random_parent=True, consolidate=8),
+    # V1 de la spec: mismos parámetros nuevos que el árbol (16 deltas de bajo rango por capa), ruteo plano
+    Cond2("control_bajo_rango+consolidacion", grow_at_start=True, lowrank_growth=True, consolidate=8),
 ]}  # fmt: skip
 
 
@@ -95,6 +99,7 @@ class Cfg2:
     save_every: int = 2000
     calib_seqs: int = 8  # secuencias de entrenamiento por dominio para la fusión
     grow_row: str = "clon"  # clones del control: "clon" (fila del padre), "cero" (fila en cero) o "silencioso"
+    lowrank_lr_mult: float = 1.0  # V8: el lr de los deltas U·V es este múltiplo del lr base
     extra: dict = field(default_factory=dict)
 
 
@@ -149,10 +154,13 @@ def write_parts(path: str, tag: str, size: int = 64 << 20, keep: int = 2) -> Non
         old.rmdir()
 
 
-def _adamw(model, lr: float) -> torch.optim.Optimizer:
-    params = [p for p in model.parameters() if p.requires_grad]
+def _adamw(model, lr: float, lowrank_mult: float = 1.0) -> torch.optim.Optimizer:
+    """Dos grupos: los deltas U·V (`lowrank`, V8) con su múltiplo del lr y el resto. El bucle fija `lr · mult`."""
+    named = [(n, p) for n, p in model.named_parameters() if p.requires_grad]
+    groups = [{"params": [p for n, p in named if ".lowrank." not in n], "mult": 1.0},
+              {"params": [p for n, p in named if ".lowrank." in n], "mult": lowrank_mult}]  # fmt: skip
     # fused: la versión foreach copia todos los momentos en temporales y no entró en la L4 (piloto 2, 2026-10-17)
-    return torch.optim.AdamW(params, lr=lr, weight_decay=0.0, fused=params[0].is_cuda)
+    return torch.optim.AdamW([g for g in groups if g["params"]], lr=lr, weight_decay=0.0, fused=named[0][1].is_cuda)
 
 
 @torch.no_grad()
@@ -240,7 +248,23 @@ def _jaccard(a: torch.Tensor, b: torch.Tensor) -> float:
     return round(float((inter / (2 * a.shape[-1] - inter)).mean()), 4)
 
 
-def _routing_report(model, layers: list[int], evals: dict, snaps: dict, device: str) -> dict:
+def _trainable_expert_params(model, layers: list[int], frozen: dict[int, set[int]]) -> int:
+    """V1: parámetros de expertos que siguen entrenables al final (filas libres más deltas U·V libres)."""
+    total = 0
+    for i in layers:
+        experts, _ = moe(model, i)
+        lr = getattr(experts, "lowrank", None)
+        fixed = frozen[i] | (set(lr.rows.tolist()) if lr is not None else set())
+        per_row = sum(getattr(experts, n)[0].numel() for n in ft.NAMES)
+        total += per_row * (experts.num_experts - len(fixed))
+        if lr is not None:
+            per_delta = sum(getattr(lr, f"{a}_{n}")[0].numel() for n in ft.NAMES for a in "uv") if len(lr.rows) else 0
+            total += per_delta * sum(1 for r in lr.rows.tolist() if r not in frozen[i])
+    return total
+
+
+def _routing_report(model, layers: list[int], evals: dict, snaps: dict, device: str,
+                    frozen: dict[int, set[int]] | None = None) -> dict:  # fmt: skip
     """Medidas del ticket 14 al final de la corrida. Nunca tira la corrida: un error queda en el resultado."""
     try:
         doms = list(evals)
@@ -272,12 +296,19 @@ def _routing_report(model, layers: list[int], evals: dict, snaps: dict, device: 
         for r, b in zip(rs, keep):  # el modo train actualiza el balanceo: se deshace
             for k, v in b.items():
                 setattr(r, k, v)
-        drift = {d: _jaccard(_route(model, layers, evals[d][:DRIFT_SEQS], device).cpu(), s.long()) for d, s in snaps.items()}
+        now = {d: _route(model, layers, evals[d][:DRIFT_SEQS], device).cpu() for d in snaps}
+        drift = {d: _jaccard(now[d], s.long()) for d, s in snaps.items()}
+        frozen = frozen or {i: set() for i in layers}
+        to_frozen = lambda idx: round(float(np.mean([np.isin(idx[li].numpy(), sorted(frozen[i])).mean()  # noqa: E731
+                                                     for li, i in enumerate(layers)])), 4)  # fmt: skip
         return {"entropia_uso": ent, "hojas_muertas": dead,
                 "fractal": [{k: f[k] for k in ("exceso", "autosimilitud")} for f in frac],
                 "train_vs_eval": _jaccard(in_train, _route(model, layers, x, device)),
                 "bf16_vs_fp32": _jaccard(_route(model, layers, x, device), _route(model, layers, x, device, cast=False)),
-                "deriva": drift}  # fmt: skip
+                "deriva": drift,
+                # R5: parte de los tokens de cada dominio terminado que va a expertos congelados, al cerrarlo y al final
+                "uso_congelados": {d: [to_frozen(s.long()), to_frozen(now[d])] for d, s in snaps.items()},
+                "forma": [ft.shape(model, i) for i in layers]}  # fmt: skip
     except Exception as e:  # noqa: BLE001
         return {"error": f"{type(e).__name__}: {str(e)[:300]}"}
 
@@ -288,6 +319,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     torch.manual_seed(seed)
     if cond.tree:
         ft.install(model)
+    elif cond.lowrank_growth:
+        ft.install_lowrank(model)
     rng = random.Random(seed)
     layers = set_trainable(model, cfg.trainable_from)
     for i in layers:
@@ -303,22 +336,28 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     frozen: dict[int, set[int]] = {i: set() for i in layers}
     snaps: dict[str, torch.Tensor] = {}  # ruteo de cada dominio terminado al cerrarlo: mide la deriva
     L0, L, learned, start, step_in, done_steps = None, [], [], 0, 0, []
-    opt = _adamw(model, cfg.lr)
+    curve, clock, resumes = [], [0.0, 0], 0  # M5: pérdida media cada 50 pasos; V2: segundos y pasos; V9
+    opt = _adamw(model, cfg.lr, cfg.lowrank_lr_mult)
     if ckpt and Path(ckpt).exists():
         ck = torch.load(ckpt, map_location="cpu", weights_only=True)
         if ck["key"] != key:
             raise ValueError(f"el checkpoint {ckpt} es de la corrida {ck['key']!r}, no de {key!r}")
         st = ck["state"]
         (ft.resize if cond.tree else resize)(model, st["expertos_por_capa"])  # los expertos nuevos nacen en fp32 y entrenables
+        if cond.lowrank_growth:
+            scratch = torch.optim.SGD(model.parameters(), lr=0.0)
+            for i in layers:
+                ft.to_lowrank(model, scratch, i, range(model.config.num_local_experts, routers(model)[i].num_experts))
         for r, n in zip(routers(model), st.get("nacidos_desde", [])):
             r.n_born = n
         missing = model.load_state_dict(ck["model"], strict=False).unexpected_keys
         assert not missing, missing
-        opt = _adamw(model, cfg.lr)  # momentos en cero: el retome vuelve a calentar el learning rate
+        opt = _adamw(model, cfg.lr, cfg.lowrank_lr_mult)  # momentos en cero: el retome vuelve a calentar el lr
         L0, L, learned = st["L_inicial"], st["L"], st["aprendido"]
         start, step_in, done_steps = st["dominio"], st["paso"], st["pasos"]
         frozen = {int(k): set(v) for k, v in st["congelados"].items()}
         snaps = st.get("deriva", {})
+        curve, clock, resumes = st.get("curva", []), st.get("reloj", [0.0, 0]), st.get("retomes", 0) + 1
         set_rng_state(rng, st["rng"])
         if div:
             div.events, div.z_max = st["division"], st.get("z_max", [])
@@ -327,13 +366,16 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     elif cond.grow_at_start:
         calib = torch.as_tensor(np.asarray(data[GENERAL]["train"][: cfg.calib_seqs], dtype=np.int64), device=device)
         _grow_control(model, opt, layers, cfg.n_final, calib, device, cfg.grow_row)
+        if cond.lowrank_growth:
+            for i in layers:
+                ft.to_lowrank(model, opt, i, range(model.config.num_local_experts, routers(model)[i].num_experts))
     if div:
         div.attach(model)
 
     def refreeze(only: set[int] | None = None) -> None:
         """Vuelve a congelar los padres de esas capas: una división reemplazó sus Parameters (y sus hooks)."""
         for i, rows in frozen.items():
-            if cond.tree and (only is None or i in only):  # también las copias base de las hojas de bajo rango
+            if (cond.tree or cond.lowrank_growth) and (only is None or i in only):  # y las copias base de U·V
                 ft.freeze(model, opt, i, rows)
             elif rows and (only is None or i in only):
                 experts, router = moe(model, i)
@@ -348,7 +390,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                  "nacidos_desde": [r.n_born for r in routers(model)],
                  "congelados": {str(k): sorted(v) for k, v in frozen.items()},
                  "division": div.events if div else [], "z_max": div.z_max if div else [], "fusion": mer.events if mer else [],
-                 "deriva": snaps}  # fmt: skip
+                 "deriva": snaps, "curva": curve, "reloj": clock, "retomes": resumes}  # fmt: skip
         tmp = Path(ckpt + ".tmp")
         torch.save({"key": key, "model": trainable, "state": state}, tmp)
         tmp.replace(ckpt)
@@ -369,7 +411,9 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         if div:
             div._acc = []
         n_events = len(div.events) if div else 0
+        window = []
         for s in range(s0, steps):
+            tic = time.perf_counter()
             n_old = max(1, round(cfg.replay * cfg.batch))
             rows = [train[j] for j in order[s * cfg.batch : (s + 1) * cfg.batch - n_old]]
             gen = data[GENERAL]["train"]
@@ -377,7 +421,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             ids = torch.as_tensor(np.stack(rows).astype(np.int64), device=device)
             lr = cfg.lr * min(1.0, (s - s0 + 1) / cfg.warmup)  # recalienta al empezar cada dominio y al retomar
             for g in opt.param_groups:
-                g["lr"] = lr
+                g["lr"] = lr * g.get("mult", 1.0)
             loss = 0.0
             for k, c in enumerate(ids.split(cfg.micro)):  # acumula el gradiente: mismo paso que con el lote entero
                 with amp(device):
@@ -400,7 +444,12 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                             frozen[e["capa"]].add(e["padre"])
                     refreeze({e["capa"] for e in new})
                     n_events = len(div.events)
+            clock[0] += time.perf_counter() - tic
+            clock[1] += 1
+            window.append(loss)
             if (s + 1) % 50 == 0:
+                curve.append({"dominio": dom, "paso": s + 1, "loss_media": round(sum(window) / len(window), 4)})
+                window = []
                 log({"dominio": dom, "paso": s + 1, "de": steps, "loss": round(loss, 4),
                      "expertos": [routers(model)[i].num_experts for i in layers]})  # fmt: skip
             if ckpt and (s + 1) % cfg.save_every == 0:
@@ -439,7 +488,9 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                                     for i in layers],  # fmt: skip
             "congelados": {str(k): sorted(v) for k, v in frozen.items()},
             "eventos_division": div.events if div else [], "eventos_fusion": mer.events if mer else [],
-            "ruteo": _routing_report(model, layers, evals, snaps, device)}  # fmt: skip
+            "ruteo": _routing_report(model, layers, evals, snaps, device, frozen),
+            "curva": curve, "segundos_por_paso": round(clock[0] / max(1, clock[1]), 3), "retomes": resumes,
+            "parametros_entrenables_expertos": _trainable_expert_params(model, layers, frozen)}  # fmt: skip
 
 
 
@@ -451,14 +502,20 @@ PRODUCTION = {"batch": 64, "lr": 6e-5, "warmup": 15, "check_every": 38, "z_split
 EVAL_SEQS = 500
 
 
-def main(data_dir: str, out: str, cond: str, seed: int, ckpt: str | None = None) -> None:
+# V4 de la spec: el tercer campo de la lista de la cola elige el orden de los dominios ("f2" = el original)
+ORDERS = {"f2": DOMAINS, "f2o1": ("suajili", "indonesio", "turco", "fines"), "f2o2": ("turco", "suajili", "fines", "indonesio")}
+
+
+def main(data_dir: str, out: str, cond: str, seed: int, ckpt: str | None = None, order: str = "f2") -> None:
     data = {d: {"train": v["train"], "eval": v["eval"][:EVAL_SEQS]} for d, v in load_data(data_dir).items()}
-    res = run2(CONDS2[cond], seed, load(attention_dropout=0.0), data, "cuda", Cfg2(**PRODUCTION), ckpt=ckpt,
-               log=lambda r: print(json.dumps(r), flush=True))  # fmt: skip
+    res = run2(CONDS2[cond], seed, load(attention_dropout=0.0), data, "cuda", Cfg2(**PRODUCTION, domains=ORDERS[order]),
+               ckpt=ckpt, log=lambda r: print(json.dumps(r), flush=True))  # fmt: skip
     res["datos"] = json.loads(Path(data_dir, "datos.json").read_text())  # sha256 de cada dominio
+    commit = Path(__file__).resolve().parents[1] / "COMMIT"  # I6: lo escribe colab/build_zip.sh
+    res["commit"] = commit.read_text().strip() if commit.exists() else None
     Path(out).mkdir(parents=True, exist_ok=True)
     Path(out, "result.json").write_text(json.dumps(res, ensure_ascii=False))
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), *sys.argv[5:6])
+    main(sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), *sys.argv[5:7])

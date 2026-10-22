@@ -91,9 +91,17 @@ class GraniteTreeRouter(RecordingGraniteRouter):
         return idx, (weights * scale).type_as(hidden_states), logits
 
 
+def install_lowrank(model) -> None:
+    """Deltas vacíos en cada capa. Van antes de crear el optimizador: crecer los reemplaza dentro de su grupo."""
+    model.config._experts_implementation = "grouped_mm_bf16"  # los deltas U·V entran solo por esa implementación
+    for i in range(len(model.model.layers)):
+        experts, router = moe(model, i)
+        experts.lowrank = LowRank(experts).to(router.weight.device)
+
+
 def install(model) -> None:
     """Router en árbol y deltas vacíos en cada capa; sin mitosis, rutea igual que Granite."""
-    model.config._experts_implementation = "grouped_mm_bf16"  # los deltas U·V entran solo por esa implementación
+    install_lowrank(model)
     for i, layer in enumerate(model.model.layers):
         experts, old = moe(model, i)
         new = GraniteTreeRouter(model.config, decay=old.decay, u=old.u).to(old.weight.device)
@@ -101,7 +109,6 @@ def install(model) -> None:
         new.bias.copy_(old.bias)
         new.load.copy_(old.load)
         layer.block_sparse_moe.router = new
-        experts.lowrank = LowRank(experts).to(old.weight.device)
 
 
 @torch.no_grad()
@@ -114,11 +121,7 @@ def split(model, opt, layer: int, parent: int, row_dir: torch.Tensor | None, **_
         _grow_param(opt, experts, name, parent, w)
     child = experts.num_experts
     experts.num_experts += 1
-    for name in NAMES:
-        _, out, inp = getattr(experts, name).shape
-        _append(opt, lr, f"u_{name}", torch.zeros(out, RANK, device=router.weight.device))
-        _append(opt, lr, f"v_{name}", torch.randn(RANK, inp, device=router.weight.device) / inp**0.5)
-    lr.rows = torch.cat([lr.rows, torch.tensor([child], device=lr.rows.device)])
+    to_lowrank(model, opt, layer, [child])
     h = router.weight.shape[1]
     d = row_dir if row_dir is not None and row_dir.norm() > 0 else torch.randn(h, device=router.weight.device)
     d = (d / d.norm()).float()
@@ -143,6 +146,38 @@ def split(model, opt, layer: int, parent: int, row_dir: torch.Tensor | None, **_
     router.node_kids[node] = torch.tensor([n, n + 1], device=dev)
     router.num_experts += 1
     return child
+
+
+@torch.no_grad()
+def to_lowrank(model, opt, layer: int, rows) -> None:
+    """Las filas pasan a ser hojas de bajo rango: su copia base queda fija (ver `freeze`) y aprenden en U·V,
+    con U en cero (la salida no cambia). El control con los mismos parámetros que el árbol (V1) lo usa con sus clones."""
+    experts, _ = moe(model, layer)
+    lr = experts.lowrank
+    for row in rows:
+        for name in NAMES:
+            _, out, inp = getattr(experts, name).shape
+            _append(opt, lr, f"u_{name}", torch.zeros(out, RANK, device=lr.rows.device))
+            _append(opt, lr, f"v_{name}", torch.randn(RANK, inp, device=lr.rows.device) / inp**0.5)
+        lr.rows = torch.cat([lr.rows, torch.tensor([row], device=lr.rows.device)])
+
+
+def shape(model, layer: int) -> dict:
+    """Forma del árbol de la capa (F3): hojas por profundidad. Sin router en árbol, todo está en la profundidad 0."""
+    router = moe(model, layer)[1]
+    if not hasattr(router, "node_kids"):
+        return {"hojas_por_profundidad": [router.num_experts]}
+    depth, todo = {}, [(i, 0) for i in range(router.weight.shape[0])]
+    while todo:
+        node, d = todo.pop()
+        kids = router.node_kids[node].tolist()
+        if kids[0] < 0:
+            depth[d] = depth.get(d, 0) + 1
+        else:
+            todo += [(k, d + 1) for k in kids]
+    load = router.gate_load
+    return {"hojas_por_profundidad": [depth.get(d, 0) for d in range(max(depth) + 1)],
+            "compuerta_reparto_max": round(float(load.max(1).values.max()), 4) if len(load) else None}  # fmt: skip
 
 
 def freeze(model, opt, layer: int, leaves) -> None:

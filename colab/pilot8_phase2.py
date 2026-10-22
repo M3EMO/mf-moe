@@ -1,11 +1,14 @@
 """Piloto 8 de la fase 2 (ticket 14, etapa C): el árbol fractal en la GPU.
 
-Corre `arbol+consolidacion` (mitosis con hija de bajo rango, hija vieja congelada, consolidación por uso) y, como
-referencia del mismo piloto, `control+consolidacion_uso` (etapa A), con la configuración del piloto 7: finés y
-turco, 1.600 secuencias cada uno, lote 64, lr 6e-5, revisión cada 5 pasos y mitosis forzada en cada revisión.
+Corre `arbol+consolidacion` (mitosis con hija de bajo rango, hija vieja congelada, consolidación por uso) con el lr
+de los deltas U·V × 1, × 3 y × 10 (V8 de la spec), `control_bajo_rango+consolidacion` × 1 y × 10 (V1: los mismos
+parámetros nuevos, ruteo plano) y, como referencia, `control+consolidacion_uso` (etapa A). Configuración del
+piloto 7: finés y turco, 1.600 secuencias cada uno, lote 64, lr 6e-5, revisión cada 5 pasos y mitosis forzada en
+cada revisión. El múltiplo ganador (menor pérdida aprendida del árbol, no menor olvido) pasa a las 3 semillas.
 Referencia del piloto 7: `division+consolidacion_uso` finés aprendido 2,975, olvido 0,271.
-Reglas de corte (ticket 14): más del 25 % de hojas muertas en alguna capa, o coincidencia train/eval o bf16/fp32
-menor que 0,99, o más del doble de tiempo que el piloto 7, frenan las corridas largas del árbol.
+Reglas de corte (spec R1-R3): más del 25 % de hojas muertas en alguna capa, una compuerta con más del 95 % a una
+hija, coincidencia train/eval o bf16/fp32 menor que 0,99, o más del doble de tiempo que el piloto 7 (~1.050 s)
+frenan las corridas largas del árbol. Cada corrida trae su veredicto en `corte`.
 Uso: python pilot8_phase2.py DATOS OUT
 """
 
@@ -24,6 +27,22 @@ DOMS = ("fines", "turco")
 # El pilotito tiene 25 pasos × 64 pasadas por dominio: u recluta en ~1/4 de dominio (1 / (0,25 · 1.600) = 2,5e-3);
 # el decay de 0,99 deja que el balanceo se pase de largo ~0,25 en el sesgo.
 BAL = {"balance_u": 2.5e-3, "load_decay": 0.99, "silent": True}
+
+
+def cut(r: dict, seconds: float) -> list[str]:
+    """Reglas de corte que falla la corrida (vacío = pasa)."""
+    rep, out = r["ruteo"], []
+    if "error" in rep:
+        return [f"reporte: {rep['error']}"]
+    if max(rep["hojas_muertas"]) > 0.25:
+        out.append("hojas muertas > 25 %")
+    if any((f.get("compuerta_reparto_max") or 0) > 0.95 for f in rep["forma"]):
+        out.append("compuerta > 95 % a una hija")
+    if min(rep["train_vs_eval"], rep["bf16_vs_fp32"]) < 0.99:
+        out.append("inferencia dispar < 0,99")
+    if seconds > 2 * 1050:
+        out.append("más del doble de tiempo que el piloto 7")
+    return out
 
 
 def main(data_dir: str, out: str) -> None:
@@ -47,7 +66,8 @@ def main(data_dir: str, out: str) -> None:
         emit(name, {"L_inicial": r["L_inicial"], "L": r["L"], "aprendido": r["aprendido"], "olvido": r["olvido"],
                     "expertos_finales": r["expertos_finales"], "divisiones": len(r["eventos_division"] or []),
                     "z_max_por_revision": [max(c["z"] for c in z if c["paso"] == s) for s in sorted({c["paso"] for c in z})],
-                    "uso_expertos_nuevos": r["uso_expertos_nuevos"], "ruteo": r["ruteo"],
+                    "uso_expertos_nuevos": r["uso_expertos_nuevos"], "ruteo": r["ruteo"], "corte": cut(r, time.time() - t0),
+                    "parametros_entrenables_expertos": r["parametros_entrenables_expertos"], "curva": r["curva"],
                     "sesgo_nacidos": [[round(float(routers(m)[i].bias[routers(m)[i].n_born :].min()), 3),
                                        round(float(routers(m)[i].bias[routers(m)[i].n_born :].max()), 3)]
                                       if len(routers(m)[i].bias) > routers(m)[i].n_born else None for i in layers],
@@ -55,8 +75,10 @@ def main(data_dir: str, out: str) -> None:
         del m
         torch.cuda.empty_cache()
 
-    for name in ("arbol+consolidacion", "control+consolidacion_uso"):
-        run(name, P.CONDS2[name], check_every=5, split_mix=0.1, z_split=-1e9, **BAL)
+    for name, mult in (("arbol+consolidacion", 1.0), ("arbol+consolidacion", 3.0), ("arbol+consolidacion", 10.0),
+                       ("control_bajo_rango+consolidacion", 1.0), ("control_bajo_rango+consolidacion", 10.0),
+                       ("control+consolidacion_uso", 1.0)):  # fmt: skip
+        run(f"{name} x{mult:g}", P.CONDS2[name], check_every=5, split_mix=0.1, z_split=-1e9, lowrank_lr_mult=mult, **BAL)
     print("== fin del piloto 8", flush=True)  # el marcador lo escribe el job después del tar
 
 

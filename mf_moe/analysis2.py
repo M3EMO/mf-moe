@@ -16,6 +16,8 @@ import statistics
 import sys
 from pathlib import Path
 
+from scipy.stats import ttest_1samp
+
 from mf_moe.analysis import bootstrap_ci
 
 CONTROL = "control"
@@ -26,7 +28,29 @@ QUESTIONS = [(arm, CONTROL) for arm in ("division", "division+fusion_alineada", 
     ("division+consolidacion_uso", "division+padre_congelado"),  # ¿importa qué se congela?
     ("division+consolidacion_uso", "control+consolidacion_uso"),  # ¿hace falta dividir?
     ("control+consolidacion_uso", "control+consolidacion_azar"),  # ¿importa elegir por uso?
+    ("arbol+consolidacion", "control+consolidacion_uso"),  # H7: ¿el árbol suma sobre la consolidación plana?
+    ("arbol+consolidacion", "control_bajo_rango+consolidacion"),  # H7 con los mismos parámetros nuevos (V1)
+    ("arbol+consolidacion", "arbol_azar+consolidacion"),  # H9: ¿la duda elige dónde abrir rama?
 ]  # fmt: skip
+
+
+DEFAULT_ORDER = ["fines", "turco", "indonesio", "suajili"]
+
+
+def arm(r: dict) -> str:
+    """Nombre del brazo; un orden de dominios distinto del original (V4) es otro brazo: `nombre@orden`."""
+    doms = r.get("cfg", {}).get("domains", DEFAULT_ORDER)
+    return r["condicion"]["name"] + ("" if list(doms) == DEFAULT_ORDER else "@" + "-".join(doms))
+
+
+def holm(ps: list[float]) -> list[float]:
+    """Corrección de Holm-Bonferroni (V5): p ajustados, en el orden de entrada."""
+    order = sorted(range(len(ps)), key=lambda i: ps[i])
+    out, run = [0.0] * len(ps), 0.0
+    for rank, i in enumerate(order):
+        run = max(run, min(1.0, (len(ps) - rank) * ps[i]))
+        out[i] = run
+    return out
 
 
 def metrics(r: dict) -> dict[str, float]:
@@ -35,7 +59,7 @@ def metrics(r: dict) -> dict[str, float]:
 
 
 def compare(results: list[dict], a: str, b: str) -> dict:
-    by = {(r["condicion"]["name"], r["semilla"]): metrics(r) for r in results}
+    by = {(arm(r), r["semilla"]): metrics(r) for r in results}
     seeds = sorted(s for (n, s) in by if n == a and (b, s) in by)
     out = {"brazo": a, "contra": b, "semillas": seeds}
     for k in ("olvido_medio", "aprendido_medio", "general_final"):
@@ -44,8 +68,10 @@ def compare(results: list[dict], a: str, b: str) -> dict:
             continue
         mean, lo, hi = bootstrap_ci(diffs)
         verdict = "pocos pares" if len(diffs) < 3 else "mejor" if lo > 0 else "peor" if hi < 0 else "sin diferencia clara"
+        # t pareada (V5): con 3 pares, el bootstrap tiene pocas remuestras distintas y su IC es optimista
+        p = float(ttest_1samp(diffs, 0.0).pvalue) if len(diffs) > 1 and statistics.pstdev(diffs) > 0 else float("nan")
         out[k] = {"diferencias": [round(d, 4) for d in diffs], "media": round(mean, 4),
-                  "ic95": [round(lo, 4), round(hi, 4)], "veredicto": verdict}  # fmt: skip
+                  "ic95": [round(lo, 4), round(hi, 4)], "p_t": round(p, 4), "veredicto": verdict}  # fmt: skip
     return out
 
 
@@ -55,13 +81,16 @@ def main(root: str) -> None:
     print(json.dumps({"corridas": len(results), "datos_identicos": len(hashes) <= 1}))
     groups: dict[str, list[dict]] = {}
     for r in results:
-        groups.setdefault(r["condicion"]["name"], []).append(metrics(r))
+        groups.setdefault(arm(r), []).append(metrics(r))
     for name, ms in sorted(groups.items()):
         print(json.dumps({"condicion": name, "corridas": len(ms)} | {k: round(statistics.fmean(m[k] for m in ms), 4)
                                                                       for k in ms[0]}, ensure_ascii=False))  # fmt: skip
-    for a, b in QUESTIONS:
-        if a in groups and b in groups:
-            print(json.dumps(compare(results, a, b), ensure_ascii=False))
+    rows = [compare(results, a, b) for a, b in QUESTIONS if a in groups and b in groups]
+    tested = [r for r in rows if "olvido_medio" in r and r["olvido_medio"]["p_t"] == r["olvido_medio"]["p_t"]]
+    for r, p in zip(tested, holm([r["olvido_medio"]["p_t"] for r in tested])):
+        r["olvido_medio"]["p_holm"] = round(p, 4)  # sobre la métrica primaria, entre todas las preguntas con datos
+    for r in rows:
+        print(json.dumps(r, ensure_ascii=False))
 
 
 if __name__ == "__main__":

@@ -11,3 +11,9 @@ def test_a_lower_forgetting_is_a_positive_difference_and_needs_three_seeds():
     out = compare(rs, "division+consolidacion_uso", "control")
     assert out["olvido_medio"]["veredicto"] == "mejor" and out["olvido_medio"]["media"] > 0.38
     assert compare(rs[:2] + rs[3:5], "division+consolidacion_uso", "control")["olvido_medio"]["veredicto"] == "pocos pares"
+
+
+def test_holm_adjusts_in_input_order_and_is_monotone():
+    from mf_moe.analysis2 import holm
+
+    assert holm([0.01, 0.04, 0.03]) == [0.03, 0.06, 0.06]

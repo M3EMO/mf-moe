@@ -5,7 +5,7 @@ import torch
 import mf_moe.phase2 as P
 from mf_moe.division import Divider
 from mf_moe.granite import tiny
-from mf_moe.model import routers
+from mf_moe.model import moe, routers
 
 CFG = P.Cfg2(batch=4, warmup=2, trainable_from=1, n_final=8, check_every=2, save_every=4, calib_seqs=2)
 
@@ -109,3 +109,42 @@ def test_random_consolidation_freezes_as_many_experts_as_usage_but_other_ones():
             for r in (False, True)}  # fmt: skip
     use, rand = outs[False]["congelados"]["1"], outs[True]["congelados"]["1"]
     assert len(use) == len(rand) >= 2 and use != rand  # sin división: la consolidación también corre sobre el control
+
+
+def test_low_rank_control_matches_the_tree_in_new_parameters_and_trains_only_the_deltas():
+    """V1 y V8 de la spec: los clones del control de bajo rango quedan fijos y aprenden en U·V, con su propio lr."""
+    model = tiny(n_experts=6)
+    cfg = P.Cfg2(**{**CFG.__dict__, "lowrank_lr_mult": 3.0})
+    seen = {}
+    real = P._adamw
+
+    def spy(m, lr, mult=1.0):
+        seen["opt"] = real(m, lr, mult)
+        return seen["opt"]
+
+    P._adamw = spy
+    try:
+        low = P.run2(P.Cond2("bajo", grow_at_start=True, lowrank_growth=True, consolidate=1), 0, model, _data(), "cpu", cfg,
+                     log=lambda r: None)  # fmt: skip  (con 8, el modelo diminuto congela todo)
+    finally:
+        P._adamw = real
+    full = P.run2(P.Cond2("entero", grow_at_start=True, consolidate=1), 0, tiny(n_experts=6), _data(), "cpu", CFG,
+                  log=lambda r: None)  # fmt: skip
+    experts = moe(model, 1)[0]
+    assert experts.lowrank.rows.tolist() == [6, 7] and experts.lowrank.u_down_proj.abs().sum() > 0
+    assert low["parametros_entrenables_expertos"] < full["parametros_entrenables_expertos"]
+    assert sorted(g["mult"] for g in seen["opt"].param_groups) == [1.0, 3.0]
+    assert {g["lr"] / g["mult"] for g in seen["opt"].param_groups if g["lr"]} == {CFG.lr}
+
+
+def test_every_run_reports_curve_timing_frozen_usage_and_tree_shape():
+    out = P.run2(P.CONDS2["arbol+consolidacion"], 0, tiny(n_experts=6), _data(), "cpu", CFG, log=lambda r: None)
+    rep = out["ruteo"]
+    assert set(rep["uso_congelados"]) == set(P.DOMAINS[:-1]) and all(0 <= v <= 1 for p in rep["uso_congelados"].values() for v in p)
+    assert sum(rep["forma"][0]["hojas_por_profundidad"]) == out["expertos_finales"][0]
+    assert len(rep["forma"][0]["hojas_por_profundidad"]) >= 2  # hubo mitosis: hay hojas debajo de la raíz
+    assert out["segundos_por_paso"] > 0 and out["retomes"] == 0 and isinstance(out["curva"], list)
+
+
+def test_domain_orders_are_permutations_of_the_four_languages():
+    assert all(sorted(o) == sorted(P.DOMAINS) for o in P.ORDERS.values()) and P.ORDERS["f2"] == P.DOMAINS
