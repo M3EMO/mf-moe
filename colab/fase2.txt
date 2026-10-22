@@ -16,9 +16,3 @@ division+fusion_alineada|2|f2
 division+padre_congelado|2|f2
 azar+padre_congelado|2|f2
 division+consolidacion_uso|2|f2
-control+consolidacion_uso|0|f2
-control+consolidacion_azar|0|f2
-control+consolidacion_uso|1|f2
-control+consolidacion_azar|1|f2
-control+consolidacion_uso|2|f2
-control+consolidacion_azar|2|f2
