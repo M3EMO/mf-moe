@@ -94,3 +94,18 @@ def test_gate_balancing_pushes_a_lopsided_gate_toward_both_daughters():
         for _ in range(30):
             model(input_ids=IDS)
     assert router.gate_bias[0, 1] > router.gate_bias[0, 0]  # el sesgo empuja hacia la hija sin tokens
+
+
+def test_one_level_tree_never_splits_a_daughter_and_the_free_tree_does():
+    """H10 de la spec: con max_depth 1 todas las mitosis son sobre expertos de Granite; sin límite, hay nietas."""
+    import mf_moe.phase2 as P
+    from tests.test_phase2 import CFG, _data
+
+    cfg = P.Cfg2(**{**CFG.__dict__, "check_every": 1, "n_final": 10})
+    deep = {}
+    for name in ("arbol_un_nivel+consolidacion", "arbol+consolidacion"):
+        model = tiny(n_experts=6)
+        P.run2(P.Cond2(name, divide=True, tree=True, max_depth=P.CONDS2[name].max_depth), 0, model, _data(), "cpu", cfg,
+               log=lambda r: None)  # fmt: skip
+        deep[name] = int(FT.leaf_depths(routers(model)[1]).max())
+    assert deep["arbol_un_nivel+consolidacion"] == 1 and deep["arbol+consolidacion"] >= 2

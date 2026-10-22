@@ -59,6 +59,7 @@ class Cond2:
     consolidate_random: bool = False  # congela tantos expertos nuevos como el uso, pero al azar: ¿importa cuáles?
     tree: bool = False  # árbol fractal (ticket 14): mitosis con hija de bajo rango; la hija vieja queda congelada
     lowrank_growth: bool = False  # V1: los clones del control son copias fijas + U·V, como las hojas del árbol
+    max_depth: int = 0  # H10: profundidad máxima de las hojas que hacen mitosis (0 = sin límite; 1 = árbol de un nivel)
 
 
 CONDS2 = {c.name: c for c in [
@@ -76,6 +77,8 @@ CONDS2 = {c.name: c for c in [
     Cond2("arbol_azar+consolidacion", divide=True, tree=True, random_parent=True, consolidate=8),
     # V1 de la spec: mismos parámetros nuevos que el árbol (16 deltas de bajo rango por capa), ruteo plano
     Cond2("control_bajo_rango+consolidacion", grow_at_start=True, lowrank_growth=True, consolidate=8),
+    # H10 de la spec: las hijas no vuelven a dividirse; mismo calendario de mitosis. Aísla la recursión (lo fractal)
+    Cond2("arbol_un_nivel+consolidacion", divide=True, tree=True, consolidate=8, max_depth=1),
 ]}  # fmt: skip
 
 
@@ -328,7 +331,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     key = f"fase2/{cond.name}/semilla{seed}/{'-'.join(cfg.domains)}"
     div = Divider(signal="duda", z=cfg.z_split, mix=cfg.split_mix, silent=cfg.silent,
                   random_parent=seed if cond.random_parent else None, max_experts=cfg.n_final, every=cfg.check_every,
-                  splitter=ft.split if cond.tree else None,
+                  splitter=ft.split if cond.tree else None, eligible=ft.below(cond.max_depth) if cond.max_depth else None,
                   layers=tuple(layers)) \
         if cond.divide else None  # fmt: skip
     mer = Merger(criterion="salidas", align=True, min_experts=routers(model)[layers[0]].num_experts,

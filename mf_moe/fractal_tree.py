@@ -162,6 +162,25 @@ def to_lowrank(model, opt, layer: int, rows) -> None:
         lr.rows = torch.cat([lr.rows, torch.tensor([row], device=lr.rows.device)])
 
 
+def leaf_depths(router) -> torch.Tensor:
+    """Profundidad de cada hoja (fila de expertos): 0 para un experto de Granite que nunca hizo mitosis."""
+    out = torch.zeros(router.num_experts, dtype=torch.long)
+    todo = [(i, 0) for i in range(router.weight.shape[0])]
+    while todo:
+        node, d = todo.pop()
+        kids = router.node_kids[node].tolist()
+        if kids[0] < 0:
+            out[int(router.node_leaf[node])] = d
+        else:
+            todo += [(k, d + 1) for k in kids]
+    return out
+
+
+def below(max_depth: int):
+    """Para `Divider.eligible`: solo hacen mitosis las hojas por encima de `max_depth` (H10: un solo nivel = 1)."""
+    return lambda model, layer: (leaf_depths(moe(model, layer)[1]) < max_depth).to(moe(model, layer)[1].weight.device)
+
+
 def shape(model, layer: int) -> dict:
     """Forma del árbol de la capa (F3): hojas por profundidad. Sin router en árbol, todo está en la profundidad 0."""
     router = moe(model, layer)[1]

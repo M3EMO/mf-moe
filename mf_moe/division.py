@@ -85,6 +85,7 @@ class Divider:
     silent: bool = False  # el hijo nace sin que el router lo elija: ver `split`
     random_parent: int | None = None  # semilla: el padre se elige al azar (control de la duda), no por la señal
     splitter: object = None  # otra forma de dividir con la firma de `split` (p. ej. la mitosis de `tree`)
+    eligible: object = None  # (modelo, capa) -> máscara de expertos que pueden dividirse; None = todos
     layers: tuple[int, ...] | None = None  # capas que pueden dividir; None = todas
     events: list[dict] = field(default_factory=list)
     z_max: list[dict] = field(default_factory=list)  # z más alto de cada capa en cada revisión, divida o no
@@ -141,9 +142,14 @@ class Divider:
             doubt, loss = a["ent"] / a["n"].clamp_min(1), a["loss"] / a["nl"].clamp_min(1)
             zd, zl = self._z(doubt), self._z(loss)
             score = {"duda": zd, "perdida": zl, "ambas": torch.minimum(zd, zl)}[self.signal]
+            ok = self.eligible(model, layer) if self.eligible is not None else None
+            if ok is not None:
+                score = torch.where(ok, score, torch.full_like(score, -float("inf")))
             parent = int(score.argmax())
             if self.random_parent is not None:
-                parent = random.Random(f"{self.random_parent}-{step}-{layer}").randrange(r.num_experts)
+                pick = random.Random(f"{self.random_parent}-{step}-{layer}")
+                parent = pick.randrange(r.num_experts) if ok is None else (ok.nonzero().flatten().tolist() or [0])[
+                    pick.randrange(max(1, int(ok.sum())))]  # fmt: skip
             self.z_max.append({"paso": step, "capa": layer, "z": round(float(score[parent]), 3)})
             if score[parent] > self.z or self.random_parent is not None and score.max() > self.z:
                 child = (self.splitter or split)(model, opt, layer, parent, a["hi"][parent] / a["nhi"][parent].clamp_min(1),
