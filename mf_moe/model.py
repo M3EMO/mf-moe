@@ -20,21 +20,27 @@ EOS_ID = 10  # "\n"
 
 
 class _Bf16Weights:
-    """Los expertos con los pesos en bf16 solo para multiplicar: el gradiente vuelve a los pesos fp32."""
+    """Los expertos con los pesos en bf16 solo para multiplicar: el gradiente vuelve a los pesos fp32. Con
+    `lowrank` (hojas del árbol fractal, `mf_moe.fractal_tree`) suma los deltas U·V a sus filas."""
 
-    def __init__(self, experts: torch.nn.Module):
-        self._experts = experts
+    def __init__(self, experts: torch.nn.Module, dtype: torch.dtype | None = torch.bfloat16):
+        self._experts, self._dtype = experts, dtype
 
     def __getattr__(self, name: str):
         value = getattr(self._experts, name)
-        return value.to(torch.bfloat16) if name in ("gate_up_proj", "down_proj") else value
+        if name not in ("gate_up_proj", "down_proj"):
+            return value
+        value = value.to(self._dtype) if self._dtype else value
+        lr = getattr(self._experts, "lowrank", None)
+        return lr.add_to(name, value) if lr is not None else value
 
 
 def _grouped_mm_bf16(self, hidden_states, top_k_index, top_k_weights):
     # grouped_mm ignora autocast y con pesos fp32 multiplica en fp32 (perfil en L4, 2026-10-15: 183 contra 110 ms
     # por paso). Guardar los pesos en bf16 perdería las actualizaciones chicas de AdamW.
     if not torch.is_autocast_enabled(hidden_states.device.type):
-        return grouped_mm_experts_forward(self, hidden_states, top_k_index, top_k_weights)
+        exp = _Bf16Weights(self, None) if getattr(self, "lowrank", None) is not None else self
+        return grouped_mm_experts_forward(exp, hidden_states, top_k_index, top_k_weights)
     return grouped_mm_experts_forward(_Bf16Weights(self), hidden_states.to(torch.bfloat16), top_k_index, top_k_weights)
 
 

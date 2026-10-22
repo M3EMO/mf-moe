@@ -39,6 +39,7 @@ def test_every_condition_runs_and_the_frozen_half_does_not_move(name):
     before = model.model.layers[0].block_sparse_moe.experts.down_proj.detach().to(torch.bfloat16).clone()
     out = P.run2(P.CONDS2[name], 0, model, _data(), "cpu", CFG, log=lambda r: None)
     assert len(out["L"]) == 4 and set(out["olvido"]) == set(P.DOMAINS)
+    assert "error" not in out["ruteo"] and len(out["ruteo"]["entropia_uso"]) == 1, out["ruteo"]
     assert torch.equal(model.model.layers[0].block_sparse_moe.experts.down_proj, before)
     assert routers(model)[0].num_experts == 6 and 6 <= out["expertos_finales"][0] <= 8
     if not P.CONDS2[name].divide:
@@ -49,7 +50,8 @@ def test_every_condition_runs_and_the_frozen_half_does_not_move(name):
         assert out["eventos_fusion"] is not None
 
 
-def test_resume_mid_domain_finishes_with_the_saved_structure(tmp_path, monkeypatch):
+@pytest.mark.parametrize("name", ["division+padre_congelado", "arbol+consolidacion"])
+def test_resume_mid_domain_finishes_with_the_saved_structure(tmp_path, monkeypatch, name):
     ckpt = str(tmp_path / "ckpt.pt")
     real, calls = P.eval_loss, {"n": 0}
 
@@ -61,14 +63,13 @@ def test_resume_mid_domain_finishes_with_the_saved_structure(tmp_path, monkeypat
 
     monkeypatch.setattr(P, "eval_loss", crash)
     with pytest.raises(RuntimeError):
-        P.run2(P.CONDS2["division+padre_congelado"], 0, tiny(n_experts=6), _data(), "cpu", CFG, ckpt=ckpt,
-               log=lambda r: None)  # fmt: skip
+        P.run2(P.CONDS2[name], 0, tiny(n_experts=6), _data(), "cpu", CFG, ckpt=ckpt, log=lambda r: None)
     monkeypatch.setattr(P, "eval_loss", real)
     saved = torch.load(ckpt, weights_only=True)["state"]
-    out = P.run2(P.CONDS2["division+padre_congelado"], 0, tiny(n_experts=6), _data(), "cpu", CFG, ckpt=ckpt,
-                 log=lambda r: None)  # fmt: skip
+    out = P.run2(P.CONDS2[name], 0, tiny(n_experts=6), _data(), "cpu", CFG, ckpt=ckpt, log=lambda r: None)
     assert len(out["L"]) == 4 and out["expertos_finales"][0] >= saved["expertos_por_capa"][1]
-    assert out["L_inicial"] == saved["L_inicial"]
+    assert out["L_inicial"] == saved["L_inicial"] and "error" not in out["ruteo"]
+    assert set(out["ruteo"]["deriva"]) == set(P.DOMAINS[:-1])  # el ruteo guardado antes del corte vuelve
 
 
 def test_micro_batches_take_the_same_step_as_the_whole_batch():

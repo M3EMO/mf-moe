@@ -33,7 +33,9 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from mf_moe import fractal_tree as ft
 from mf_moe.division import Divider, resize, split
+from mf_moe.expert_tree import fractal
 from mf_moe.granite import load
 from mf_moe.lifelong import freeze_rows
 from mf_moe.merging import Merger
@@ -54,6 +56,7 @@ class Cond2:
     random_parent: bool = False  # divide expertos al azar con el mismo calendario: separa la duda del congelado
     consolidate: int = 0  # al cerrar cada dominio congela los k expertos que más usó (diagnóstico: el olvido vive ahí)
     consolidate_random: bool = False  # congela tantos expertos nuevos como el uso, pero al azar: ¿importa cuáles?
+    tree: bool = False  # árbol fractal (ticket 14): mitosis con hija de bajo rango; la hija vieja queda congelada
 
 
 CONDS2 = {c.name: c for c in [
@@ -65,6 +68,10 @@ CONDS2 = {c.name: c for c in [
     Cond2("division+consolidacion_uso", divide=True, consolidate=8),
     Cond2("control+consolidacion_uso", grow_at_start=True, consolidate=8),  # ¿hace falta dividir?
     Cond2("control+consolidacion_azar", grow_at_start=True, consolidate=8, consolidate_random=True),
+    # ticket 14, etapa C: el calendario dice cuándo (mismo presupuesto, 16 mitosis por capa) y la duda dice dónde,
+    # en cualquier profundidad; un umbral absoluto nunca dispara (z > 3 en 0 de 192 revisiones de la fase 2)
+    Cond2("arbol+consolidacion", divide=True, tree=True, consolidate=8),
+    Cond2("arbol_azar+consolidacion", divide=True, tree=True, random_parent=True, consolidate=8),
 ]}  # fmt: skip
 
 
@@ -203,10 +210,84 @@ def _most_used(model, layers: list[int], seqs: np.ndarray, device: str, k: int) 
     return out
 
 
+DRIFT_SEQS, REPORT_SEQS, PER_DOC = 16, 128, 8  # PER_DOC: secuencias de evaluación por documento (prepare_phase2)
+
+
+@torch.no_grad()
+def _route(model, layers: list[int], seqs: np.ndarray, device: str, cast: bool = True) -> torch.Tensor:
+    """Hojas elegidas (capas, tokens, k) en modo eval, sin tocar el estado de los routers."""
+    rs = routers(model)
+    was, training = [r.record for r in rs], model.training
+    for r in rs:
+        r.record = True
+    model.eval()
+    ids = torch.as_tensor(np.asarray(seqs, dtype=np.int64), device=device)
+    if cast:
+        with amp(device):
+            model.model(input_ids=ids)
+    else:
+        model.model(input_ids=ids)
+    out = torch.stack([rs[i].last[2] for i in layers])
+    for r, w in zip(rs, was):
+        r.record = w
+    model.train(training)
+    return out
+
+
+def _jaccard(a: torch.Tensor, b: torch.Tensor) -> float:
+    """Coincidencia media de los conjuntos top-k de cada token."""
+    inter = (a[..., :, None] == b[..., None, :]).any(-1).sum(-1).float()
+    return round(float((inter / (2 * a.shape[-1] - inter)).mean()), 4)
+
+
+def _routing_report(model, layers: list[int], evals: dict, snaps: dict, device: str) -> dict:
+    """Medidas del ticket 14 al final de la corrida. Nunca tira la corrida: un error queda en el resultado."""
+    try:
+        doms = list(evals)
+        n = max(routers(model)[i].num_experts for i in layers)
+        U = np.zeros((len(layers), len(doms) * (REPORT_SEQS // PER_DOC), n), dtype=np.int64)
+        for d, dom in enumerate(doms):
+            for j in range(0, min(REPORT_SEQS, len(evals[dom])), PER_DOC):
+                idx = _route(model, layers, evals[dom][j : j + PER_DOC], device).reshape(len(layers), -1).cpu()
+                for li in range(len(layers)):
+                    U[li, d * (REPORT_SEQS // PER_DOC) + j // PER_DOC] += np.bincount(idx[li].numpy(), minlength=n)
+        tot = U.sum(1)
+        live = [routers(model)[i].num_experts for i in layers]
+        ent, dead = [], []
+        for li, m in enumerate(live):
+            p = tot[li, :m] / tot[li, :m].sum()
+            ent.append(round(float(-(p * np.log(p + 1e-30)).sum() / np.log(m)), 4))
+            dead.append(round(float((p < 0.01 / m).mean()), 4))
+        dom_of = np.repeat(np.arange(len(doms)), REPORT_SEQS // PER_DOC)
+        frac = fractal(U, [dom_of, np.arange(len(dom_of))], n_null=10)
+        x = evals[GENERAL][:8]
+        rs = routers(model)
+        keep = [{k: v.clone() for k, v in r.named_buffers()} for r in rs]
+        model.train()
+        with torch.no_grad(), amp(device):
+            for r in rs:
+                r.record = True
+            model.model(input_ids=torch.as_tensor(np.asarray(x, dtype=np.int64), device=device))
+            in_train = torch.stack([rs[i].last[2] for i in layers])
+        for r, b in zip(rs, keep):  # el modo train actualiza el balanceo: se deshace
+            for k, v in b.items():
+                setattr(r, k, v)
+        drift = {d: _jaccard(_route(model, layers, evals[d][:DRIFT_SEQS], device).cpu(), s.long()) for d, s in snaps.items()}
+        return {"entropia_uso": ent, "hojas_muertas": dead,
+                "fractal": [{k: f[k] for k in ("exceso", "autosimilitud")} for f in frac],
+                "train_vs_eval": _jaccard(in_train, _route(model, layers, x, device)),
+                "bf16_vs_fp32": _jaccard(_route(model, layers, x, device), _route(model, layers, x, device, cast=False)),
+                "deriva": drift}  # fmt: skip
+    except Exception as e:  # noqa: BLE001
+        return {"error": f"{type(e).__name__}: {str(e)[:300]}"}
+
+
 def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | None = None,
          ckpt: str | None = None, log=print) -> dict:  # fmt: skip
     cfg = cfg or Cfg2()
     torch.manual_seed(seed)
+    if cond.tree:
+        ft.install(model)
     rng = random.Random(seed)
     layers = set_trainable(model, cfg.trainable_from)
     for i in layers:
@@ -214,11 +295,13 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     key = f"fase2/{cond.name}/semilla{seed}/{'-'.join(cfg.domains)}"
     div = Divider(signal="duda", z=cfg.z_split, mix=cfg.split_mix, silent=cfg.silent,
                   random_parent=seed if cond.random_parent else None, max_experts=cfg.n_final, every=cfg.check_every,
+                  splitter=ft.split if cond.tree else None,
                   layers=tuple(layers)) \
         if cond.divide else None  # fmt: skip
     mer = Merger(criterion="salidas", align=True, min_experts=routers(model)[layers[0]].num_experts,
                  layers=tuple(layers)) if cond.merge_align else None  # fmt: skip
     frozen: dict[int, set[int]] = {i: set() for i in layers}
+    snaps: dict[str, torch.Tensor] = {}  # ruteo de cada dominio terminado al cerrarlo: mide la deriva
     L0, L, learned, start, step_in, done_steps = None, [], [], 0, 0, []
     opt = _adamw(model, cfg.lr)
     if ckpt and Path(ckpt).exists():
@@ -226,7 +309,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         if ck["key"] != key:
             raise ValueError(f"el checkpoint {ckpt} es de la corrida {ck['key']!r}, no de {key!r}")
         st = ck["state"]
-        resize(model, st["expertos_por_capa"])  # los expertos nuevos nacen en fp32 y entrenables
+        (ft.resize if cond.tree else resize)(model, st["expertos_por_capa"])  # los expertos nuevos nacen en fp32 y entrenables
         for r, n in zip(routers(model), st.get("nacidos_desde", [])):
             r.n_born = n
         missing = model.load_state_dict(ck["model"], strict=False).unexpected_keys
@@ -235,6 +318,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         L0, L, learned = st["L_inicial"], st["L"], st["aprendido"]
         start, step_in, done_steps = st["dominio"], st["paso"], st["pasos"]
         frozen = {int(k): set(v) for k, v in st["congelados"].items()}
+        snaps = st.get("deriva", {})
         set_rng_state(rng, st["rng"])
         if div:
             div.events, div.z_max = st["division"], st.get("z_max", [])
@@ -249,7 +333,9 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     def refreeze(only: set[int] | None = None) -> None:
         """Vuelve a congelar los padres de esas capas: una división reemplazó sus Parameters (y sus hooks)."""
         for i, rows in frozen.items():
-            if rows and (only is None or i in only):
+            if cond.tree and (only is None or i in only):  # también las copias base de las hojas de bajo rango
+                ft.freeze(model, opt, i, rows)
+            elif rows and (only is None or i in only):
                 experts, router = moe(model, i)
                 for p in (experts.gate_up_proj, experts.down_proj, router.weight):
                     freeze_rows(opt, p, sorted(rows))
@@ -261,7 +347,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                  "expertos_por_capa": [r.num_experts for r in routers(model)],
                  "nacidos_desde": [r.n_born for r in routers(model)],
                  "congelados": {str(k): sorted(v) for k, v in frozen.items()},
-                 "division": div.events if div else [], "z_max": div.z_max if div else [], "fusion": mer.events if mer else []}  # fmt: skip
+                 "division": div.events if div else [], "z_max": div.z_max if div else [], "fusion": mer.events if mer else [],
+                 "deriva": snaps}  # fmt: skip
         tmp = Path(ckpt + ".tmp")
         torch.save({"key": key, "model": trainable, "state": state}, tmp)
         tmp.replace(ckpt)
@@ -308,7 +395,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                     div.check(model, opt, s + 1)
                 if len(div.events) > n_events:  # una división reemplazó parámetros: AdamW los siguió en el lugar
                     new = div.events[n_events:]
-                    if cond.freeze_parent:
+                    if cond.freeze_parent or cond.tree:
                         for e in new:
                             frozen[e["capa"]].add(e["padre"])
                     refreeze({e["capa"] for e in new})
@@ -319,6 +406,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             if ckpt and (s + 1) % cfg.save_every == 0:
                 save(di, s + 1)
         learned.append(eval_loss(model, evals[dom], device))
+        if di < len(cfg.domains) - 1:
+            snaps[dom] = _route(model, layers, evals[dom][:DRIFT_SEQS], device).to(torch.int16).cpu()
         if cond.consolidate and di < len(cfg.domains) - 1:
             for i, top in _most_used(model, layers, data[dom]["train"][: 2 * cfg.calib_seqs], device, cond.consolidate).items():
                 if cond.consolidate_random:  # misma cantidad de congelados nuevos que el uso, elegidos sin mirarlo
@@ -349,7 +438,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             "uso_expertos_nuevos": [round(float(routers(model)[i].load[model.config.num_local_experts :].sum()), 4)
                                     for i in layers],  # fmt: skip
             "congelados": {str(k): sorted(v) for k, v in frozen.items()},
-            "eventos_division": div.events if div else [], "eventos_fusion": mer.events if mer else []}  # fmt: skip
+            "eventos_division": div.events if div else [], "eventos_fusion": mer.events if mer else [],
+            "ruteo": _routing_report(model, layers, evals, snaps, device)}  # fmt: skip
 
 
 
