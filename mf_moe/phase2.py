@@ -166,7 +166,7 @@ def drive_sync(ckpt: str, step: str) -> subprocess.Popen | None:
     drive = os.environ.get("MFMOE_DRIVE")
     if not drive:
         return None
-    cmd = f'rclone copyto "{ckpt}" "{drive}/ckpt.pt" && printf "{step}\\n" | rclone rcat "{drive}/ckpt.pt.step"'
+    cmd = f'timeout 3600 rclone copyto "{ckpt}" "{drive}/ckpt.pt" && printf "{step}\\n" | timeout 300 rclone rcat "{drive}/ckpt.pt.step"'
     try:
         return subprocess.Popen(["flock", ckpt + ".lock", "sh", "-c", cmd])
     except OSError as e:  # sin flock la corrida sigue: Drive es un respaldo, nunca un motivo para cortar
