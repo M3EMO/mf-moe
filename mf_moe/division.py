@@ -86,6 +86,10 @@ class Divider:
     random_parent: int | None = None  # semilla: el padre se elige al azar (control de la duda), no por la señal
     splitter: object = None  # otra forma de dividir con la firma de `split` (p. ej. la mitosis de `tree`)
     eligible: object = None  # (modelo, capa) -> máscara de expertos que pueden dividirse; None = todos
+    # Con `mass` la duda de cada experto es la suma sobre sus tokens, no la media: divide donde hay más duda en total.
+    # Con la media, el árbol volvía a partir siempre a la hija nueva (recibe los tokens dudosos por construcción) y
+    # crecía en cadena hasta 11 niveles, con hojas casi sin tokens (arbol s0, 2026-10-23: 31 % de hojas muertas)
+    mass: bool = False
     layers: tuple[int, ...] | None = None  # capas que pueden dividir; None = todas
     events: list[dict] = field(default_factory=list)
     z_max: list[dict] = field(default_factory=list)  # z más alto de cada capa en cada revisión, divida o no
@@ -139,7 +143,7 @@ class Divider:
         for layer, (r, a) in enumerate(zip(routers(model), self._acc)):
             if r.num_experts >= self.max_experts or (self.layers is not None and layer not in self.layers):
                 continue
-            doubt, loss = a["ent"] / a["n"].clamp_min(1), a["loss"] / a["nl"].clamp_min(1)
+            doubt, loss = a["ent"] / (1 if self.mass else a["n"].clamp_min(1)), a["loss"] / a["nl"].clamp_min(1)
             zd, zl = self._z(doubt), self._z(loss)
             score = {"duda": zd, "perdida": zl, "ambas": torch.minimum(zd, zl)}[self.signal]
             ok = self.eligible(model, layer) if self.eligible is not None else None

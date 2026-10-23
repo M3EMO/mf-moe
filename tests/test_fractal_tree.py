@@ -101,7 +101,7 @@ def test_one_level_tree_never_splits_a_daughter_and_the_free_tree_does():
     import mf_moe.phase2 as P
     from tests.test_phase2 import CFG, _data
 
-    cfg = P.Cfg2(**{**CFG.__dict__, "check_every": 1, "n_final": 10})
+    cfg = P.Cfg2(**{**CFG.__dict__, "check_every": 1, "n_final": 16, "z_split": -1e9})  # calendario, como PRODUCTION
     deep = {}
     for name in ("arbol_un_nivel+consolidacion", "arbol+consolidacion"):
         model = tiny(n_experts=6)
@@ -126,3 +126,32 @@ def test_a_gate_whose_bias_overrides_a_near_zero_probability_keeps_finite_gradie
     loss.backward()
     assert torch.isfinite(loss)
     assert all(torch.isfinite(p.grad).all() for p in model.parameters() if p.grad is not None)
+
+
+def test_doubt_mass_splits_the_busy_leaf_and_mean_doubt_the_newest_one():
+    """La media elige la hoja chica con duda alta (la hija nueva): cadenas. La suma elige donde hay más duda total."""
+    from mf_moe.division import Divider
+
+    picked = {}
+    for mass in (False, True):
+        model = tiny(n_experts=6)
+        div = Divider(z=-1e9, every=1, max_experts=99, mass=mass, layers=(1,),
+                      splitter=lambda m, o, layer, parent, *a, **k: picked.__setitem__(mass, parent) or 0)  # fmt: skip
+        div._reset(model)
+        acc = div._acc[1]
+        acc["n"][:] = torch.tensor([100.0, 5, 100, 100, 100, 100])  # la hoja 1 es chica
+        acc["ent"][:] = torch.tensor([150.0, 10, 100, 110, 90, 120])  # media: 1,5 contra 2,0 de la chica
+        div.check(model, None, 1)
+    assert picked == {False: 1, True: 0}
+
+
+def test_a_saturated_gate_can_still_be_flipped_by_its_balancing_bias():
+    model, _ = _tree()
+    _logits(model)
+    child = FT.split(model, torch.optim.SGD(model.parameters(), lr=0.0), 1, 0, None)
+    router = routers(model)[1]
+    with torch.no_grad():
+        router.gate_b[0] = torch.tensor([0.0, -1000.0])  # sin cota, p de la hija nueva sería 0
+        router.gate_bias[0] = torch.tensor([0.0, 1.0])
+    _logits(model)
+    assert child in router.last[2].reshape(-1).tolist()  # el sesgo manda tokens a la hija nueva

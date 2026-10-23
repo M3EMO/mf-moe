@@ -69,7 +69,11 @@ class GraniteTreeRouter(RecordingGraniteRouter):
             if not len(t):
                 break
             g = self.node_gate[node[t, k]]
-            gp = torch.softmax(torch.einsum("nh,nch->nc", hidden_states[t].float(), self.gates[g].float()) + self.gate_b[g], -1)
+            # logits acotados a ±4: la compuerta nunca satura (p >= 3e-4) y el sesgo de ±1 siempre puede dar vuelta la
+            # elección; sin la cota, una compuerta llegó a 100 % a una hija (arbol s0, 2026-10-23). Conserva el signo:
+            # la partición de la mitosis no cambia
+            z = torch.einsum("nh,nch->nc", hidden_states[t].float(), self.gates[g].float()) + self.gate_b[g]
+            gp = torch.softmax(z.clamp(-4.0, 4.0), -1)
             kid = (gp + self.gate_bias[g]).argmax(-1)
             p = gp.gather(-1, kid[:, None]).squeeze(-1)
             # vale 1 y lleva el gradiente. Nunca p / p.detach(): si el sesgo elige una hija con p ~ 0, el gradiente es

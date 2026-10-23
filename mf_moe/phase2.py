@@ -349,6 +349,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
     div = Divider(signal="duda", z=cfg.z_split, mix=cfg.split_mix, silent=cfg.silent,
                   random_parent=seed if cond.random_parent else None, max_experts=cfg.n_final, every=cfg.check_every,
                   splitter=ft.split if cond.tree else None, eligible=ft.below(cond.max_depth) if cond.max_depth else None,
+                  mass=cond.tree,
                   layers=tuple(layers)) \
         if cond.divide else None  # fmt: skip
     mer = Merger(criterion="salidas", align=True, min_experts=routers(model)[layers[0]].num_experts,
