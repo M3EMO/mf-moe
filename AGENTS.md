@@ -83,4 +83,4 @@ bd prime                # Refresh Beads context
 
 ## SDLC (pipeline de 6 etapas)
 
-Este repo construye features con `mmorch.sdlc` (skill `/project`). Contrato del repo en `sdlc.toml`; artefactos de cada corrida en `docs/sdlc/` de la review branch.
+Este repo construye features con el paquete `sdlc` (skill `/project`). Contrato del repo en `sdlc.toml`; artefactos de cada corrida en `docs/sdlc/` de la review branch.
