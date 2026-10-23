@@ -148,3 +148,25 @@ def test_every_run_reports_curve_timing_frozen_usage_and_tree_shape():
 
 def test_domain_orders_are_permutations_of_the_four_languages():
     assert all(sorted(o) == sorted(P.DOMAINS) for o in P.ORDERS.values()) and P.ORDERS["f2"] == P.DOMAINS
+
+
+def test_drive_sync_copies_the_checkpoint_then_writes_the_step_it_was_called_with(tmp_path, monkeypatch):
+    """Ticket 14: el job copia cada checkpoint a Drive desde la VM. Un rclone falso escribe en una carpeta."""
+    import os
+    import stat
+
+    fake, remote = tmp_path / "bin", tmp_path / "drive"
+    fake.mkdir()
+    remote.mkdir()
+    rclone = fake / "rclone"
+    rclone.write_text(f'#!/bin/sh\nR={remote}\ncase $1 in\n copyto) cp "$2" "$R/$(basename $3)";;\n'
+                      f' rcat) cat > "$R/$(basename $2)";;\nesac\n')  # fmt: skip
+    rclone.chmod(rclone.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("PATH", f"{fake}:{os.environ['PATH']}")
+    monkeypatch.setenv("MFMOE_DRIVE", "mfmoe:mf-moe/fase2/corrida")
+    ckpt = tmp_path / "ckpt.pt"
+    ckpt.write_bytes(b"pesos")
+    P.drive_sync(str(ckpt), "2:0").wait()
+    assert (remote / "ckpt.pt").read_bytes() == b"pesos" and (remote / "ckpt.pt.step").read_text() == "2:0\n"
+    monkeypatch.delenv("MFMOE_DRIVE")
+    assert P.drive_sync(str(ckpt), "3:0") is None  # sin Drive configurado, nada

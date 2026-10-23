@@ -25,6 +25,8 @@ al retomar, AdamW arranca con momentos en cero y vuelve a calentar el learning r
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 import random
 import sys
 import time
@@ -155,6 +157,21 @@ def write_parts(path: str, tag: str, size: int = 64 << 20, keep: int = 2) -> Non
         for f in old.iterdir():
             f.unlink()
         old.rmdir()
+
+
+def drive_sync(ckpt: str, step: str) -> subprocess.Popen | None:
+    """Con MFMOE_DRIVE (remoto de rclone, ver colab/phase2_vm.py) copia el checkpoint a Drive en segundo plano: un
+    retiro de la VM ya no pierde el dominio mientras la PC baja 3,5 GB. El marcador va después del archivo y lleva
+    el paso de este guardado, no el que haya en disco cuando termine la copia. Un lock serializa dos copias."""
+    drive = os.environ.get("MFMOE_DRIVE")
+    if not drive:
+        return None
+    cmd = f'rclone copyto "{ckpt}" "{drive}/ckpt.pt" && printf "{step}\\n" | rclone rcat "{drive}/ckpt.pt.step"'
+    try:
+        return subprocess.Popen(["flock", ckpt + ".lock", "sh", "-c", cmd])
+    except OSError as e:  # sin flock la corrida sigue: Drive es un respaldo, nunca un motivo para cortar
+        print(json.dumps({"drive": f"no se pudo copiar: {e}"}), flush=True)
+        return None
 
 
 def _adamw(model, lr: float, lowrank_mult: float = 1.0) -> torch.optim.Optimizer:
@@ -399,6 +416,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         tmp.replace(ckpt)
         write_parts(ckpt, f"{d}-{s}")
         Path(ckpt + ".step").write_text(f"{d}:{s}\n")
+        drive_sync(ckpt, f"{d}:{s}")
 
     refreeze()
     evals = {d: data[d]["eval"] for d in (*cfg.domains, GENERAL)}
