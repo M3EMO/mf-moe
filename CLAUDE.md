@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # mf-moe
 
 North-star: medir si un MoE de 80-100 M de parámetros con división, repetición y fusión de expertos
