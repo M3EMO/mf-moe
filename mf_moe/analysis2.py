@@ -31,6 +31,7 @@ QUESTIONS = [(arm, CONTROL) for arm in ("division", "division+fusion_alineada", 
     ("arbol+consolidacion", "control+consolidacion_uso"),  # H7: ¿el árbol suma sobre la consolidación plana?
     ("arbol+consolidacion", "control_bajo_rango+consolidacion"),  # H7 con los mismos parámetros nuevos (V1)
     ("arbol+consolidacion", "arbol_azar+consolidacion"),  # H9: ¿la duda elige dónde abrir rama?
+    ("arbol+consolidacion", "arbol_un_nivel+consolidacion"),  # H10: ¿suma la recursión?
 ]  # fmt: skip
 
 
