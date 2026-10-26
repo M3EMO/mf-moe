@@ -23,6 +23,7 @@ def main(path: str) -> None:
     t0 = time.time()
     tok = AutoTokenizer.from_pretrained(MODEL_ID)
     model = AutoModelForCausalLM.from_pretrained(MODEL_ID, dtype=torch.bfloat16).eval()
+    Ws = {L: model.model.layers[L].block_sparse_moe.router.weight.detach().float().numpy() for L in LAYERS}
     rec = Recorder(model, len(DOMAINS), keep_layers=LAYERS, keep_frac=0.25)
     for i, d in enumerate(DOMAINS):
         rec.domain = i
@@ -35,8 +36,7 @@ def main(path: str) -> None:
     res = {"modelo": MODEL_ID, "dominios": DOMAINS, "capas": {}}
     for L in LAYERS:
         H = torch.cat([h for h, _, _ in rec.kept[L]]).numpy()
-        W = model.model.layers[L].block_sparse_moe.router.layer.weight.float().numpy()
-        res["capas"][L] = {"tokens": len(H), "niveles": hierarchical_routing(H, W, model.config.num_experts_per_tok)}
+        res["capas"][L] = {"tokens": len(H), "niveles": hierarchical_routing(H, Ws[L], model.config.num_experts_per_tok)}
     res["segundos"] = round(time.time() - t0)
     json.dump(res, open(path, "w"), ensure_ascii=False)
 
