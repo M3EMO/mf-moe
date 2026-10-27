@@ -16,6 +16,8 @@ Condiciones (todas terminan con hasta 48 expertos por capa entrenable y top-k fi
 - azar+padre_congelado: como la anterior, pero el padre se elige al azar (¿aporta la duda o alcanza congelar?);
 - division+consolidacion_uso: crece igual, pero al cerrar cada dominio congela los 8 expertos por capa que ese
   dominio más usó (el diagnóstico mostró que el olvido vive en los expertos que usa lo viejo).
+- control+emo: el control con el ruteo de EMO (arXiv 2605.06663): cada documento rutea dentro de un grupo de
+  expertos. Logra modularidad sin crecer; si olvida poco, el MoE fractal tiene que ganarle.
 Todo experto nuevo nace silencioso (sesgo -1) y el balanceo de los nacidos lo recluta (pilotos 5 y 6).
 
 Retome (decisión del usuario): el checkpoint guarda solo los pesos entrenables en fp32 y el estado del bucle;
@@ -39,7 +41,7 @@ import torch
 from mf_moe import fractal_tree as ft
 from mf_moe.division import Divider, resize, split
 from mf_moe.expert_tree import fractal
-from mf_moe.granite import load
+from mf_moe.granite import RecordingGraniteRouter, load
 from mf_moe.lifelong import freeze_rows
 from mf_moe.merging import Merger
 from mf_moe.model import moe, routers
@@ -62,6 +64,7 @@ class Cond2:
     tree: bool = False  # árbol fractal (ticket 14): mitosis con hija de bajo rango; la hija vieja queda congelada
     lowrank_growth: bool = False  # V1: los clones del control son copias fijas + U·V, como las hojas del árbol
     max_depth: int = 0  # H10: profundidad máxima de las hojas que hacen mitosis (0 = sin límite; 1 = árbol de un nivel)
+    emo: int = 0  # EMO: tamaño mínimo del grupo de expertos de cada documento, d ~ U{emo..n} (0 = apagado); ver `EmoRouter`
 
 
 CONDS2 = {c.name: c for c in [
@@ -81,6 +84,8 @@ CONDS2 = {c.name: c for c in [
     Cond2("control_bajo_rango+consolidacion", grow_at_start=True, lowrank_growth=True, consolidate=8),
     # H10 de la spec: las hijas no vuelven a dividirse; mismo calendario de mitosis. Aísla la recursión (lo fractal)
     Cond2("arbol_un_nivel+consolidacion", divide=True, tree=True, consolidate=8, max_depth=1),
+    # rival sin crecimiento: modularidad por documento con los mismos 48 expertos; d desde el top-k de Granite (8)
+    Cond2("control+emo", grow_at_start=True, emo=8),
 ]}  # fmt: skip
 
 
@@ -333,6 +338,49 @@ def _routing_report(model, layers: list[int], evals: dict, snaps: dict, device: 
         return {"error": f"{type(e).__name__}: {str(e)[:300]}"}
 
 
+class EmoRouter(RecordingGraniteRouter):
+    """EMO (arXiv 2605.06663; `v2/emo_router.py` de OLMo-core): suma las probabilidades de ruteo de los tokens de
+    cada documento, toma sus top-d expertos como grupo y elige el top-k de cada token dentro del grupo. En
+    entrenamiento d ~ U{d_min..n} por documento y por pasada; en evaluación d = (d_min + n) // 2, como la referencia.
+    `d_min` se acota a [top-k, n]; con d = n el ruteo es el del control. Un documento termina en EOS y nunca cruza
+    de secuencia (como los `segment_ids` de la referencia). El balanceo ya es global (media móvil del uso, nunca por
+    lote ni por documento): es el mismo del control, sin la pérdida auxiliar de la referencia."""
+
+    d_min: int
+    seg: torch.Tensor  # (tokens,) documento de cada token del forward en curso; lo fija el pre-hook de `install_emo`
+
+    def restrict(self, probs: torch.Tensor, scores: torch.Tensor) -> torch.Tensor:
+        n = probs.shape[-1]
+        lo = max(self.top_k, min(self.d_min, n))
+        if lo >= n:  # grupo = todos: ni siquiera sortea, así el ruteo y el RNG quedan como en el control
+            return scores
+        n_doc = int(self.seg.max()) + 1
+        doc = probs.new_zeros(n_doc, n).index_add_(0, self.seg, probs.detach())
+        if self.training:
+            d = torch.randint(lo, n + 1, (n_doc, 1), device=probs.device)
+        else:
+            d = torch.full((n_doc, 1), (lo + n) // 2, device=probs.device)
+        keep = doc.argsort(-1, descending=True).argsort(-1) < d  # puesto de cada experto en su documento
+        return scores.masked_fill(~keep[self.seg], float("-inf"))
+
+
+def install_emo(model, d_min: int) -> None:
+    """Pasa los routers a `EmoRouter` sin tocar sus pesos ni buffers, y engancha el corte en documentos."""
+    eos = model.config.eos_token_id
+
+    def segments(_, args, kwargs):
+        ids = kwargs["input_ids"] if "input_ids" in kwargs else args[0]
+        end = (ids == eos).long()
+        seg = end.cumsum(1) - end + torch.arange(len(ids), device=ids.device)[:, None] * ids.shape[1]  # el EOS cierra su documento
+        seg = torch.unique(seg.reshape(-1), return_inverse=True)[1]
+        for r in routers(model):
+            r.seg = seg
+
+    model.model.register_forward_pre_hook(segments, with_kwargs=True)
+    for r in routers(model):
+        r.__class__, r.d_min = EmoRouter, d_min
+
+
 def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | None = None,
          ckpt: str | None = None, log=print) -> dict:  # fmt: skip
     cfg = cfg or Cfg2()
@@ -341,6 +389,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         ft.install(model)
     elif cond.lowrank_growth:
         ft.install_lowrank(model)
+    if cond.emo:
+        install_emo(model, cond.emo)
     rng = random.Random(seed)
     layers = set_trainable(model, cfg.trainable_from)
     for i in layers:
