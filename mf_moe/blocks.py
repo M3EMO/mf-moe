@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import numpy as np
 from scipy.cluster.hierarchy import fcluster, linkage
+from scipy.stats import pearsonr, spearmanr
 
 from mf_moe.expert_tree import participation_ratio
 
@@ -31,6 +32,27 @@ def neuron_signatures(w_in: np.ndarray, w_out: np.ndarray) -> tuple[np.ndarray, 
     gate, down = w_in[:, : two_i // 2].reshape(-1, H), np.transpose(w_out, (0, 2, 1)).reshape(-1, H)
     down = down * np.sign(down[np.arange(len(down)), np.abs(down).argmax(1)])[:, None]
     return np.concatenate([_unit(gate), _unit(down)], 1), np.repeat(np.arange(E), two_i // 2)
+
+
+def activation_signatures(H: np.ndarray, w_in: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """B1b: firma funcional. H [T, d] son tokens fijos que entran a la capa; w_in [E, 2I, d] (compuerta y up).
+    Firma de una neurona = su activación silu(compuerta)·up sobre los T tokens, centrada y unitaria (el coseno
+    entre firmas es la correlación). Se evalúa en todos los tokens, no solo en los ruteados: con soportes
+    disjuntos, dos expertos nunca se parecerían. El signo se fija como en `neuron_signatures`."""
+    E, two_i, d = w_in.shape
+    gate, up = (H @ w_in[:, s].reshape(-1, d).T for s in (slice(None, two_i // 2), slice(two_i // 2, None)))
+    A = (gate / (1 + np.exp(-gate)) * up).T
+    A = A - A.mean(1, keepdims=True)
+    A = A * np.sign(A[np.arange(len(A)), np.abs(A).argmax(1)])[:, None]
+    return _unit(A), np.repeat(np.arange(E), two_i // 2)
+
+
+def weight_function_agreement(Xw: np.ndarray, Xf: np.ndarray, n_pairs: int = 20000, seed: int = 0) -> dict:
+    """Correlación entre el coseno por pesos y el coseno por función, sobre pares de neuronas al azar."""
+    i, j = np.random.default_rng(seed).integers(0, len(Xw), (2, n_pairs))
+    i, j = i[i != j], j[i != j]
+    cw, cf = [(_unit(X[i]) * _unit(X[j])).sum(1) for X in (Xw, Xf)]
+    return {"pares": len(i), "pearson": float(pearsonr(cw, cf)[0]), "spearman": float(spearmanr(cw, cf)[0])}
 
 
 def _levels(X: np.ndarray, labels: np.ndarray, ks: list[int], n_experts: int) -> dict:
