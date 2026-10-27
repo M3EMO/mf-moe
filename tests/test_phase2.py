@@ -170,3 +170,35 @@ def test_drive_sync_copies_the_checkpoint_then_writes_the_step_it_was_called_wit
     assert (remote / "ckpt.pt").read_bytes() == b"pesos" and (remote / "ckpt.pt.step").read_text() == "2:0\n"
     monkeypatch.delenv("MFMOE_DRIVE")
     assert P.drive_sync(str(ckpt), "3:0") is None  # sin Drive configurado, nada
+
+
+def test_emo_routes_each_document_only_inside_its_group():
+    model = tiny(n_experts=6, top_k=2)
+    P.install_emo(model, 2)  # en evaluación d = (2 + 6) // 2 = 4
+    ids = torch.randint(3, 256, (2, 64), generator=torch.Generator().manual_seed(0))
+    ids[0, 30] = model.config.eos_token_id  # tres documentos: la fila 0 en dos, la fila 1 entera
+    seg = torch.cat([torch.zeros(31), torch.ones(33), torch.full((64,), 2)]).long()
+    model.eval()
+    for r in routers(model):
+        r.record = True
+    with torch.no_grad():
+        model.model(input_ids=ids)
+    for r in routers(model):
+        _, probs, idx = r.last
+        for j in range(3):
+            group = set(probs[seg == j].sum(0).topk(4).indices.tolist())
+            assert set(idx[seg == j].unique().tolist()) <= group
+    plain = tiny(n_experts=6, top_k=2)
+    for r in routers(plain):
+        r.record = True
+    with torch.no_grad():
+        plain.model(input_ids=ids)
+    assert any(len(r.last[2][seg == j].unique()) > 4 for r in routers(plain) for j in range(3))  # sin EMO se sale del grupo
+
+
+def test_emo_with_the_whole_group_is_the_control_and_a_smaller_group_is_not():
+    run = lambda c: P.run2(c, 0, tiny(n_experts=6), _data(), "cpu", CFG, log=lambda r: None)  # noqa: E731
+    control = run(P.CONDS2["control"])["L"]
+    assert run(P.Cond2("emo_n", grow_at_start=True, emo=CFG.n_final))["L"] == control
+    assert run(P.Cond2("emo_k", grow_at_start=True, emo=2))["L"] != control
+    assert P.CONDS2["control+emo"] == P.Cond2("control+emo", grow_at_start=True, emo=8)

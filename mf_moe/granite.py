@@ -33,7 +33,7 @@ class RecordingGraniteRouter(gm.GraniteMoeTopKRouter):
     def forward(self, hidden_states: torch.Tensor):
         logits = F.linear(hidden_states, self.weight).float()
         probs = torch.softmax(logits, dim=-1)
-        _, idx = (probs + self.bias).topk(self.top_k, dim=-1)  # el sesgo solo elige; en cero, es el top-k de Granite
+        _, idx = self.restrict(probs, probs + self.bias).topk(self.top_k, dim=-1)  # el sesgo solo elige; en cero, es el top-k de Granite
         weights = torch.softmax(logits.gather(-1, idx), dim=-1).type_as(hidden_states)
         if self.training:
             with torch.no_grad():
@@ -46,6 +46,10 @@ class RecordingGraniteRouter(gm.GraniteMoeTopKRouter):
         if self.record:
             self.last = (hidden_states.detach(), probs.detach(), idx)
         return idx, weights, logits
+
+    def restrict(self, probs: torch.Tensor, scores: torch.Tensor) -> torch.Tensor:
+        """Puntajes de elección del top-k; EMO (`mf_moe.phase2.EmoRouter`) enmascara los expertos fuera del grupo."""
+        return scores
 
 
 def patch_routers(model: GraniteMoeForCausalLM) -> GraniteMoeForCausalLM:
