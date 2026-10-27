@@ -15,3 +15,5 @@ usd_max = 3.0
 files = [
     "mf_moe/**/*.py",
 ]
+contenedor = "ninguno"  # excepcion al contenedor obligatorio (orchestration-0rv)
+contenedor_motivo = "necesita torch con GPU (CUDA, varios GB); el entrenamiento corre en Colab y la laptop no tiene GPU NVIDIA para --device"
