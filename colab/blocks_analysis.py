@@ -12,7 +12,7 @@ import time
 import numpy as np
 from safetensors import safe_open
 
-from mf_moe.blocks import composition, neuron_signatures, shared_atoms
+from mf_moe.blocks import composition, neuron_signatures, shared_atoms, tree_likeness
 from mf_moe.granite import MODEL_ID
 
 
@@ -32,7 +32,7 @@ def main(path: str, layers: list[int]) -> None:
     for L in layers:
         t = time.time()
         X, lab = neuron_signatures(*tensors(L))
-        res["capas"][L] = {"composicion": composition(X, lab), "atomos_compartidos": shared_atoms(X, lab), "segundos": round(time.time() - t)}
+        res["capas"][L] = {"composicion": composition(X, lab), "atomos_compartidos": shared_atoms(X, lab), "arbol": tree_likeness(X), "segundos": round(time.time() - t)}
         print(json.dumps({"capa": L, "segundos": res["capas"][L]["segundos"]}), flush=True)
         json.dump(res, open(path, "w"), ensure_ascii=False)
 

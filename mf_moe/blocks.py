@@ -149,3 +149,24 @@ def hierarchical_routing(H: np.ndarray, W: np.ndarray, k: int, groups: tuple[int
             out.append({"grupos": G, "m": m, "recall": round(r, 4), "recall_nulo": round(float(np.mean(nulls)), 4),
                         "recall_nulo_p95": round(float(np.percentile(nulls, 95)), 4), "costo": round(cost, 3)})  # fmt: skip
     return out
+
+
+def tree_likeness(X: np.ndarray, n_quads: int = 20000, seed: int = 0) -> dict:
+    """¿El mapa es un árbol o una nube? Condición de 4 puntos de Gromov sobre cuartetos al azar, relativa a cada
+    cuarteto: (S_mayor - S_segunda) / S_mayor, con S = sumas de distancias de los 3 apareos. 0 = árbol exacto.
+    Relativa al cuarteto y no al diámetro: así las ramas finas pesan igual que las gruesas. Árbol ≠ autosimilar:
+    un árbol puede tener ramas de formas distintas en cada nivel. Nulo: gaussiana con el mismo espectro."""
+    rng = np.random.default_rng(seed)
+
+    def delta(A: np.ndarray) -> dict:
+        q = A[rng.integers(0, len(A), (n_quads, 4))]
+        d = lambda a, b: np.linalg.norm(q[:, a] - q[:, b], axis=1)  # noqa: E731
+        s = np.sort(np.stack([d(0, 1) + d(2, 3), d(0, 2) + d(1, 3), d(0, 3) + d(1, 2)], 1), 1)
+        s = s[s[:, 2] > 0]
+        r = (s[:, 2] - s[:, 1]) / s[:, 2]
+        return {"delta_rel_medio": float(r.mean()), "delta_rel_mediana": float(np.median(r))}
+
+    Xc = X - X.mean(0)
+    _, S, Vt = np.linalg.svd(Xc, full_matrices=False)
+    gauss = (rng.standard_normal((len(X), len(S))) * (S / np.sqrt(len(X)))) @ Vt
+    return {"real": delta(Xc), "nulo_gaussiano": delta(gauss)}

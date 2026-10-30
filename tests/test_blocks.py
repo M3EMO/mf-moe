@@ -84,3 +84,11 @@ def test_weight_function_agreement():
     X = rng.standard_normal((300, 16))
     assert weight_function_agreement(X, X)["pearson"] > 0.99
     assert abs(weight_function_agreement(X, rng.standard_normal((300, 16)))["pearson"]) < 0.05
+
+
+def test_tree_likeness_separates_hierarchy_from_gaussian():
+    from mf_moe.blocks import tree_likeness
+
+    X, _ = _hierarchical(n_levels=8, ratio=0.4)
+    r = tree_likeness(X, n_quads=5000)
+    assert r["real"]["delta_rel_medio"] < 0.5 * r["nulo_gaussiano"]["delta_rel_medio"]
