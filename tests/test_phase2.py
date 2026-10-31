@@ -50,7 +50,8 @@ def test_every_condition_runs_and_the_frozen_half_does_not_move(name):
         assert out["eventos_fusion"] is not None
 
 
-@pytest.mark.parametrize("name", ["division+padre_congelado", "arbol+consolidacion"])
+@pytest.mark.parametrize("name", ["division+padre_congelado", "arbol+consolidacion",
+                                  "control+consolidacion_uso+anillos"])
 def test_resume_mid_domain_finishes_with_the_saved_structure(tmp_path, monkeypatch, name):
     ckpt = str(tmp_path / "ckpt.pt")
     real, calls = P.eval_loss, {"n": 0}
@@ -237,3 +238,27 @@ def test_graded_consolidation_slows_the_important_experts_and_with_c0_is_the_con
     assert zero["L"] == run(P.CONDS2["control"])["L"] and any(sum(v) > 0 for v in zero["omega"].values())
     arm = P.CONDS2["control+consolidacion_graduada"]
     assert arm.graded == 1.0 and not arm.consolidate and run(arm)["L"] != zero["L"]
+
+
+def test_a_new_ring_does_not_change_the_output_and_the_old_ones_train_slower():
+    """B4: el anillo nace con B = 0; al llegar otro, el viejo y la atención base pasan a lr × 0,1."""
+    assert P.CONDS2["control+consolidacion_uso+anillos"].rings
+    model = tiny(n_experts=6)
+    layers = P.set_trainable(model, 1)
+    opt = P._adamw(model, CFG.lr)
+    ids = torch.randint(1, 256, (2, 16), generator=torch.Generator().manual_seed(0))
+    model.eval()
+    with torch.no_grad(), P.amp("cpu"):  # mezcla capas bf16 y fp32, como en la corrida
+        before = model(input_ids=ids).logits
+        P.add_ring(model, layers)
+        P.ring_groups(model, opt, layers)
+        assert torch.equal(model(input_ids=ids).logits, before)
+        P.add_ring(model, layers)
+        P.ring_groups(model, opt, layers)
+    q = model.model.layers[1].self_attn.q_proj
+    mult = {id(p): g["mult"] for g in opt.param_groups for p in g["params"]}
+    assert len(q.ring_a) == 2 and q.ring_a[0].shape == (P.RING_RANK, 64)
+    assert mult[id(q.ring_a[1])] == mult[id(q.ring_b[1])] == 1.0
+    assert mult[id(q.ring_a[0])] == mult[id(q.ring_b[0])] == mult[id(q.weight)] == P.RING_OLD_MULT
+    assert mult[id(model.model.layers[1].block_sparse_moe.experts.down_proj)] == 1.0
+    assert len(mult) == sum(p.requires_grad for p in model.parameters())  # cada entrenable en un solo grupo
