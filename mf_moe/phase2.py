@@ -18,6 +18,8 @@ Condiciones (todas terminan con hasta 48 expertos por capa entrenable y top-k fi
   dominio más usó (el diagnóstico mostró que el olvido vive en los expertos que usa lo viejo).
 - control+emo: el control con el ruteo de EMO (arXiv 2605.06663): cada documento rutea dentro de un grupo de
   expertos. Logra modularidad sin crecer; si olvida poco, el MoE fractal tiene que ganarle.
+- control+consolidacion_graduada: el control, pero en vez de congelar, cada experto aprende con lr ∝ 1/(1+c·Ω_e)
+  (synaptic intelligence, Zenke 2017; Benna y Fusi 2016). Ver `_graded_step`.
 Todo experto nuevo nace silencioso (sesgo -1) y el balanceo de los nacidos lo recluta (pilotos 5 y 6).
 
 Retome (decisión del usuario): el checkpoint guarda solo los pesos entrenables en fp32 y el estado del bucle;
@@ -66,6 +68,7 @@ class Cond2:
     lowrank_growth: bool = False  # V1: los clones del control son copias fijas + U·V, como las hojas del árbol
     max_depth: int = 0  # H10: profundidad máxima de las hojas que hacen mitosis (0 = sin límite; 1 = árbol de un nivel)
     emo: int = 0  # EMO: tamaño mínimo del grupo de expertos de cada documento, d ~ U{emo..n} (0 = apagado); ver `EmoRouter`
+    graded: float | None = None  # B5: c de la consolidación graduada (None = apagada; 0 corre el camino sin efecto)
 
 
 CONDS2 = {c.name: c for c in [
@@ -89,6 +92,9 @@ CONDS2 = {c.name: c for c in [
     Cond2("arbol_un_nivel+consolidacion", divide=True, tree=True, consolidate=8, max_depth=1),
     # rival sin crecimiento: modularidad por documento con los mismos 48 expertos; d desde el top-k de Granite (8)
     Cond2("control+emo", grow_at_start=True, emo=8),
+    # B5: la consolidación por uso congela de forma binaria y aprende 0,022 nats peor; acá el lr baja gradual
+    # con la importancia acumulada. c = 1 sin calibrar: el experto de importancia media aprende a la mitad
+    Cond2("control+consolidacion_graduada", grow_at_start=True, graded=1.0),
 ]}  # fmt: skip
 
 
@@ -291,6 +297,32 @@ def _jaccard(a: torch.Tensor, b: torch.Tensor) -> float:
     return round(float((inter / (2 * a.shape[-1] - inter)).mean()), 4)
 
 
+def _adam_delta(opt, p: torch.nn.Parameter) -> torch.Tensor:
+    """El paso que AdamW (sin weight decay) acaba de dar en `p`, rehecho con sus momentos: copiar los pesos
+    entrenables antes del paso costaría varios GB más en la L4."""
+    g = next(g for g in opt.param_groups if any(q is p for q in g["params"]))
+    st, (b1, b2) = opt.state[p], g["betas"]
+    t = float(st["step"])
+    return -g["lr"] / (1 - b1**t) * st["exp_avg"] / (st["exp_avg_sq"].sqrt() / (1 - b2**t) ** 0.5 + g["eps"])
+
+
+@torch.no_grad()
+def _graded_step(opt, model, layers: list[int], omega: dict, acc: dict, c: float) -> None:
+    """B5, después de `opt.step()`: achica el paso de cada experto a 1/(1+c·Ω̂_e) y suma -g·Δθ del paso aplicado
+    en `acc`. Ω̂ = Ω / media de la capa: c no depende de la escala de la loss. En AdamW, escalar el lr de una fila
+    es escalar su paso; los momentos no cambian."""
+    for i in layers:
+        experts, router = moe(model, i)
+        scale = 1 / (1 + c * omega[i] / omega[i].mean().clamp_min(1e-30))
+        for p in (experts.gate_up_proj, experts.down_proj, router.weight):
+            if p.grad is None or p not in opt.state:
+                continue
+            s = scale.view(-1, *[1] * (p.dim() - 1))
+            d = _adam_delta(opt, p)
+            p.sub_(d * (1 - s))  # con s = 1 resta un cero exacto: c = 0 es el control bit a bit
+            acc[i] -= (p.grad * d * s).flatten(1).sum(1)
+
+
 def _trainable_expert_params(model, layers: list[int], frozen: dict[int, set[int]]) -> int:
     """V1: parámetros de expertos que siguen entrenables al final (filas libres más deltas U·V libres)."""
     total = 0
@@ -460,6 +492,14 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                 ft.to_lowrank(model, opt, i, range(model.config.num_local_experts, routers(model)[i].num_experts))
     if div:
         div.attach(model)
+    # B5: Ω suma la importancia de los dominios cerrados (se arrastra entre dominios, como el congelado);
+    # `acc` junta la del dominio en curso y recién cuenta al cerrarlo: no frena el aprendizaje de ese dominio
+    n_exp = {i: routers(model)[i].num_experts for i in layers}  # shortcut: tamaño fijo, no sirve con división
+    omega = {i: torch.zeros(n, device=device) for i, n in n_exp.items()}
+    acc = {i: torch.zeros(n, device=device) for i, n in n_exp.items()}
+    if ckpt and Path(ckpt).exists():
+        for k, v in st.get("omega", {}).items():
+            omega[int(k)], acc[int(k)] = (torch.tensor(x, device=device) for x in v)
 
     def refreeze(only: set[int] | None = None) -> None:
         """Vuelve a congelar los padres de esas capas: una división reemplazó sus Parameters (y sus hooks)."""
@@ -479,7 +519,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                  "nacidos_desde": [r.n_born for r in routers(model)],
                  "congelados": {str(k): sorted(v) for k, v in frozen.items()},
                  "division": div.events if div else [], "z_max": div.z_max if div else [], "fusion": mer.events if mer else [],
-                 "deriva": snaps, "curva": curve, "reloj": clock, "retomes": resumes}  # fmt: skip
+                 "deriva": snaps, "curva": curve, "reloj": clock, "retomes": resumes,
+                 "omega": {str(i): [omega[i].tolist(), acc[i].tolist()] for i in layers}}  # fmt: skip
         tmp = Path(ckpt + ".tmp")
         torch.save({"key": key, "model": trainable, "state": state}, tmp)
         tmp.replace(ckpt)
@@ -523,6 +564,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                 del out
             torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
             opt.step()
+            if cond.graded is not None:
+                _graded_step(opt, model, layers, omega, acc, cond.graded)
             opt.zero_grad(set_to_none=True)
             if div:
                 if (s + 1) % div.every == 0:
@@ -555,6 +598,10 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                     top = set(random.Random(f"{seed}/{di}/{i}").sample(free, len(top - frozen[i])))
                 frozen[i] |= top
             refreeze()
+        if cond.graded is not None:  # -g·Δθ sumado puede salir negativo por ruido: importancia mínima 0
+            for i in layers:
+                omega[i] += acc[i].clamp_min(0)
+                acc[i].zero_()
         if mer:
             calib = np.concatenate([data[d]["train"][: cfg.calib_seqs] for d in cfg.domains[: di + 1]])
             with amp(device):
@@ -578,6 +625,7 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
             "uso_expertos_nuevos": [round(float(routers(model)[i].load[model.config.num_local_experts :].sum()), 4)
                                     for i in layers],  # fmt: skip
             "congelados": {str(k): sorted(v) for k, v in frozen.items()},
+            "omega": {str(i): [round(float(x), 6) for x in omega[i]] for i in layers} if cond.graded is not None else None,
             "eventos_division": div.events if div else [], "eventos_fusion": mer.events if mer else [],
             "ruteo": _routing_report(model, layers, evals, snaps, device, frozen),
             "curva": curve, "segundos_por_paso": round(clock[0] / max(1, clock[1]), 3), "retomes": resumes,
