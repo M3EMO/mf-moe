@@ -202,3 +202,30 @@ def test_emo_with_the_whole_group_is_the_control_and_a_smaller_group_is_not():
     assert run(P.Cond2("emo_n", grow_at_start=True, emo=CFG.n_final))["L"] == control
     assert run(P.Cond2("emo_k", grow_at_start=True, emo=2))["L"] != control
     assert P.CONDS2["control+emo"] == P.Cond2("control+emo", grow_at_start=True, emo=8)
+
+
+def test_graded_consolidation_slows_the_important_experts_and_with_c0_is_the_control():
+    """B5: el paso de cada experto se achica a 1/(1+c·Ω̂_e); el paso rehecho desde AdamW es el que se dio."""
+    model = tiny(n_experts=6)
+    layers = P.set_trainable(model, 1)
+    opt = P._adamw(model, 1e-2)
+    ids = torch.randint(3, 256, (2, 16), generator=torch.Generator().manual_seed(0))
+    with P.amp("cpu"):
+        model(input_ids=ids, labels=ids).loss.backward()
+    w = moe(model, 1)[0].down_proj
+    before = w.detach().clone()
+    opt.step()
+    full = w.detach() - before
+    assert torch.allclose(full, P._adam_delta(opt, w), atol=1e-7) and (full.flatten(1).norm(dim=1) > 0).all()
+    omega = {1: torch.tensor([9.0, 0, 0, 0, 0, 3.0])}  # Ω̂ = Ω / 2: el experto 0 vale 4,5 y el 5 vale 1,5
+    acc = {1: torch.zeros(6)}
+    P._graded_step(opt, model, layers, omega, acc, c=1.0)
+    ratio = [float((w.detach()[e] - before[e]).norm() / full[e].norm()) for e in range(6)]
+    assert ratio[0] == pytest.approx(1 / 5.5, rel=1e-4) and ratio[5] == pytest.approx(1 / 2.5, rel=1e-4)
+    assert ratio[1] == pytest.approx(1.0) and acc[1].abs().sum() > 0
+
+    run = lambda c: P.run2(c, 0, tiny(n_experts=6), _data(), "cpu", CFG, log=lambda r: None)  # noqa: E731
+    zero = run(P.Cond2("graduada_0", grow_at_start=True, graded=0.0))
+    assert zero["L"] == run(P.CONDS2["control"])["L"] and any(sum(v) > 0 for v in zero["omega"].values())
+    arm = P.CONDS2["control+consolidacion_graduada"]
+    assert arm.graded == 1.0 and not arm.consolidate and run(arm)["L"] != zero["L"]
