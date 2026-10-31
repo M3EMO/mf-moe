@@ -18,6 +18,8 @@ Condiciones (todas terminan con hasta 48 expertos por capa entrenable y top-k fi
   dominio más usó (el diagnóstico mostró que el olvido vive en los expertos que usa lo viejo).
 - control+emo: el control con el ruteo de EMO (arXiv 2605.06663): cada documento rutea dentro de un grupo de
   expertos. Logra modularidad sin crecer; si olvida poco, el MoE fractal tiene que ganarle.
+- control+consolidacion_uso+anillos (B4): la atención explica ~69 % del olvido y entrena libre (un tronco débil
+  frena el árbol). Cada dominio suma un anillo, una LoRA de atención nueva; lo viejo entrena con lr × 0,1.
 Todo experto nuevo nace silencioso (sesgo -1) y el balanceo de los nacidos lo recluta (pilotos 5 y 6).
 
 Retome (decisión del usuario): el checkpoint guarda solo los pesos entrenables en fp32 y el estado del bucle;
@@ -27,6 +29,7 @@ al retomar, AdamW arranca con momentos en cero y vuelve a calentar el learning r
 from __future__ import annotations
 
 import json
+import math
 import os
 import subprocess
 import random
@@ -37,6 +40,8 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import torch.nn.functional as F
+from torch import nn
 
 from mf_moe import fractal_tree as ft
 from mf_moe.division import Divider, resize, split
@@ -65,6 +70,7 @@ class Cond2:
     lowrank_growth: bool = False  # V1: los clones del control son copias fijas + U·V, como las hojas del árbol
     max_depth: int = 0  # H10: profundidad máxima de las hojas que hacen mitosis (0 = sin límite; 1 = árbol de un nivel)
     emo: int = 0  # EMO: tamaño mínimo del grupo de expertos de cada documento, d ~ U{emo..n} (0 = apagado); ver `EmoRouter`
+    rings: bool = False  # B4: un anillo de atención (LoRA q, k, v, o) nuevo por dominio; ver `add_ring`
 
 
 CONDS2 = {c.name: c for c in [
@@ -86,6 +92,8 @@ CONDS2 = {c.name: c for c in [
     Cond2("arbol_un_nivel+consolidacion", divide=True, tree=True, consolidate=8, max_depth=1),
     # rival sin crecimiento: modularidad por documento con los mismos 48 expertos; d desde el top-k de Granite (8)
     Cond2("control+emo", grow_at_start=True, emo=8),
+    # B4: el tronco crece un anillo por dominio; la consolidación protege expertos y el lr bajo, la atención vieja
+    Cond2("control+consolidacion_uso+anillos", grow_at_start=True, consolidate=8, rings=True),
 ]}  # fmt: skip
 
 
@@ -186,6 +194,45 @@ def _adamw(model, lr: float, lowrank_mult: float = 1.0) -> torch.optim.Optimizer
               {"params": [p for n, p in named if ".lowrank." in n], "mult": lowrank_mult}]  # fmt: skip
     # fused: la versión foreach copia todos los momentos en temporales y no entró en la L4 (piloto 2, 2026-10-17)
     return torch.optim.AdamW([g for g in groups if g["params"]], lr=lr, weight_decay=0.0, fused=named[0][1].is_cuda)
+
+
+RING_RANK, RING_OLD_MULT = 16, 0.1
+RING_PROJS = ("q_proj", "k_proj", "v_proj", "o_proj")
+
+
+def _ring_forward(lin, args, out):
+    return out + sum(F.linear(F.linear(args[0], a), b) for a, b in zip(lin.ring_a, lin.ring_b))
+
+
+def add_ring(model, layers: list[int]) -> None:
+    """B4: suma a q, k, v y o de esas capas un anillo B·A (rango `RING_RANK`). B nace en cero: la salida no cambia.
+    Va después de `set_trainable` (toma el dtype del peso); `ring_groups` lo pone en el optimizador."""
+    for i in layers:
+        for name in RING_PROJS:
+            lin = getattr(model.model.layers[i].self_attn, name)
+            if not hasattr(lin, "ring_a"):
+                lin.ring_a, lin.ring_b = nn.ParameterList(), nn.ParameterList()
+                lin.register_forward_hook(_ring_forward)
+            w = lin.weight
+            a = nn.Parameter(torch.empty(RING_RANK, lin.in_features, device=w.device, dtype=w.dtype))
+            nn.init.kaiming_uniform_(a, a=math.sqrt(5))  # como PEFT
+            lin.ring_a.append(a)
+            lin.ring_b.append(nn.Parameter(torch.zeros(lin.out_features, RING_RANK, device=w.device, dtype=w.dtype)))
+
+
+def ring_groups(model, opt, layers: list[int]) -> None:
+    """El anillo más nuevo entrena con el lr base; la atención base y los anillos viejos, con lr × `RING_OLD_MULT`.
+    Mueve parámetros entre grupos sin tocar el estado de AdamW (va por parámetro): no pierde momentos."""
+    attn = [p for i in layers for p in model.model.layers[i].self_attn.parameters() if p.requires_grad]
+    new = [p for i in layers for n in RING_PROJS for lst in ("ring_a", "ring_b")
+           for p in getattr(getattr(model.model.layers[i].self_attn, n), lst)[-1:]]  # fmt: skip
+    ids = {id(p) for p in attn}
+    for g in opt.param_groups:
+        g["params"] = [p for p in g["params"] if id(p) not in ids]
+    opt.param_groups[:] = [g for g in opt.param_groups if g["params"]]
+    new_ids = {id(p) for p in new}
+    opt.add_param_group({"params": [p for p in attn if id(p) not in new_ids], "mult": RING_OLD_MULT})
+    opt.add_param_group({"params": new, "mult": 1.0})
 
 
 @torch.no_grad()
@@ -421,9 +468,14 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
                 ft.to_lowrank(model, scratch, i, range(model.config.num_local_experts, routers(model)[i].num_experts))
         for r, n in zip(routers(model), st.get("nacidos_desde", [])):
             r.n_born = n
+        if cond.rings:
+            for _ in range(st["dominio"] + (st["paso"] > 0)):  # un anillo por dominio empezado
+                add_ring(model, layers)
         missing = model.load_state_dict(ck["model"], strict=False).unexpected_keys
         assert not missing, missing
         opt = _adamw(model, cfg.lr, cfg.lowrank_lr_mult)  # momentos en cero: el retome vuelve a calentar el lr
+        if cond.rings:
+            ring_groups(model, opt, layers)
         L0, L, learned = st["L_inicial"], st["L"], st["aprendido"]
         start, step_in, done_steps = st["dominio"], st["paso"], st["pasos"]
         frozen = {int(k): set(v) for k, v in st["congelados"].items()}
@@ -482,6 +534,9 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         s0 = step_in if di == start else 0
         if div:
             div._acc = []
+        if cond.rings and s0 == 0:  # al retomar a mitad de dominio, su anillo ya vino del checkpoint
+            add_ring(model, layers)
+            ring_groups(model, opt, layers)
         n_events = len(div.events) if div else 0
         window = []
         for s in range(s0, steps):
