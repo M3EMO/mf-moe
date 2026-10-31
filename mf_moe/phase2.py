@@ -61,6 +61,7 @@ class Cond2:
     random_parent: bool = False  # divide expertos al azar con el mismo calendario: separa la duda del congelado
     consolidate: int = 0  # al cerrar cada dominio congela los k expertos que más usó (diagnóstico: el olvido vive ahí)
     consolidate_random: bool = False  # congela tantos expertos nuevos como el uso, pero al azar: ¿importa cuáles?
+    consolidate_tfidf: bool = False  # B8: elige los k por uso_dominio / uso_general (Meta) en vez de uso crudo
     tree: bool = False  # árbol fractal (ticket 14): mitosis con hija de bajo rango; la hija vieja queda congelada
     lowrank_growth: bool = False  # V1: los clones del control son copias fijas + U·V, como las hojas del árbol
     max_depth: int = 0  # H10: profundidad máxima de las hojas que hacen mitosis (0 = sin límite; 1 = árbol de un nivel)
@@ -76,6 +77,8 @@ CONDS2 = {c.name: c for c in [
     Cond2("division+consolidacion_uso", divide=True, consolidate=8),
     Cond2("control+consolidacion_uso", grow_at_start=True, consolidate=8),  # ¿hace falta dividir?
     Cond2("control+consolidacion_azar", grow_at_start=True, consolidate=8, consolidate_random=True),
+    # B8, sparse memory finetuning (arXiv 2510.15103): congela lo propio del dominio, no lo que también usa el inglés
+    Cond2("control+consolidacion_tfidf", grow_at_start=True, consolidate=8, consolidate_tfidf=True),
     # ticket 14, etapa C: el calendario dice cuándo (mismo presupuesto, 16 mitosis por capa) y la duda dice dónde,
     # en cualquier profundidad; un umbral absoluto nunca dispara (z > 3 en 0 de 192 revisiones de la fase 2)
     Cond2("arbol+consolidacion", divide=True, tree=True, consolidate=8),
@@ -226,21 +229,36 @@ def _grow_control(model, opt, layers: list[int], n_final: int, calib: torch.Tens
 
 
 @torch.no_grad()
-def _most_used(model, layers: list[int], seqs: np.ndarray, device: str, k: int) -> dict[int, set[int]]:
-    """Los k expertos de cada capa que el router más elige en `seqs` (los que guardan ese dominio)."""
+def _most_used(model, layers: list[int], seqs: np.ndarray, device: str, k: int,
+               background: np.ndarray | None = None) -> dict[int, set[int]]:  # fmt: skip
+    """Los k expertos de cada capa que el router más elige en `seqs` (los que guardan ese dominio).
+    Con `background` (texto general), ordena por uso_dominio / uso_general: ver `_tfidf`."""
     rs = routers(model)
     was = [r.record for r in rs]  # la división tiene el registro prendido y lo necesita después
     for r in rs:
         r.record = True
     model.eval()
-    with amp(device):
-        model.model(input_ids=torch.as_tensor(np.asarray(seqs, dtype=np.int64), device=device))
+
+    def usage(x: np.ndarray) -> dict[int, torch.Tensor]:
+        with amp(device):
+            model.model(input_ids=torch.as_tensor(np.asarray(x, dtype=np.int64), device=device))
+        return {i: torch.bincount(rs[i].last[2].reshape(-1), minlength=rs[i].num_experts) for i in layers}
+
+    score = usage(seqs)
+    if background is not None:
+        score = {i: _tfidf(u, b) for (i, u), b in zip(score.items(), usage(background).values())}
     model.train()
-    out = {i: set(torch.bincount(rs[i].last[2].reshape(-1), minlength=rs[i].num_experts).topk(min(k, rs[i].num_experts)).indices.tolist())
-           for i in layers}  # fmt: skip
+    out = {i: set(u.topk(min(k, len(u))).indices.tolist()) for i, u in score.items()}
     for r, w in zip(rs, was):
         r.record = w
     return out
+
+
+def _tfidf(usage: torch.Tensor, background: torch.Tensor) -> torch.Tensor:
+    """Puntaje de cada experto a la Meta (arXiv 2510.15103): cuánto más lo usa el dominio que el corpus de fondo.
+    Compara fracciones de uso (los dos textos pueden rutear distinta cantidad de tokens); un experto que el
+    inglés también usa mucho baja. El 1e-3 evita dividir por cero en los expertos que el fondo no elige."""
+    return (usage.float() / usage.sum() + 1e-3) / (background.float() / background.sum() + 1e-3)
 
 
 DRIFT_SEQS, REPORT_SEQS, PER_DOC = 16, 128, 8  # PER_DOC: secuencias de evaluación por documento (prepare_phase2)
@@ -530,7 +548,8 @@ def run2(cond: Cond2, seed: int, model, data: dict, device: str, cfg: Cfg2 | Non
         if di < len(cfg.domains) - 1:
             snaps[dom] = _route(model, layers, evals[dom][:DRIFT_SEQS], device).to(torch.int16).cpu()
         if cond.consolidate and di < len(cfg.domains) - 1:
-            for i, top in _most_used(model, layers, data[dom]["train"][: 2 * cfg.calib_seqs], device, cond.consolidate).items():
+            bg = data[GENERAL]["train"][: 2 * cfg.calib_seqs] if cond.consolidate_tfidf else None  # el texto del replay
+            for i, top in _most_used(model, layers, data[dom]["train"][: 2 * cfg.calib_seqs], device, cond.consolidate, bg).items():
                 if cond.consolidate_random:  # misma cantidad de congelados nuevos que el uso, elegidos sin mirarlo
                     free = sorted(set(range(routers(model)[i].num_experts)) - frozen[i])
                     top = set(random.Random(f"{seed}/{di}/{i}").sample(free, len(top - frozen[i])))

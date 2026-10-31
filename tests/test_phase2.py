@@ -202,3 +202,11 @@ def test_emo_with_the_whole_group_is_the_control_and_a_smaller_group_is_not():
     assert run(P.Cond2("emo_n", grow_at_start=True, emo=CFG.n_final))["L"] == control
     assert run(P.Cond2("emo_k", grow_at_start=True, emo=2))["L"] != control
     assert P.CONDS2["control+emo"] == P.Cond2("control+emo", grow_at_start=True, emo=8)
+
+
+def test_tfidf_consolidation_drops_an_expert_that_english_also_uses_a_lot():
+    domain, english = torch.tensor([50, 40, 10, 0]), torch.tensor([5, 90, 5, 0])
+    assert set(domain.topk(2).indices.tolist()) == {0, 1}  # por uso crudo, el 1 queda segundo
+    assert set(P._tfidf(domain, english).topk(2).indices.tolist()) == {0, 2}  # el inglés también lo usa: baja
+    assert P.CONDS2["control+consolidacion_tfidf"] == P.Cond2(
+        "control+consolidacion_tfidf", grow_at_start=True, consolidate=8, consolidate_tfidf=True)
