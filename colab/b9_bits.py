@@ -26,7 +26,7 @@ import torch
 from mf_moe.bits import PRIMS, RECURSIVE, make_bits_example
 from mf_moe.blocks import composition, neuron_signatures, tree_likeness
 from mf_moe.model import build, routers
-from mf_moe.train import MASTERY, adamw, encode, scores
+from mf_moe.train import MASTERY, REPLAY_FRAC, adamw, encode, scores
 
 SIZE = {"top_k": 2, "d": 64, "layers": 4, "ctx": 64}
 N_EXPERTS, BATCH, EVAL_EVERY, EVAL_N = 16, 128, 500, 300
@@ -42,14 +42,17 @@ def eval_sets(tasks: list[str]) -> dict:
     return {t: [make_bits_example(t, random.Random(f"eval:{t}:{i}"), named=True) for i in range(EVAL_N)] for t in tasks}
 
 
-def train(model, opt, tasks: list[str], evals: dict, max_steps: int, rng: random.Random, tag: str) -> dict:
-    """Lotes parejos entre `tasks` hasta que todas lleguen al 88 % o se acaben los pasos."""
-    held = {e.prompt for exs in evals.values() for e in exs}
+def train(model, opt, tasks: list[str], evals: dict, max_steps: int, rng: random.Random, tag: str,
+          replay: list[str] = (), held: set[str] | None = None) -> dict:  # fmt: skip
+    """Lotes parejos entre `tasks` hasta que todas lleguen al 88 % o se acaben los pasos. Con `replay`, cada
+    ejemplo sale de esas tareas viejas con probabilidad REPLAY_FRAC (ejemplos nuevos, no un buffer)."""
+    held = held if held is not None else {e.prompt for exs in evals.values() for e in exs}
     hist, t0 = [], time.time()
     for step in range(1, max_steps + 1):
         exs = []
         while len(exs) < BATCH:
-            ex = make_bits_example(rng.choice(tasks), rng, named=True)
+            old = replay and rng.random() < REPLAY_FRAC
+            ex = make_bits_example(rng.choice(replay if old else tasks), rng, named=True)
             if ex.prompt not in held:
                 exs.append(ex)
         ids, labels = encode(exs, "cpu")
