@@ -25,20 +25,28 @@ codes = [p.wait() for p in ps]
 open("/content/out/FIN", "w").write(str(codes))
 ''')
 PY
-start() {
+launch() {  # el exec queda conectado toda la corrida: sin cliente, Colab retira la VM a los ~20 min
   [ -f $D/exec.pid ] && kill $(cat $D/exec.pid) 2>/dev/null
-  $C stop -s $S >/dev/null 2>&1
-  $C new -s $S --gpu L4 >> $LOG 2>&1
-  $C upload -s $S $D/code.zip /content/code.zip >> $LOG 2>&1
   for f in $OUTS; do [ -s $D/$f ] && $C upload -s $S $D/$f /content/out/$f >> $LOG 2>&1; done  # para retomar
   nohup $CLI exec -s $S -f $D/job.py --timeout 30000 > $D/exec.log 2>&1 &
   echo $! > $D/exec.pid
   log "lanzado"
 }
+start() {
+  $C stop -s $S >/dev/null 2>&1
+  $C new -s $S --gpu L4 >> $LOG 2>&1
+  $C upload -s $S $D/code.zip /content/code.zip >> $LOG 2>&1
+  launch
+}
 start
 for i in $(seq 1 300); do
   sleep 120
-  if $C status -s $S 2>&1 | grep -q "not found"; then log "VM retirada: relanzo"; start; continue; fi
+  st=$($C status -s $S 2>&1)
+  if echo "$st" | grep -q "not found"; then log "VM retirada: relanzo"; start; continue; fi
+  # kernel ocioso sin FIN: el exec se cortó antes de arrancar o el trabajo murió; los scripts retoman
+  if echo "$st" | grep -q "Status: IDLE" && ! $C download -s $S /content/out/FIN $D/FIN >/dev/null 2>&1; then
+    log "kernel ocioso sin FIN: relanzo el trabajo"; launch; continue
+  fi
   for f in $OUTS; do
     $C download -s $S /content/out/$f.log $D/$f.log >/dev/null 2>&1
     $C download -s $S /content/out/$f $D/$f.tmp >/dev/null 2>&1 && [ -s $D/$f.tmp ] && mv $D/$f.tmp $D/$f
