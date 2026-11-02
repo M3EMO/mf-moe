@@ -30,7 +30,7 @@ import time
 import numpy as np
 import torch
 
-from colab.b9_bits import EVAL_EVERY, SINGLES, SIZE, eval_sets, routing, train
+from colab.b9_bits import DEVICE, EVAL_EVERY, SINGLES, SIZE, eval_sets, routing, train
 from colab.b10b_cobertura import COVERAGE, UNSEEN
 from mf_moe.bits import make_bits_example
 from mf_moe.division import _grow_param
@@ -74,7 +74,7 @@ def grow(model, opt, arm: str, rng: random.Random, p: float = 0.0) -> tuple[dict
                 W = getattr(experts, name)
                 w = {"raiz": W[pa], "raiz_g": W[pb], "azar": torch.randn_like(W[pa]) * W[:E0].std()}.get(arm, (W[pa] + W[pb]) / 2)
                 _grow_param(opt, experts, name, pa, w.clone())
-            row = torch.tensor(rt[pair]["h"][L].mean(0) - np.mean([rt[t]["h"][L].mean(0) for t in rt], 0))
+            row = torch.tensor(rt[pair]["h"][L].mean(0) - np.mean([rt[t]["h"][L].mean(0) for t in rt], 0)).to(router.weight)
             _grow_param(opt, router, "weight", pa, row / row.norm() * router.weight[pa].norm() * ROW_SCALE)
             router.bias = torch.cat([router.bias, router.bias[pa : pa + 1] - 1])  # mudo: solo entra si se fuerza
             router.load = torch.cat([router.load, router.load[pa : pa + 1]])
@@ -89,7 +89,7 @@ def force_by_task(model, child: dict[str, int]):
 
     def hook(_, args, kwargs):
         ids = kwargs.get("input_ids", args[0] if args else None)
-        c = torch.tensor([child.get(bytes(r[:16].tolist()).split(b":")[0].decode(errors="ignore"), -1) for r in ids])
+        c = torch.tensor([child.get(bytes(r[:16].tolist()).split(b":")[0].decode(errors="ignore"), -1) for r in ids], device=ids.device)
         for r in routers(model):
             r.force = c[:, None].expand(ids.shape).reshape(-1)
 
@@ -105,7 +105,7 @@ def main(path: str, max_steps: int = 20000, seed: int = 0, p: float = 0.0, arms:
     held = {e.prompt for exs in ev.values() for e in exs}
     stage1 = {}
     for n in (E0, E0 + len(PAIRS)) if "fijo" in arms else (E0,):  # el brazo fijo entrena sus primitivas con los 26 expertos
-        model = build(n, seed=seed, **SIZE)
+        model = build(n, seed=seed, **SIZE).to(DEVICE)
         opt = adamw(model)
         r = train(model, opt, SINGLES, {t: ev[t] for t in SINGLES}, max_steps, random.Random(seed), f"primitivas:{n}", held=held, p=p)
         stage1[n] = (model, opt, {k: r[k] for k in ("pasos", "domino", "historia")})
@@ -113,14 +113,14 @@ def main(path: str, max_steps: int = 20000, seed: int = 0, p: float = 0.0, arms:
         model, opt, s1 = copy.deepcopy(stage1[E0 + len(PAIRS) if arm == "fijo" else E0])  # copia modelo y AdamW juntos
         child, par = ({}, None) if arm == "fijo" else grow(model, opt, arm, random.Random(seed), p)
         hook = force_by_task(model, child)
-        after_birth = {t: round(scores(model, ev[t], "cpu")[0], 3) for t in SINGLES}
+        after_birth = {t: round(scores(model, ev[t], DEVICE)[0], 3) for t in SINGLES}
         r = train(model, opt, PAIRS, {t: ev[t] for t in PAIRS}, max_steps, random.Random(seed + 1), arm,
                   replay=SINGLES, held=held, p=p, every=every)  # fmt: skip
-        acc = {t: round(scores(model, ev[t], "cpu")[0], 3) for t in SINGLES + PAIRS + UNSEEN}
+        acc = {t: round(scores(model, ev[t], DEVICE)[0], 3) for t in SINGLES + PAIRS + UNSEEN}
         hook.remove()
         for rt in routers(model):
             rt.force = None
-        free = {t: round(scores(model, ev[t], "cpu")[0], 3) for t in PAIRS} if child else None
+        free = {t: round(scores(model, ev[t], DEVICE)[0], 3) for t in PAIRS} if child else None
         out = {"primitivas": s1, "pares": {k: r[k] for k in ("pasos", "domino", "historia")}, "exactitud": acc,
                "primitivas_al_nacer": after_birth, "pares_sin_forzar": free, "padres": par,
                "primitivas_media": round(float(np.mean([acc[t] for t in SINGLES])), 3),

@@ -16,6 +16,7 @@ Uso: .venv/bin/python -m colab.b9_bits SALIDA.json [pasos máximos por etapa]
 """
 
 import json
+import os
 import random
 import sys
 import time
@@ -30,6 +31,7 @@ from mf_moe.train import MASTERY, REPLAY_FRAC, adamw, encode, scores
 
 SIZE = {"top_k": 2, "d": 64, "layers": 4, "ctx": 64}
 N_EXPERTS, BATCH, EVAL_EVERY, EVAL_N = 16, 128, 500, 300
+DEVICE = os.environ.get("MFMOE_DEVICE", "cpu")  # cuda en Colab (B12c)
 # Sin rev: con 6 primitivas y 12 pares, las 6 tareas con rev seguían en cero a los 10.000 pasos (2026-10-31), y
 # sola la aprende en 3000. Con las 6 primitivas y los 30 pares, la media era 0,34 a los 8000 pasos.
 SINGLES = [p for p in PRIMS if p != "rev"]
@@ -57,13 +59,13 @@ def train(model, opt, tasks: list[str], evals: dict, max_steps: int, rng: random
             ex = make_bits_example(rng.choice(replay if old else tasks), rng, named=True, steps=steps, p=p)
             if ex.prompt not in held:
                 exs.append(ex)
-        ids, labels = encode(exs, "cpu")
+        ids, labels = encode(exs, DEVICE)
         model(input_ids=ids, labels=labels).loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
         opt.zero_grad(set_to_none=True)
         if step % every == 0:
-            accs = {t: round(scores(model, evals[t], "cpu")[0], 3) for t in tasks}
+            accs = {t: round(scores(model, evals[t], DEVICE)[0], 3) for t in tasks}
             hist.append({"paso": step, "peor": min(accs.values()), "media": round(float(np.mean(list(accs.values()))), 3),
                          "en_cero": sorted(t for t, a in accs.items() if a < 0.05)})  # fmt: skip
             print(json.dumps({"etapa": tag, **hist[-1], "segundos": round(time.time() - t0)}), flush=True)
@@ -82,11 +84,11 @@ def routing(model, evals: dict) -> dict:
         r.record = True
     out = {}
     for t, exs in evals.items():
-        ids, labels = encode(exs, "cpu")
+        ids, labels = encode(exs, DEVICE)
         model(input_ids=ids)
         mask = (labels != -100).reshape(-1)
-        out[t] = {"idx": np.stack([r.last[2][mask].numpy() for r in rs], 1),
-                  "h": np.stack([r.last[0][mask].numpy() for r in rs])}  # fmt: skip
+        out[t] = {"idx": np.stack([r.last[2][mask].cpu().numpy() for r in rs], 1),
+                  "h": np.stack([r.last[0][mask].cpu().numpy() for r in rs])}  # fmt: skip
     for r in rs:
         r.record = False
     model.train()
@@ -150,7 +152,7 @@ def structure(model, rt: dict) -> dict:
         H = np.concatenate([rt[t]["h"][L] for t in rt])
         H = H[np.random.default_rng(L).choice(len(H), min(4000, len(H)), replace=False)]
         e = layer.mlp.experts
-        Xw, lab = neuron_signatures(e.gate_up_proj.detach().numpy(), e.down_proj.detach().numpy())
+        Xw, lab = neuron_signatures(e.gate_up_proj.detach().cpu().numpy(), e.down_proj.detach().cpu().numpy())
         comp = composition(Xw, lab)
         out[L] = {"arbol_estados": tree_likeness(H), "cv_pendientes": comp["real"]["cv_pendientes"],
                   "cv_pendientes_nulo": comp["nulo_gaussiano"]["cv_pendientes"]}  # fmt: skip
@@ -158,7 +160,7 @@ def structure(model, rt: dict) -> dict:
 
 
 def fresh(seed: int):
-    model = build(N_EXPERTS, seed=seed, **SIZE)
+    model = build(N_EXPERTS, seed=seed, **SIZE).to(DEVICE)
     return model, adamw(model)
 
 
@@ -183,7 +185,7 @@ def main(path: str, max_steps: int = 20000, seed: int = 0) -> None:
     res["fila_primitivas"] = train(model, opt, SINGLES, pick(SINGLES), max_steps, random.Random(seed + 1), "fila:1")
     res["fila_primitivas"]["info_mutua"] = mutual_info(routing(model, pick(SINGLES)), SINGLES)
     res["fila_pares"] = train(model, opt, PAIRS, pick(PAIRS), max_steps, random.Random(seed + 2), "fila:2")
-    res["fila_pares"]["primitivas_despues"] = {t: round(scores(model, ev[t], "cpu")[0], 3) for t in SINGLES}
+    res["fila_pares"]["primitivas_despues"] = {t: round(scores(model, ev[t], DEVICE)[0], 3) for t in SINGLES}
     model, opt = fresh(seed)
     res["pares_desde_cero"] = train(model, opt, PAIRS, pick(PAIRS), max_steps, random.Random(seed + 2), "cero")
     save()

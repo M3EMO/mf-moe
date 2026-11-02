@@ -1,0 +1,5 @@
+b12c_a_s0.json|colab.b12c_distincion {out} 20000 0
+b12c_a_s1.json|colab.b12c_distincion {out} 20000 1
+b12c_a_s2.json|colab.b12c_distincion {out} 20000 2
+b12c_a_s3.json|colab.b12c_distincion {out} 20000 3
+b12c_a_s4.json|colab.b12c_distincion {out} 20000 4

@@ -23,7 +23,7 @@ import time
 import numpy as np
 import torch
 
-from colab.b9_bits import SINGLES, SIZE, _mi, eval_sets, routing, train
+from colab.b9_bits import DEVICE, SINGLES, SIZE, _mi, eval_sets, routing, train
 from colab.b12_raices import E0, _usage, parents
 from mf_moe.model import build, routers
 from mf_moe.train import adamw, encode, scores
@@ -61,14 +61,14 @@ def _cos(M: np.ndarray) -> float:
 @torch.no_grad()
 def ablation(model, ev: dict) -> list:
     """[capas][expertos][primitivas]: caída de exactitud al excluir el experto del top-k de esa capa."""
-    base = {t: scores(model, ev[t], "cpu")[0] for t in SINGLES}
+    base = {t: scores(model, ev[t], DEVICE)[0] for t in SINGLES}
     out = []
     for r in routers(model):
         rows = []
         for e in range(E0):
             keep = r.bias[e].item()
             r.bias[e] = -1e9
-            rows.append([round(base[t] - scores(model, ev[t], "cpu")[0], 3) for t in SINGLES])
+            rows.append([round(base[t] - scores(model, ev[t], DEVICE)[0], 3) for t in SINGLES])
             r.bias[e] = keep
         out.append(rows)
     return out
@@ -106,7 +106,7 @@ def measure(model, ev: dict, seed: int) -> dict:
 
 def run(p: float, variant: str, max_steps: int, seed: int) -> dict:
     ev = eval_sets(SINGLES, p=p)
-    model = build(E0, seed=seed, **SIZE)
+    model = build(E0, seed=seed, **SIZE).to(DEVICE)
     for r in routers(model):
         if variant == "sin_balanceo":
             r.u = 0.0
