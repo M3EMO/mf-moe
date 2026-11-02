@@ -73,6 +73,11 @@ def compositions(max_len: int = 3) -> list[str]:
     return ["+".join(c) for k in range(1, max_len + 1) for c in itertools.product(PRIMS, repeat=k)]
 
 
-def make_bits_example(task: str, rng: random.Random, named: bool = False, n_bits: int = N_BITS) -> Example:
+def make_bits_example(task: str, rng: random.Random, named: bool = False, n_bits: int = N_BITS,
+                      steps: bool = False) -> Example:  # fmt: skip
+    """Con `steps`, la respuesta escribe cada resultado intermedio de una composición, separados por espacio."""
     b = "".join(rng.choice("01") for _ in range(n_bits))
-    return Example(task, ("" if not named else f"{task}: ") + b + " =", apply(task, b) + EOS)
+    out = [apply(task, b)]
+    if steps and not task.startswith("rec:"):
+        out = list(itertools.accumulate(primitives(task), lambda x, p: PRIMS[p](x), initial=b))[1:]
+    return Example(task, ("" if not named else f"{task}: ") + b + " =", " ".join(out) + EOS)

@@ -38,12 +38,13 @@ PAIRS = [f"{SINGLES[i]}+{SINGLES[(i + j) % 5]}" for j in (1, 2) for i in range(5
 RECS = [f"rec:{p}" for p in RECURSIVE if p != "rev"]
 
 
-def eval_sets(tasks: list[str]) -> dict:
-    return {t: [make_bits_example(t, random.Random(f"eval:{t}:{i}"), named=True) for i in range(EVAL_N)] for t in tasks}
+def eval_sets(tasks: list[str], steps: bool = False) -> dict:
+    return {t: [make_bits_example(t, random.Random(f"eval:{t}:{i}"), named=True, steps=steps) for i in range(EVAL_N)]
+            for t in tasks}  # fmt: skip
 
 
 def train(model, opt, tasks: list[str], evals: dict, max_steps: int, rng: random.Random, tag: str,
-          replay: list[str] = (), held: set[str] | None = None) -> dict:  # fmt: skip
+          replay: list[str] = (), held: set[str] | None = None, steps: bool = False) -> dict:  # fmt: skip
     """Lotes parejos entre `tasks` hasta que todas lleguen al 88 % o se acaben los pasos. Con `replay`, cada
     ejemplo sale de esas tareas viejas con probabilidad REPLAY_FRAC (ejemplos nuevos, no un buffer)."""
     held = held if held is not None else {e.prompt for exs in evals.values() for e in exs}
@@ -52,7 +53,7 @@ def train(model, opt, tasks: list[str], evals: dict, max_steps: int, rng: random
         exs = []
         while len(exs) < BATCH:
             old = replay and rng.random() < REPLAY_FRAC
-            ex = make_bits_example(rng.choice(replay if old else tasks), rng, named=True)
+            ex = make_bits_example(rng.choice(replay if old else tasks), rng, named=True, steps=steps)
             if ex.prompt not in held:
                 exs.append(ex)
         ids, labels = encode(exs, "cpu")
