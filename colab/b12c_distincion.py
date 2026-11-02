@@ -4,7 +4,7 @@ B12 se parecían demasiado (mismo vocabulario 0/1, mismo formato). Plan y reglas
 Dial p: cada primitiva escribe las posiciones propias (las primeras round(16p) de un orden fijo) con su alfabeto;
 el resto queda en 0/1 (mf_moe.bits.write). Solo primitivas, 16 expertos. Variantes por semilla:
 - base con p ∈ P_GRID;
-- sin_balanceo (u = 0) y router_azar (router congelado al azar) con p = 0 y p = 1.
+- sin_balanceo (u = 0) y router_azar (router congelado al azar) con p = 0 y p = 1, con los pasos de su base como tope.
 Medidas, por capa y solo en la respuesta:
 - uso diferencial y número de padres distintos (los de B12b);
 - información mutua experto × primitiva, total y condicionada al token sobre los bits 0/1 (los compartidos), con un
@@ -15,6 +15,7 @@ Uso: .venv/bin/python -m colab.b12c_distincion SALIDA.json [pasos máximos] [sem
 """
 
 import json
+import os
 import random
 import sys
 import time
@@ -120,9 +121,16 @@ def run(p: float, variant: str, max_steps: int, seed: int) -> dict:
 def main(path: str, max_steps: int = 20000, seed: int = 0) -> None:
     torch.set_num_threads(4)
     t0, res = time.time(), {"semilla": seed, "pasos_maximos": max_steps, "corridas": []}
+    if os.path.exists(path):  # retoma: no repite lo que ya está en la salida
+        res = json.load(open(path))
+    done = {(c["p"], c["variante"]): c for c in res["corridas"]}
     plan = [(p, "base") for p in P_GRID] + [(p, v) for v in CONTROLS for p in (0.0, 1.0)]
     for p, v in plan:
-        out = run(p, v, max_steps, seed)
+        if (p, v) in done:
+            continue
+        # un control entrena a lo sumo los pasos de su base: mismo presupuesto, y sin correr 20.000 pasos si no domina
+        out = run(p, v, max_steps if v == "base" else done[(p, "base")]["pasos"], seed)
+        done[(p, v)] = out
         res["corridas"].append(out)
         print(json.dumps({"p": p, "variante": v, "pasos": out["pasos"],
                           "padres_distintos": [c["padres_distintos"] for c in out["capas"]],
