@@ -52,6 +52,7 @@ class BiasBalancedRouter(qm.Qwen2MoeTopKRouter):
         super().__init__(config)
         self.u, self.decay = u, decay
         self.record = False  # con True guarda (estados, probs, top-k) del último forward: la división los lee
+        self.force = None  # [tokens] experto que entra sí o sí en el top-k (-1 = ninguno); B12 lo usa por tarea
         self.register_buffer("bias", torch.zeros(self.num_experts))
         self.register_buffer("load", torch.full((self.num_experts,), 1.0 / self.num_experts))
 
@@ -60,6 +61,9 @@ class BiasBalancedRouter(qm.Qwen2MoeTopKRouter):
         logits = F.linear(hs, self.weight)
         probs = torch.softmax(logits, dtype=torch.float, dim=-1)
         _, idx = torch.topk(probs + self.bias, self.top_k, dim=-1)  # el sesgo solo elige
+        if self.force is not None:
+            add = (self.force >= 0) & ~(idx == self.force[:, None]).any(-1)
+            idx[add, -1] = self.force[add]
         top = probs.gather(-1, idx)
         if self.record:
             self.last = (hs.detach(), probs.detach(), idx)
