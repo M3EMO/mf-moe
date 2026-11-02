@@ -10,7 +10,7 @@ repetición, B9b P3 dio olvido total y el olvido no separa nada). Al final:
 - generalización: exactitud en los 10 pares nunca vistos (el nombre «b+a» compone dos primitivas conocidas);
 - información mutua experto × primitiva (`mutual_info` de B9b).
 Pendiente: el orden por k-means jerárquico (Vo et al.) y las composiciones de 3.
-Uso: .venv/bin/python -m colab.b10_curriculum SALIDA.json [pasos máximos por etapa] [semilla]
+Uso: .venv/bin/python -m colab.b10_curriculum SALIDA.json [pasos máximos por etapa] [semilla] [órdenes, con comas]
 """
 
 import json
@@ -28,12 +28,13 @@ UNSEEN = [f"{a}+{b}" for a in SINGLES for b in SINGLES if a != b and f"{a}+{b}" 
 ORDERS = {"raices": [SINGLES, PAIRS], "azar": [SINGLES + PAIRS], "reves": [PAIRS, SINGLES]}
 
 
-def main(path: str, max_steps: int = 20000, seed: int = 0) -> None:
+def main(path: str, max_steps: int = 20000, seed: int = 0, orders: str = ",".join(ORDERS)) -> None:
     torch.set_num_threads(4)
     t0, res = time.time(), {"semilla": seed, "pasos_maximos": max_steps, "no_vistos": UNSEEN, "ordenes": {}}
     ev = eval_sets(SINGLES + PAIRS + UNSEEN)
     held = {e.prompt for exs in ev.values() for e in exs}
-    for name, stages in ORDERS.items():
+    for name in orders.split(","):
+        stages = ORDERS[name]
         model, opt = fresh(seed)
         rng, seen, out = random.Random(seed), [], {"etapas": []}
         for i, tasks in enumerate(stages):
@@ -53,4 +54,4 @@ def main(path: str, max_steps: int = 20000, seed: int = 0) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], *map(int, sys.argv[2:]))
+    main(sys.argv[1], *[int(x) if x.isdigit() else x for x in sys.argv[2:]])
