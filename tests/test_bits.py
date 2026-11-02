@@ -1,6 +1,7 @@
 import random
 
-from mf_moe.bits import INVERSE, PRIMS, RECURSIVE, apply, compositions, make_bits_example, primitives, recursive
+from mf_moe.bits import (INVERSE, PRIMS, RECURSIVE, apply, compositions, make_bits_example, own_positions,
+                         primitives, recursive)
 
 
 def test_primitives_are_deterministic_length_preserving_and_invertible():
@@ -29,3 +30,16 @@ def test_recursive_variant_repeats_the_rule_at_every_scale():
         b = "".join(rng.choice("01") for _ in range(16))
         h = 8  # la misma regla a la mitad de escala, y la mitad derecha pasa por p
         assert apply(f"rec:{p}", b) == recursive(p, b[:h]) + PRIMS[p](recursive(p, b[h:])), p
+
+
+def test_alphabet_dial_reads_in_the_first_primitive_and_writes_in_the_last():
+    plain = make_bits_example("not+xor", random.Random(3))
+    half = make_bits_example("not+xor", random.Random(3), p=0.5)
+    own = own_positions(0.5)
+    assert len(own) == 8
+    b, out = plain.prompt[:-2], plain.answer[:16]
+    hb, hout = half.prompt[:-2], half.answer[:16]
+    for i in range(16):
+        assert hb[i] == ("AB"[int(b[i])] if i in own else b[i])  # not lee con su alfabeto
+        assert hout[i] == ("CD"[int(out[i])] if i in own else out[i])  # xor escribe con el suyo
+    assert set(make_bits_example("rot", random.Random(0), p=1.0).answer[:16]) <= set("EF")

@@ -16,7 +16,9 @@ Su fila del router es la media de los estados del par menos la media de todas la
 El hijo hereda los momentos de AdamW del experto de f en todos los brazos que crecen.
 B12b (mf-moe-5tq.28): el padre de cada primitiva es el experto de mayor uso diferencial (uso en ella menos uso
 medio en las otras). B12 (commit cc6e6db) usaba el más elegido, que era el mismo para casi todas.
-Uso: .venv/bin/python -m colab.b12_raices SALIDA.json [pasos máximos por etapa] [semilla]
+B12c Fase B (mf-moe-5tq.29): con p (dial de mf_moe.bits) corren los brazos de ARMS_B12C, que suman raiz_g (copia
+del experto de g), y se evalúa cada 100 pasos para medir la velocidad temprana.
+Uso: .venv/bin/python -m colab.b12_raices SALIDA.json [pasos máximos por etapa] [semilla] [p]
 """
 
 import copy
@@ -28,7 +30,7 @@ import time
 import numpy as np
 import torch
 
-from colab.b9_bits import SINGLES, SIZE, eval_sets, routing, train
+from colab.b9_bits import EVAL_EVERY, SINGLES, SIZE, eval_sets, routing, train
 from colab.b10b_cobertura import COVERAGE, UNSEEN
 from mf_moe.bits import make_bits_example
 from mf_moe.division import _grow_param
@@ -39,6 +41,7 @@ PAIRS = COVERAGE[10]
 E0 = 16
 ROW_SCALE = 1.0  # norma de la fila del hijo, en múltiplos de la del padre
 ARMS = ("raiz", "interp", "azar", "padres_azar", "fijo")
+ARMS_B12C = ("raiz", "raiz_g", "interp", "padres_azar", "azar")
 
 
 def _usage(idx: np.ndarray, n: int) -> np.ndarray:
@@ -54,9 +57,9 @@ def parents(rt: dict, n: int) -> tuple[dict[str, np.ndarray], dict[str, list[flo
 
 
 @torch.no_grad()
-def grow(model, opt, arm: str, rng: random.Random) -> tuple[dict[str, int], dict]:
+def grow(model, opt, arm: str, rng: random.Random, p: float = 0.0) -> tuple[dict[str, int], dict]:
     """Un hijo por par en cada capa; devuelve el índice del hijo de cada par (el mismo en todas las capas) y los padres."""
-    probe = {t: [make_bits_example(t, random.Random(f"init:{t}:{i}"), named=True) for i in range(100)]
+    probe = {t: [make_bits_example(t, random.Random(f"init:{t}:{i}"), named=True, p=p) for i in range(100)]
              for t in SINGLES + PAIRS}  # fmt: skip
     rt = routing(model, probe)
     top, lift = parents(rt, E0)
@@ -69,7 +72,7 @@ def grow(model, opt, arm: str, rng: random.Random) -> tuple[dict[str, int], dict
             pa, pb = int(top[a][L]), int(top[b][L])
             for name in ("gate_up_proj", "down_proj"):
                 W = getattr(experts, name)
-                w = {"raiz": W[pa], "azar": torch.randn_like(W[pa]) * W[:E0].std()}.get(arm, (W[pa] + W[pb]) / 2)
+                w = {"raiz": W[pa], "raiz_g": W[pb], "azar": torch.randn_like(W[pa]) * W[:E0].std()}.get(arm, (W[pa] + W[pb]) / 2)
                 _grow_param(opt, experts, name, pa, w.clone())
             row = torch.tensor(rt[pair]["h"][L].mean(0) - np.mean([rt[t]["h"][L].mean(0) for t in rt], 0))
             _grow_param(opt, router, "weight", pa, row / row.norm() * router.weight[pa].norm() * ROW_SCALE)
@@ -93,25 +96,26 @@ def force_by_task(model, child: dict[str, int]):
     return model.register_forward_pre_hook(hook, with_kwargs=True)
 
 
-def main(path: str, max_steps: int = 20000, seed: int = 0) -> None:
+def main(path: str, max_steps: int = 20000, seed: int = 0, p: float = 0.0, arms: tuple = ARMS,
+         every: int = EVAL_EVERY) -> None:  # fmt: skip
     torch.set_num_threads(4)
     t0 = time.time()
-    res = {"semilla": seed, "pasos_maximos": max_steps, "pares": PAIRS, "no_vistos": UNSEEN, "brazos": {}}
-    ev = eval_sets(SINGLES + PAIRS + UNSEEN)
+    res = {"semilla": seed, "pasos_maximos": max_steps, "p": p, "evaluar_cada": every, "pares": PAIRS, "no_vistos": UNSEEN, "brazos": {}}
+    ev = eval_sets(SINGLES + PAIRS + UNSEEN, p=p)
     held = {e.prompt for exs in ev.values() for e in exs}
     stage1 = {}
-    for n in (E0, E0 + len(PAIRS)):  # el brazo fijo entrena sus primitivas con los 26 expertos
+    for n in (E0, E0 + len(PAIRS)) if "fijo" in arms else (E0,):  # el brazo fijo entrena sus primitivas con los 26 expertos
         model = build(n, seed=seed, **SIZE)
         opt = adamw(model)
-        r = train(model, opt, SINGLES, {t: ev[t] for t in SINGLES}, max_steps, random.Random(seed), f"primitivas:{n}", held=held)
+        r = train(model, opt, SINGLES, {t: ev[t] for t in SINGLES}, max_steps, random.Random(seed), f"primitivas:{n}", held=held, p=p)
         stage1[n] = (model, opt, {k: r[k] for k in ("pasos", "domino", "historia")})
-    for arm in ARMS:
+    for arm in arms:
         model, opt, s1 = copy.deepcopy(stage1[E0 + len(PAIRS) if arm == "fijo" else E0])  # copia modelo y AdamW juntos
-        child, par = ({}, None) if arm == "fijo" else grow(model, opt, arm, random.Random(seed))
+        child, par = ({}, None) if arm == "fijo" else grow(model, opt, arm, random.Random(seed), p)
         hook = force_by_task(model, child)
         after_birth = {t: round(scores(model, ev[t], "cpu")[0], 3) for t in SINGLES}
         r = train(model, opt, PAIRS, {t: ev[t] for t in PAIRS}, max_steps, random.Random(seed + 1), arm,
-                  replay=SINGLES, held=held)  # fmt: skip
+                  replay=SINGLES, held=held, p=p, every=every)  # fmt: skip
         acc = {t: round(scores(model, ev[t], "cpu")[0], 3) for t in SINGLES + PAIRS + UNSEEN}
         hook.remove()
         for rt in routers(model):
@@ -130,4 +134,6 @@ def main(path: str, max_steps: int = 20000, seed: int = 0) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], *map(int, sys.argv[2:]))
+    a = sys.argv[1:]
+    b12c = {"p": float(a[3]), "arms": ARMS_B12C, "every": 100} if len(a) > 3 else {}
+    main(a[0], *map(int, a[1:3]), **b12c)

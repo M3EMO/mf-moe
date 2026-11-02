@@ -73,11 +73,31 @@ def compositions(max_len: int = 3) -> list[str]:
     return ["+".join(c) for k in range(1, max_len + 1) for c in itertools.product(PRIMS, repeat=k)]
 
 
+# B12c: alfabeto propio de cada primitiva y orden fijo de las posiciones que lo usan (las primeras round(16p)).
+ALPHABET = {"not": "AB", "xor": "CD", "rot": "EF", "rev": "KL", "par": "GH", "andor": "IJ"}
+OWN_ORDER = random.Random("b12c").sample(range(N_BITS), N_BITS)
+
+
+def own_positions(p: float) -> set[int]:
+    return set(OWN_ORDER[: round(N_BITS * p)])
+
+
+def write(b: str, prim: str, p: float) -> str:
+    """Escribe los bits de las posiciones propias con el alfabeto de `prim`; el resto queda en 0/1."""
+    own = own_positions(p)
+    return "".join(ALPHABET[prim][int(x)] if i in own else x for i, x in enumerate(b))
+
+
 def make_bits_example(task: str, rng: random.Random, named: bool = False, n_bits: int = N_BITS,
-                      steps: bool = False) -> Example:  # fmt: skip
-    """Con `steps`, la respuesta escribe cada resultado intermedio de una composición, separados por espacio."""
+                      steps: bool = False, p: float = 0.0) -> Example:  # fmt: skip
+    """Con `steps`, la respuesta escribe cada resultado intermedio de una composición, separados por espacio.
+    Con `p` > 0 (B12c), la entrada usa el alfabeto de la primera primitiva y la salida el de la última."""
+    assert not p or (n_bits == N_BITS and not steps)
     b = "".join(rng.choice("01") for _ in range(n_bits))
     out = [apply(task, b)]
     if steps and not task.startswith("rec:"):
         out = list(itertools.accumulate(primitives(task), lambda x, p: PRIMS[p](x), initial=b))[1:]
+    if p:
+        ps = primitives(task)
+        b, out = write(b, ps[0], p), [write(out[0], ps[-1], p)]
     return Example(task, ("" if not named else f"{task}: ") + b + " =", " ".join(out) + EOS)
