@@ -1,0 +1,3 @@
+diag_par_s0.json|colab.b12c_diag_par {out} 12000 0
+diag_par_s1.json|colab.b12c_diag_par {out} 12000 1
+diag_par_s2.json|colab.b12c_diag_par {out} 12000 2
