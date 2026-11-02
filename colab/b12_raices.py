@@ -14,6 +14,8 @@ Su fila del router es la media de los estados del par menos la media de todas la
 - padres_azar: promedio de los expertos de dos primitivas ajenas al par (control de topología);
 - fijo: 26 expertos desde el principio, sin crecer (mismos parámetros al final).
 El hijo hereda los momentos de AdamW del experto de f en todos los brazos que crecen.
+B12b (mf-moe-5tq.28): el padre de cada primitiva es el experto de mayor uso diferencial (uso en ella menos uso
+medio en las otras). B12 (commit cc6e6db) usaba el más elegido, que era el mismo para casi todas.
 Uso: .venv/bin/python -m colab.b12_raices SALIDA.json [pasos máximos por etapa] [semilla]
 """
 
@@ -39,18 +41,25 @@ ROW_SCALE = 1.0  # norma de la fila del hijo, en múltiplos de la del padre
 ARMS = ("raiz", "interp", "azar", "padres_azar", "fijo")
 
 
-def _top(idx: np.ndarray, n: int) -> np.ndarray:
-    """Experto más elegido en cada capa; `idx` es [tokens, capas, k]."""
-    return np.array([np.bincount(idx[:, L].reshape(-1), minlength=n).argmax() for L in range(idx.shape[1])])
+def _usage(idx: np.ndarray, n: int) -> np.ndarray:
+    """Fracción del ruteo de cada experto por capa: [capas, expertos]; `idx` es [tokens, capas, k]."""
+    return np.stack([np.bincount(idx[:, L].reshape(-1), minlength=n) / idx[:, L].size for L in range(idx.shape[1])])
+
+
+def parents(rt: dict, n: int) -> tuple[dict[str, np.ndarray], dict[str, list[float]]]:
+    """Por primitiva y capa: el experto de mayor uso diferencial, y ese uso diferencial."""
+    u = {t: _usage(rt[t]["idx"], n) for t in SINGLES}
+    lift = {t: u[t] - np.mean([u[o] for o in SINGLES if o != t], 0) for t in SINGLES}
+    return {t: lift[t].argmax(1) for t in SINGLES}, {t: lift[t].max(1).round(3).tolist() for t in SINGLES}
 
 
 @torch.no_grad()
-def grow(model, opt, arm: str, rng: random.Random) -> dict[str, int]:
-    """Un hijo por par en cada capa; devuelve el índice del hijo de cada par (el mismo en todas las capas)."""
+def grow(model, opt, arm: str, rng: random.Random) -> tuple[dict[str, int], dict]:
+    """Un hijo por par en cada capa; devuelve el índice del hijo de cada par (el mismo en todas las capas) y los padres."""
     probe = {t: [make_bits_example(t, random.Random(f"init:{t}:{i}"), named=True) for i in range(100)]
              for t in SINGLES + PAIRS}  # fmt: skip
     rt = routing(model, probe)
-    top = {t: _top(rt[t]["idx"], E0) for t in SINGLES}
+    top, lift = parents(rt, E0)
     child = {}
     for pair in PAIRS:
         f, g = pair.split("+")
@@ -69,7 +78,7 @@ def grow(model, opt, arm: str, rng: random.Random) -> dict[str, int]:
             experts.num_experts += 1
             router.num_experts += 1
         child[pair] = experts.num_experts - 1
-    return child
+    return child, {"padres": {t: top[t].tolist() for t in SINGLES}, "uso_diferencial": lift}
 
 
 def force_by_task(model, child: dict[str, int]):
@@ -98,7 +107,7 @@ def main(path: str, max_steps: int = 20000, seed: int = 0) -> None:
         stage1[n] = (model, opt, {k: r[k] for k in ("pasos", "domino", "historia")})
     for arm in ARMS:
         model, opt, s1 = copy.deepcopy(stage1[E0 + len(PAIRS) if arm == "fijo" else E0])  # copia modelo y AdamW juntos
-        child = {} if arm == "fijo" else grow(model, opt, arm, random.Random(seed))
+        child, par = ({}, None) if arm == "fijo" else grow(model, opt, arm, random.Random(seed))
         hook = force_by_task(model, child)
         after_birth = {t: round(scores(model, ev[t], "cpu")[0], 3) for t in SINGLES}
         r = train(model, opt, PAIRS, {t: ev[t] for t in PAIRS}, max_steps, random.Random(seed + 1), arm,
@@ -109,7 +118,7 @@ def main(path: str, max_steps: int = 20000, seed: int = 0) -> None:
             rt.force = None
         free = {t: round(scores(model, ev[t], "cpu")[0], 3) for t in PAIRS} if child else None
         out = {"primitivas": s1, "pares": {k: r[k] for k in ("pasos", "domino", "historia")}, "exactitud": acc,
-               "primitivas_al_nacer": after_birth, "pares_sin_forzar": free,
+               "primitivas_al_nacer": after_birth, "pares_sin_forzar": free, "padres": par,
                "primitivas_media": round(float(np.mean([acc[t] for t in SINGLES])), 3),
                "pares_media": round(float(np.mean([acc[t] for t in PAIRS])), 3),
                "no_vistos_media": round(float(np.mean([acc[t] for t in UNSEEN])), 3)}  # fmt: skip
