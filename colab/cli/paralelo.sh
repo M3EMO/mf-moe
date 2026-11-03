@@ -13,6 +13,9 @@ import sys
 jobs = [l.strip().split("|") for l in open(sys.argv[1]) if l.strip()]
 print(f'''import os, subprocess, sys
 os.makedirs("/content/out", exist_ok=True)
+for out, _ in {jobs!r}:  # lo subido para retomar llega a /content (en una VM nueva /content/out aún no existe)
+    if os.path.exists("/content/" + out) and not os.path.exists("/content/out/" + out):
+        os.replace("/content/" + out, "/content/out/" + out)
 subprocess.run("rm -rf /content/code && mkdir /content/code && cd /content/code && unzip -q /content/code.zip", shell=True, check=True)
 subprocess.run([sys.executable, "-m", "pip", "install", "-q", "transformers>=5.18"], check=True)
 env = dict(os.environ, MFMOE_DEVICE="cuda", PYTHONPATH="/content/code")
@@ -27,7 +30,7 @@ open("/content/out/FIN", "w").write(str(codes))
 PY
 launch() {  # el exec queda conectado toda la corrida: sin cliente, Colab retira la VM a los ~20 min
   [ -f $D/exec.pid ] && kill $(cat $D/exec.pid) 2>/dev/null
-  for f in $OUTS; do [ -s $D/$f ] && $C upload -s $S $D/$f /content/out/$f >> $LOG 2>&1; done  # para retomar
+  for f in $OUTS; do [ -s $D/$f ] && $C upload -s $S $D/$f /content/$f >> $LOG 2>&1; done  # para retomar
   nohup $CLI exec -s $S -f $D/job.py --timeout 30000 > $D/exec.log 2>&1 &
   echo $! > $D/exec.pid
   log "lanzado"
