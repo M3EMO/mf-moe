@@ -23,13 +23,17 @@ import time
 import numpy as np
 import torch
 
-from colab.b9_bits import DEVICE, SINGLES, SIZE, _mi, eval_sets, routing, train
+from colab.b9_bits import DEVICE, EVAL_EVERY, SINGLES, SIZE, _mi, eval_sets, routing, train
 from colab.b12_raices import E0, _usage, parents
 from mf_moe.model import build, routers
 from mf_moe.train import adamw, encode, scores
 
 P_GRID = (0.0, 0.25, 0.5, 0.75, 1.0)
 CONTROLS = ("sin_balanceo", "router_azar")
+# Tras la primera pasada: con p = 1 `par` no aprende en 20.000 pasos (5 de 5 semillas), y un router congelado al azar
+# ya da el 85 % de la IM. Controles agregados: router al azar en las p intermedias, y base sin corte temprano
+# ("largo", 20.000 pasos) para separar el largo del entrenamiento de la distinción.
+EXTRA = [(p, "router_azar") for p in (0.25, 0.5, 0.75)] + [(p, "largo") for p in (0.0, 0.75)]
 SHARED = tuple(b"01")
 N_NULL = 200
 
@@ -113,7 +117,8 @@ def run(p: float, variant: str, max_steps: int, seed: int) -> dict:
         if variant == "router_azar":
             r.weight.requires_grad_(False)
     opt = adamw(model)
-    r = train(model, opt, SINGLES, ev, max_steps, random.Random(seed), f"{variant}:{p}", p=p)
+    every = max_steps if variant == "largo" else EVAL_EVERY  # largo evalúa solo al final: no corta al dominar
+    r = train(model, opt, SINGLES, ev, max_steps, random.Random(seed), f"{variant}:{p}", p=p, every=every)
     return {"p": p, "variante": variant, "pasos": r["pasos"], "domino": r["domino"], "historia": r["historia"],
             **measure(model, ev, seed)}  # fmt: skip
 
@@ -124,12 +129,12 @@ def main(path: str, max_steps: int = 20000, seed: int = 0) -> None:
     if os.path.exists(path):  # retoma: no repite lo que ya está en la salida
         res = json.load(open(path))
     done = {(c["p"], c["variante"]): c for c in res["corridas"]}
-    plan = [(p, "base") for p in P_GRID] + [(p, v) for v in CONTROLS for p in (0.0, 1.0)]
+    plan = [(p, "base") for p in P_GRID] + [(p, v) for v in CONTROLS for p in (0.0, 1.0)] + EXTRA
     for p, v in plan:
         if (p, v) in done:
             continue
         # un control entrena a lo sumo los pasos de su base: mismo presupuesto, y sin correr 20.000 pasos si no domina
-        out = run(p, v, max_steps if v == "base" else done[(p, "base")]["pasos"], seed)
+        out = run(p, v, max_steps if v in ("base", "largo") else done[(p, "base")]["pasos"], seed)
         done[(p, v)] = out
         res["corridas"].append(out)
         print(json.dumps({"p": p, "variante": v, "pasos": out["pasos"],
