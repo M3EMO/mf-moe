@@ -1,0 +1,5 @@
+b13b_s1.json|colab.b13b_traducciones {out} 20000 1 base,router_azar,sin_balanceo 8 2
+b13b_s2.json|colab.b13b_traducciones {out} 20000 2 base,router_azar,sin_balanceo 8 2
+b13b_s3.json|colab.b13b_traducciones {out} 20000 3 base,router_azar,sin_balanceo 8 2
+b13b_s4.json|colab.b13b_traducciones {out} 20000 4 base,router_azar,sin_balanceo 8 2
+b13b_s5.json|colab.b13b_traducciones {out} 20000 5 base,router_azar,sin_balanceo 8 2
