@@ -1,0 +1,10 @@
+b12c_b_p0.0_s0.json|colab.b12_raices {out} 20000 0 0.0
+b12c_b_p0.0_s1.json|colab.b12_raices {out} 20000 1 0.0
+b12c_b_p0.0_s2.json|colab.b12_raices {out} 20000 2 0.0
+b12c_b_p0.0_s3.json|colab.b12_raices {out} 20000 3 0.0
+b12c_b_p0.0_s4.json|colab.b12_raices {out} 20000 4 0.0
+b12c_b_p0.75_s0.json|colab.b12_raices {out} 20000 0 0.75
+b12c_b_p0.75_s1.json|colab.b12_raices {out} 20000 1 0.75
+b12c_b_p0.75_s2.json|colab.b12_raices {out} 20000 2 0.75
+b12c_b_p0.75_s3.json|colab.b12_raices {out} 20000 3 0.75
+b12c_b_p0.75_s4.json|colab.b12_raices {out} 20000 4 0.75
