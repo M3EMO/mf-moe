@@ -27,6 +27,23 @@ def test_reglas_sin_ambiguedad_y_oraciones_validas():
             assert any((tab[parent, r] == syms[i, 2 * j : 2 * j + 2]).all() for r in range(h.M))
 
 
+def test_traducciones_comparten_los_latentes_hasta_el_nivel_l_menos_d():
+    tabs, T = h.rules(0), h.tree_distance()
+    syms, latent = h.sample_family(tabs, 40, np.random.default_rng(0))
+    assert syms.shape == (40, h.N_LANG, h.SEQ)
+    for a in range(h.N_LANG):
+        for b in range(h.N_LANG):
+            for lv in range(h.L):
+                same = (latent[lv][:, a] == latent[lv][:, b]).all()
+                assert same if lv <= h.L - T[a, b] else not same
+            assert (syms[:, a] == syms[:, b]).all() == (a == b)
+    for a in range(h.N_LANG):  # cada lengua sigue su propia gramática
+        tab = tabs[h.L - 1][h.clade(a, h.owner_depth(h.L - 1))]
+        for i in range(40):
+            for j, parent in enumerate(latent[-1][i, a]):
+                assert any((tab[parent, r] == syms[i, a, 2 * j : 2 * j + 2]).all() for r in range(h.M))
+
+
 def test_ids_vocabulario_compartido_o_propio():
     syms, lang = np.array([[0, 15]]), np.array([7])
     assert h.ids(syms, lang, False).tolist() == [[h.BOS, 32, 47]]
@@ -53,3 +70,11 @@ def test_kmeans_separa_dos_nubes():
     H = np.concatenate([rng.normal(0, 0.1, (50, 4)), rng.normal(5, 0.1, (50, 4))])
     a = h.kmeans_topk(H, 2, 1)[:, 0]
     assert len(set(a[:50])) == 1 and len(set(a[50:])) == 1 and a[0] != a[50]
+
+
+def test_acuerdo_mknn_y_distancia():
+    A = np.array([[0, 1], [2, 3]])
+    assert h.agreement(A, A) == 1.0 and h.agreement(A, np.array([[1, 5], [4, 6]])) == 0.25
+    X = np.random.default_rng(0).normal(size=(30, 5))
+    assert h.mknn(X, X) == 1.0 and h.mknn(X, np.random.default_rng(1).normal(size=(30, 5))) < 0.6
+    assert h.by_distance(h.tree_distance().astype(float)) == [1.0, 2.0, 3.0]

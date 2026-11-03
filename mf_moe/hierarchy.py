@@ -59,6 +59,20 @@ def sample(tabs: list[np.ndarray], lang: np.ndarray, rng: np.random.Generator) -
     return syms, latent
 
 
+def sample_family(tabs: list[np.ndarray], n: int, rng: np.random.Generator) -> tuple[np.ndarray, list[np.ndarray]]:
+    """Traducciones (B13b): n oraciones latentes escritas en las N_LANG lenguas, [n, N_LANG, SEQ]. Cada nodo del árbol
+    de lenguas elige sus reglas una vez y lo heredan sus hojas: dos lenguas a distancia d comparten los símbolos
+    latentes hasta el nivel L - d (como los pares de traducción de Doshi). Latentes: [n, N_LANG, S**l] para l < L."""
+    syms, latent = np.repeat(rng.integers(V, size=(n, 1, 1)), N_LANG, 1), []
+    for level in range(L):
+        latent.append(syms)
+        k = owner_depth(level)
+        node = clade(np.arange(N_LANG), k)
+        r = rng.integers(M, size=(n, 2**k, syms.shape[2]))[:, node]
+        syms = tabs[level][node[None, :, None], syms, r].reshape(n, N_LANG, -1)
+    return syms, latent
+
+
 def ids(syms: np.ndarray, lang: np.ndarray, own_vocab: bool) -> np.ndarray:
     """[n, 1 + SEQ] ids de byte con BOS al principio."""
     tok = OWN0 + V * np.asarray(lang)[:, None] + syms if own_vocab else SHARED0 + syms
@@ -121,3 +135,27 @@ def kmeans_topk(H: np.ndarray, k: int, top: int, seed: int = 0, iters: int = 50)
         a = d2(C).argmin(1)
         C = np.stack([H[a == j].mean(0) if (a == j).any() else C[j] for j in range(k)])
     return np.argsort(d2(C), 1)[:, :top]
+
+
+def agreement(A: np.ndarray, B: np.ndarray) -> float:
+    """Fracción media de expertos compartidos entre los top-k de tokens alineados, [tokens, k] cada uno."""
+    return float((A[:, :, None] == B[:, None, :]).any(-1).mean())
+
+
+def mknn(X: np.ndarray, Y: np.ndarray, k: int = 10) -> float:
+    """Vecinos mutuos (Doshi et al.): fracción de los k vecinos coseno de cada oración en X que también lo son de su
+    traducción en Y. X, Y: [oraciones, d], alineadas por fila."""
+    def nn(Z):
+        Z = Z / np.linalg.norm(Z, axis=1, keepdims=True)
+        C = Z @ Z.T
+        np.fill_diagonal(C, -np.inf)
+        return np.argsort(-C, 1)[:, :k]
+
+    a, b = nn(X), nn(Y)
+    return float(np.mean([len(set(a[i]) & set(b[i])) / k for i in range(len(X))]))
+
+
+def by_distance(M: np.ndarray) -> list[float]:
+    """Media de una matriz [lenguas, lenguas] por distancia en el árbol, d = 1..DEPTH."""
+    T = tree_distance()
+    return [round(float(M[T == d].mean()), 4) for d in range(1, DEPTH + 1)]
