@@ -102,14 +102,15 @@ def main(path: str, seed: int, mode: str, k: int = 3, c: float = 10.0) -> None:
                            for i in range(N_GENERAL)]}  # fmt: skip
     model, opt = fresh(seed)
     layers = list(range(len(model.model.layers)))
-    acc = {L: torch.zeros(routers(model)[L].num_experts) for L in layers}
+    acc = {L: torch.zeros(routers(model)[L].num_experts, device=DEVICE) for L in layers}
     ckpt = path + ".etapa_a.pt"
     if os.path.exists(ckpt):  # retoma: la etapa A es la misma para todas las ramas
-        st = torch.load(ckpt)
+        st = torch.load(ckpt, map_location=DEVICE)
         model.load_state_dict(st["modelo"])
         opt.load_state_dict(st["opt"])
         acc = st["acc"]
     else:
+        res["ramas"] = {}  # una etapa A nueva (VM nueva sin el checkpoint) invalida las ramas de la anterior
         # con Ω = 0 el paso graduado no cambia nada (escala 1): solo suma la importancia -g·Δθ de cada experto
         zero = {L: torch.zeros_like(acc[L]) for L in layers}
         res["etapa_a"] = train(model, opt, SINGLES, prims, STAGE_A_MAX, random.Random(seed + 1), "A",
