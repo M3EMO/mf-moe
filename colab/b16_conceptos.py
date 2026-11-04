@@ -22,7 +22,9 @@ import sys
 import time
 
 import numpy as np
-import torch
+
+os.environ.setdefault("CUDA_LAUNCH_BLOCKING", "1")  # la primera corrida dio un assert asíncrono de CUDA sin ubicar
+import torch  # noqa: E402
 
 from mf_moe import granite
 from mf_moe.model import routers
@@ -163,6 +165,9 @@ def main(path: str, areas: str = ",".join(AREAS), seed: int = 0, model=None, tok
     res |= {"semilla": seed, "config": {"n_train": N_TRAIN, "n_bin": N_BIN, "train_from": TRAIN_FROM,
                                         "state_layer": STATE_LAYER, "steps": STEPS, "batch": BATCH, "lr": LR}}  # fmt: skip
     wn = wordnet()
+    import transformers
+
+    print(json.dumps({"torch": torch.__version__, "transformers": transformers.__version__}), flush=True)
     if model is None:
         from transformers import AutoTokenizer
 

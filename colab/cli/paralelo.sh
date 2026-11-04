@@ -17,7 +17,7 @@ for out, _ in {jobs!r}:  # lo subido para retomar llega a /content (en una VM nu
     if os.path.exists("/content/" + out) and not os.path.exists("/content/out/" + out):
         os.replace("/content/" + out, "/content/out/" + out)
 subprocess.run("rm -rf /content/code && mkdir /content/code && cd /content/code && unzip -q /content/code.zip", shell=True, check=True)
-subprocess.run([sys.executable, "-m", "pip", "install", "-q", "transformers>=5.18"], check=True)
+subprocess.run([sys.executable, "-m", "pip", "install", "-q", "transformers==5.19.0"], check=True)  # la versión del .venv: los tests pasan con ella
 env = dict(os.environ, MFMOE_DEVICE="cuda", PYTHONPATH="/content/code")
 ps = []
 for out, args in {jobs!r}:
