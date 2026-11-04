@@ -45,8 +45,9 @@ def fact(s, definition: str) -> tuple[str, str]:
     return f"A {name(s)} is", f" {definition}."
 
 
-def run_set(model, tok, wn, area: str, ev, pool, base: dict, state: dict, s: int, order: int) -> dict:
-    """Entrena el conjunto `s` con el orden de lotes `order`, mide el daño y restaura el modelo."""
+def run_set(model, tok, wn, area: str, ev, pool, base: dict, state: dict, s: int, order: int, probe=None) -> dict:
+    """Entrena el conjunto `s` con el orden de lotes `order`, mide el daño y restaura el modelo.
+    `probe` (B19) mide gradientes antes de entrenar, el cambio de pesos después y los productos ya restaurado."""
     train = random.Random(f"{area}:{s}").sample(pool, N_TRAIN)
     don = b17.donors(wn, area, {x.name() for x in train + ev}, N_TRAIN + ANCHORS, s)
     don, anchors = don[:N_TRAIN], don[N_TRAIN:]
@@ -55,6 +56,8 @@ def run_set(model, tok, wn, area: str, ev, pool, base: dict, state: dict, s: int
     true_tr = [fact(x, x.definition()) for x in train]
     H_tr, E_tr = probes(model, tok, [name(x) for x in train])
     before_tr, before_new = b17.def_losses(model, tok, true_tr), b17.def_losses(model, tok, new)
+    if probe:
+        probe.pre(model, tok, new, keep)
     params = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=b17.LR, weight_decay=0.0)
     rng, t0, hist, step = random.Random(f"orden:{area}:{s}:{order}"), time.time(), [], 0
@@ -74,11 +77,14 @@ def run_set(model, tok, wn, area: str, ev, pool, base: dict, state: dict, s: int
                 break
     after = b17.def_losses(model, tok, [fact(x, x.definition()) for x in ev])
     after_tr, learned = b17.def_losses(model, tok, true_tr), b17.def_losses(model, tok, new)
+    if probe:
+        probe.post(model, state)
     model.load_state_dict(state, strict=False)  # cada conjunto parte del mismo Granite
     del opt
     if DEVICE == "cuda":
         torch.cuda.empty_cache()
-    return {"area": area, "conjunto": s, "orden": order, "entrenados": [x.name() for x in train], "evaluados": [x.name() for x in ev],
+    extra = probe.final(model, tok) if probe else {}
+    return extra | {"area": area, "conjunto": s, "orden": order, "entrenados": [x.name() for x in train], "evaluados": [x.name() for x in ev],
             "donantes": [x.name() for x in don], "pasos": step, "raiz": base["raiz"], "antes": base["antes"],
             "subida": (after - np.array(base["antes"])).round(4).tolist(), "subida_entrenados_verdad": float((after_tr - before_tr).mean()),
             "nuevos_antes": float(before_new.mean()), "nuevos_final": float(learned.mean()), "historia": hist,
@@ -96,7 +102,7 @@ def gate(r: dict) -> str | None:
     return None
 
 
-def main(path: str, areas: str = ",".join(AREAS), model=None, tok=None) -> None:
+def main(path: str, areas: str = ",".join(AREAS), model=None, tok=None, make_probe=None) -> None:
     res = json.load(open(path)) if os.path.exists(path) else {"areas": {}}
     res |= {"config": {"n_sets": N_SETS, "n_train": N_TRAIN, "n_far": N_FAR, "anclas": ANCHORS, "max_in": MAX_IN, "train_from": TRAIN_FROM}}
     wn = wordnet()
@@ -115,11 +121,12 @@ def main(path: str, areas: str = ",".join(AREAS), model=None, tok=None) -> None:
         root = wn.synset(area)
         base = {"H": H, "E": E, "antes": b17.def_losses(model, tok, [fact(x, x.definition()) for x in ev]).round(4).tolist(),
                 "raiz": [round(x.wup_similarity(root) or 0.0, 4) for x in ev]}  # fmt: skip
+        probe = make_probe(model, tok, wn, area, ev) if make_probe else None
         for s, order in plan:
             key = f"{area}|s{s}" + (f"|r{order}" if order else "")
             if key in res["areas"]:
                 continue
-            res["areas"][key] = r = run_set(model, tok, wn, area, ev, pool, base, state, s, order)
+            res["areas"][key] = r = run_set(model, tok, wn, area, ev, pool, base, state, s, order, probe)
             print(json.dumps({"corrida": key, "entrenados": round(r["subida_entrenados_verdad"], 3), "nuevos": round(r["nuevos_final"], 3),
                               "subida_media": round(float(np.mean(r["subida"])), 3), "pasos": r["pasos"], "segundos": r["segundos"]}), flush=True)  # fmt: skip
             why = gate(r) if len(res["areas"]) == 1 else None
