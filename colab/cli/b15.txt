@@ -1,0 +1,5 @@
+b15_s1.json|colab.b15_repeticion {out} 1
+b15_s2.json|colab.b15_repeticion {out} 2
+b15_s3.json|colab.b15_repeticion {out} 3
+b15_s4.json|colab.b15_repeticion {out} 4
+b15_s5.json|colab.b15_repeticion {out} 5
