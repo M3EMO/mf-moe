@@ -150,10 +150,11 @@ def gate(res: dict) -> str | None:
     return None
 
 
-def main(path: str, areas: str = ",".join(AREAS), seeds: str = "0", model=None, tok=None) -> None:
+def main(path: str, areas: str = ",".join(AREAS), seeds: str = "0", anchor: str = "0", freeze_from: str = "",
+         model=None, tok=None) -> None:  # fmt: skip
     """Recorre semilla por semilla todas las áreas; cada clave de `areas` es «área|s<semilla>»."""
     res = json.load(open(path)) if os.path.exists(path) else {"areas": {}}
-    res |= {"semillas": seeds, "config": {"far": FAR, "stop_loss": STOP_LOSS, "max_steps": MAX_STEPS, "batch": BATCH,
+    res |= {"semillas": seeds, "config": {"anclas": int(anchor), "congeladas_desde": freeze_from, "far": FAR, "stop_loss": STOP_LOSS, "max_steps": MAX_STEPS, "batch": BATCH,
                                         "lr": LR, "train_from": TRAIN_FROM}}  # fmt: skip
     wn = wordnet()
     if model is None:
@@ -161,11 +162,14 @@ def main(path: str, areas: str = ",".join(AREAS), seeds: str = "0", model=None, 
 
         model, tok = granite.load(DEVICE), AutoTokenizer.from_pretrained(granite.MODEL_ID)
         set_trainable(model, TRAIN_FROM)
+    if freeze_from:  # variante de la calibración: entrena solo las capas TRAIN_FROM..freeze_from-1
+        for layer in model.model.layers[int(freeze_from) :]:
+            layer.requires_grad_(False)
     for area, seed in [(a, int(s)) for s in seeds.split(",") for a in areas.split(",")]:
         key = f"{area}|s{seed}"
         if key in res["areas"]:
             continue
-        res["areas"][key] = r = run_area(model, tok, wn, area, seed)
+        res["areas"][key] = r = run_area(model, tok, wn, area, seed, int(anchor))
         sub = r["subida"]
         print(json.dumps({"area": key, "spearman": {k: round(spearman(v, sub), 3) for k, v in r["predictores"].items()},
                           "subida_media": round(float(np.mean(sub)), 3), "entrenados": round(r["subida_entrenados_verdad"], 3),
@@ -179,4 +183,4 @@ def main(path: str, areas: str = ",".join(AREAS), seeds: str = "0", model=None, 
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:6])

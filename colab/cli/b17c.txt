@@ -1,0 +1,1 @@
+b17c.json|colab.b17_conflicto {out} musical_instrument.n.01,wheeled_vehicle.n.01,fish.n.01,disease.n.01,tree.n.01,tool.n.01 0,1,2 512
