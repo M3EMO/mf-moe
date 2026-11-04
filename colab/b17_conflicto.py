@@ -82,9 +82,13 @@ def covariates(tok, train, ev) -> dict[str, list[float]]:
             "lexico": [round(x, 4) for x in lex], "ultimo_token_compartido": last}  # fmt: skip
 
 
-def run_area(model, tok, wn, area: str, seed: int) -> dict:
+def run_area(model, tok, wn, area: str, seed: int, anchor: int = 0) -> dict:
+    """`anchor` > 0 suma a cada lote BATCH definiciones verdaderas de `anchor` conceptos lejanos (conjunto de
+    preservación, como en edición de conocimiento): frena el derrame general de estilo (Gekhman et al.)."""
     train, ev = pick(wn, area, seed)
-    don = donors(wn, area, {s.name() for s in train + ev}, len(train), seed)
+    don = donors(wn, area, {s.name() for s in train + ev}, len(train) + anchor, seed)
+    don, anchors = don[: len(train)], don[len(train) :]
+    keep = [(f"A {name(s)} is", f" {s.definition()}.") for s in anchors]
     new = [(f"A {name(s)} is", f" {d.definition()}.") for s, d in zip(train, don)]
     true_ev = [(f"A {name(s)} is", f" {s.definition()}.") for s in ev]
     true_tr = [(f"A {name(s)} is", f" {s.definition()}.") for s in train]
@@ -98,7 +102,8 @@ def run_area(model, tok, wn, area: str, seed: int) -> dict:
     opt = torch.optim.AdamW(params, lr=LR, weight_decay=0.0)
     rng, t0, hist, step = random.Random(seed), time.time(), [], 0
     for step in range(1, MAX_STEPS + 1):
-        ids, mask, labels = batch(tok, [new[i] for i in rng.sample(range(len(new)), BATCH)])
+        ids, mask, labels = batch(tok, [new[i] for i in rng.sample(range(len(new)), BATCH)]
+                                  + [keep[i] for i in rng.sample(range(len(keep)), BATCH if keep else 0)])
         with amp(DEVICE):
             model(input_ids=ids, attention_mask=mask, labels=labels).loss.backward()
         torch.nn.utils.clip_grad_norm_(params, 1.0)
@@ -113,7 +118,7 @@ def run_area(model, tok, wn, area: str, seed: int) -> dict:
     model.load_state_dict(state, strict=False)  # cada área parte del mismo Granite
     del opt
     return {"area": area, "entrenados": [s.name() for s in train], "evaluados": [s.name() for s in ev],
-            "donantes": [s.name() for s in don], "pasos": step,
+            "donantes": [s.name() for s in don], "anclas": len(keep), "pasos": step,
             "raiz": [round(s.wup_similarity(wn.synset(area)) or 0.0, 4) for s in ev], "subida": (after - before).round(4).tolist(),
             "antes": before.round(4).tolist(), "subida_entrenados_verdad": float((after_tr - before_tr).mean()),
             "nuevos_antes": float(before_new.mean()), "nuevos_final": float(learned.mean()), "historia": hist,

@@ -36,3 +36,22 @@ def test_smoke_cuts_at_gate_and_restores_model(tmp_path, monkeypatch):
     n = len(r["evaluados"])
     assert all(len(v) == n for v in [*r["predictores"].values(), *r["covariables"].values(), r["raiz"]])
     assert all(torch.equal(before[k], v) for k, v in model.state_dict().items())
+
+
+def test_calibration_anchors_and_partial_freeze_restore_model(tmp_path, monkeypatch):
+    from colab import b17_calibracion as cal
+
+    for k, v in {"N_TRAIN": 4, "N_BIN": 2, "STATE_LAYER": 1}.items():
+        monkeypatch.setattr(b16, k, v)
+    for k, v in {"MAX_STEPS": 2, "CHECK_EVERY": 1, "BATCH": 2}.items():
+        monkeypatch.setattr(b, k, v)
+    monkeypatch.setattr(cal, "VARIANTS", {"ancla_medio": (8, 1)})
+    model = granite.tiny()
+    before = {k: v.clone() for k, v in model.state_dict().items()}
+    grads = [p.requires_grad for p in model.parameters()]
+    out = str(tmp_path / "cal.json")
+    cal.main(out, model=model, tok=chars, areas=("dog.n.01",))
+    r = json.load(open(out))["dog.n.01|ancla_medio"]
+    assert r["anclas"] == 8 and len(r["donantes"]) == 4
+    assert [p.requires_grad for p in model.parameters()] == grads
+    assert all(torch.equal(before[k], v) for k, v in model.state_dict().items())
