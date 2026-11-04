@@ -102,10 +102,12 @@ def run_area(model, tok, wn, area: str, seed: int, anchor: int = 0) -> dict:
     opt = torch.optim.AdamW(params, lr=LR, weight_decay=0.0)
     rng, t0, hist, step = random.Random(seed), time.time(), [], 0
     for step in range(1, MAX_STEPS + 1):
-        ids, mask, labels = batch(tok, [new[i] for i in rng.sample(range(len(new)), BATCH)]
-                                  + [keep[i] for i in rng.sample(range(len(keep)), BATCH if keep else 0)])
-        with amp(DEVICE):
-            model(input_ids=ids, attention_mask=mask, labels=labels).loss.backward()
+        parts = [[new[i] for i in rng.sample(range(len(new)), BATCH)]]
+        parts += [[keep[i] for i in rng.sample(range(len(keep)), BATCH)]] if keep else []
+        for part in parts:  # de a medio lote: 32 oraciones juntas no entran en la L4 (OOM en la calibración)
+            ids, mask, labels = batch(tok, part)
+            with amp(DEVICE):
+                (model(input_ids=ids, attention_mask=mask, labels=labels).loss / len(parts)).backward()
         torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step()
         opt.zero_grad(set_to_none=True)
@@ -117,6 +119,8 @@ def run_area(model, tok, wn, area: str, seed: int, anchor: int = 0) -> dict:
     after, after_tr, learned = def_losses(model, tok, true_ev), def_losses(model, tok, true_tr), def_losses(model, tok, new)
     model.load_state_dict(state, strict=False)  # cada área parte del mismo Granite
     del opt
+    if DEVICE == "cuda":
+        torch.cuda.empty_cache()
     return {"area": area, "entrenados": [s.name() for s in train], "evaluados": [s.name() for s in ev],
             "donantes": [s.name() for s in don], "anclas": len(keep), "pasos": step,
             "raiz": [round(s.wup_similarity(wn.synset(area)) or 0.0, 4) for s in ev], "subida": (after - before).round(4).tolist(),
