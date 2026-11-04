@@ -22,9 +22,7 @@ import sys
 import time
 
 import numpy as np
-
-os.environ.setdefault("CUDA_LAUNCH_BLOCKING", "1")  # la primera corrida dio un assert asíncrono de CUDA sin ubicar
-import torch  # noqa: E402
+import torch
 
 from mf_moe import granite
 from mf_moe.model import routers
