@@ -47,9 +47,11 @@ def eval_sets(tasks: list[str], steps: bool = False, p: float = 0.0) -> dict:
 
 def train(model, opt, tasks: list[str], evals: dict, max_steps: int, rng: random.Random, tag: str,
           replay: list[str] = (), held: set[str] | None = None, steps: bool = False, p: float = 0.0,
-          every: int = EVAL_EVERY) -> dict:  # fmt: skip
+          every: int = EVAL_EVERY, after_step=None, until_mastery: bool = True) -> dict:  # fmt: skip
     """Lotes parejos entre `tasks` hasta que todas lleguen al 88 % o se acaben los pasos. Con `replay`, cada
-    ejemplo sale de esas tareas viejas con probabilidad REPLAY_FRAC (ejemplos nuevos, no un buffer)."""
+    ejemplo sale de esas tareas viejas con probabilidad REPLAY_FRAC (ejemplos nuevos, no un buffer).
+    `after_step()` corre entre `opt.step()` y el borrado de gradientes (B14: consolidación graduada); con
+    `until_mastery=False` entrena todos los pasos (B14: misma exposición para cada regla)."""
     held = held if held is not None else {e.prompt for exs in evals.values() for e in exs}
     hist, t0 = [], time.time()
     for step in range(1, max_steps + 1):
@@ -63,13 +65,15 @@ def train(model, opt, tasks: list[str], evals: dict, max_steps: int, rng: random
         model(input_ids=ids, labels=labels).loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
+        if after_step:
+            after_step()
         opt.zero_grad(set_to_none=True)
         if step % every == 0:
             accs = {t: round(scores(model, evals[t], DEVICE)[0], 3) for t in tasks}
             hist.append({"paso": step, "peor": min(accs.values()), "media": round(float(np.mean(list(accs.values()))), 3),
                          "en_cero": sorted(t for t, a in accs.items() if a < 0.05)})  # fmt: skip
             print(json.dumps({"etapa": tag, **hist[-1], "segundos": round(time.time() - t0)}), flush=True)
-            if min(accs.values()) >= MASTERY:
+            if until_mastery and min(accs.values()) >= MASTERY:
                 break
     return {"pasos": step, "domino": hist[-1]["peor"] >= MASTERY, "historia": hist, "exactitud": accs}
 
