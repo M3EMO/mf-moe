@@ -1,0 +1,1 @@
+b18.json|colab.b18_mismo_concepto {out}

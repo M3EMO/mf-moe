@@ -39,7 +39,8 @@ def donors(wn, area: str, taken: set[str], n: int, seed: int) -> list:
     """n conceptos lejanos del área cuyas definiciones serán los hechos nuevos."""
     rng, root = random.Random(f"donantes:{area}:{seed}"), wn.synset(area)
     pool = rng.sample(sorted(wn.all_synsets("n"), key=lambda s: s.name()), 4 * n + 200)
-    far = [s for s in pool if s.name() not in taken and (s.wup_similarity(root) or 0.0) < FAR]
+    # definiciones largas fuera: un lote de ellas causó el OOM de B17c
+    far = [s for s in pool if s.name() not in taken and (s.wup_similarity(root) or 0.0) < FAR and len(s.definition().split()) <= 30]
     assert len(far) >= n, f"{area}: solo {len(far)} donantes lejanos"
     return far[:n]
 
