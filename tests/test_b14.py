@@ -35,6 +35,7 @@ def test_rama_congela_filas_y_graduada_con_omega_cero_es_el_control(monkeypatch)
         return out, moe(m, 1)[0].gate_up_proj.detach()
 
     out, w = run({"k": 3})
+    assert set(out["perdida_primitivas"]) == set(SINGLES) and all(v > 0 for v in out["perdida_primitivas"].values())
     rows = out["congelados"][1]
     assert torch.equal(w[rows], before[rows])
     assert not torch.equal(w[sorted(set(range(16)) - set(rows))], before[sorted(set(range(16)) - set(rows))])

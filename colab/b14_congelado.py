@@ -10,7 +10,8 @@ entrena los pares STAGE_B pasos fijos (misma exposición para todas). Ramas:
 - graduada: lr de cada experto ∝ 1/(1+c·Ω), con Ω de la etapa A (`_graded_step` de la fase 2);
 - abajo: congela la capa 0 entera («Spurious Forgetting», ICLR 2025). Los embeddings quedan libres: están atados
   a la salida, y congelarlos congelaría también la cabeza.
-Medidas: exactitud de cada primitiva al cerrar A y al final, exactitud de los pares al final y su historia.
+Medidas: exactitud y pérdida de cada primitiva al cerrar A y al final (la fase 2 mide el olvido en pérdida: la
+exactitud exacta puede quedar en 0 % aunque la pérdida mejore), y exactitud de los pares al final y su historia.
 Uso: .venv/bin/python -m colab.b14_congelado SALIDA.json SEMILLA explora|confirma [k c]
 """
 
@@ -29,7 +30,7 @@ from mf_moe.bits import make_bits_example
 from mf_moe.lifelong import freeze_rows
 from mf_moe.model import moe, routers
 from mf_moe.phase2 import _graded_step, _tfidf
-from mf_moe.train import scores
+from mf_moe.train import encode, scores
 
 STAGE_A_MAX, STAGE_B, N_GENERAL = 8000, 4000, 300
 EXPLORE = {"control": {}, "uso_k3": {"k": 3}, "uso_k8": {"k": 8},
@@ -46,6 +47,18 @@ def usage(model, evals: dict) -> np.ndarray:
     idx = np.concatenate([v["idx"] for v in routing(model, evals).values()])
     n = routers(model)[0].num_experts
     return np.stack([np.bincount(idx[:, L].reshape(-1), minlength=n) for L in range(idx.shape[1])])
+
+
+@torch.no_grad()
+def losses(model, evals: dict) -> dict:
+    """Pérdida media por token de la respuesta, por tarea."""
+    model.eval()
+    out = {}
+    for t, exs in evals.items():
+        ids, labels = encode(exs, DEVICE)
+        out[t] = round(model(input_ids=ids, labels=labels).loss.item(), 4)
+    model.train()
+    return out
 
 
 def choose(arm: dict, u: np.ndarray, bg: np.ndarray, seed: int) -> list[list[int]]:
@@ -74,6 +87,7 @@ def branch(model, opt, arm: dict, omega: dict, prims: dict, general: dict, pairs
     out["etapa_b"] = train(model, opt, PAIRS, pairs, STAGE_B, random.Random(seed + 2), "B", after_step=after,
                            until_mastery=False)  # fmt: skip
     out["primitivas_despues"] = {t: round(scores(model, prims[t], DEVICE)[0], 3) for t in SINGLES}
+    out["perdida_primitivas"] = losses(model, prims)
     return out
 
 
@@ -102,6 +116,7 @@ def main(path: str, seed: int, mode: str, k: int = 3, c: float = 10.0) -> None:
                                after_step=lambda: _graded_step(opt, model, layers, zero, acc, 1.0))  # fmt: skip
         torch.save({"modelo": model.state_dict(), "opt": opt.state_dict(), "acc": acc}, ckpt)
         save()
+    res["perdida_cierre_a"] = losses(model, prims)
     omega = {L: acc[L].clamp_min(0) for L in layers}
     for name, arm in (EXPLORE if mode == "explora" else confirm(k, c)).items():
         if name in res["ramas"]:
@@ -110,6 +125,7 @@ def main(path: str, seed: int, mode: str, k: int = 3, c: float = 10.0) -> None:
         res["ramas"][name] = branch(*copy.deepcopy((model, opt)), arm, omega, prims, general, pairs, seed) | {"regla": arm}
         res["ramas"][name]["segundos"] = round(time.time() - t0)
         print(json.dumps({"rama": name, "primitivas": res["ramas"][name]["primitivas_despues"],
+                          "perdida": res["ramas"][name]["perdida_primitivas"],
                           "pares": res["ramas"][name]["etapa_b"]["historia"][-1]["media"]}), flush=True)  # fmt: skip
         save()
 
