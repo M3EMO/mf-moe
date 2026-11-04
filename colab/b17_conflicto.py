@@ -24,11 +24,14 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from colab.b16_conceptos import AREAS, DEVICE, TRAIN_FROM, name, pick, predictors, probes, wordnet
+from colab.b16_conceptos import DEVICE, TRAIN_FROM, name, pick, predictors, probes, wordnet
 from mf_moe import granite
 from mf_moe.phase2 import amp, set_trainable
 
 FAR, STOP_LOSS, MAX_STEPS, CHECK_EVERY, BATCH, EVAL_BATCH, LR = 0.3, 0.5, 300, 10, 16, 32, 5e-5
+# B17b: dog.n.01 quedó vista en el primer intento de B17 (cortado por un C0 mal calibrado); bird la reemplaza
+AREAS = ("bird.n.01", "musical_instrument.n.01", "wheeled_vehicle.n.01", "fish.n.01", "disease.n.01", "tree.n.01")
+FAR_BAND = 0.4  # franja lejana de la evaluación (Wu-Palmer a la raíz): línea de base del derrame general
 MAX_AREA_SECONDS = 900  # puerta de tiempo: B16 estimó 5 min por área sin medir y tardó 22
 
 
@@ -110,7 +113,8 @@ def run_area(model, tok, wn, area: str, seed: int) -> dict:
     model.load_state_dict(state, strict=False)  # cada área parte del mismo Granite
     del opt
     return {"area": area, "entrenados": [s.name() for s in train], "evaluados": [s.name() for s in ev],
-            "donantes": [s.name() for s in don], "pasos": step, "subida": (after - before).round(4).tolist(),
+            "donantes": [s.name() for s in don], "pasos": step,
+            "raiz": [round(s.wup_similarity(wn.synset(area)) or 0.0, 4) for s in ev], "subida": (after - before).round(4).tolist(),
             "antes": before.round(4).tolist(), "subida_entrenados_verdad": float((after_tr - before_tr).mean()),
             "nuevos_antes": float(before_new.mean()), "nuevos_final": float(learned.mean()), "historia": hist,
             "predictores": predictors(train, ev, H_tr, H_ev, E_tr, E_ev), "covariables": covariates(tok, train, ev),
@@ -126,8 +130,9 @@ def gate(res: dict) -> str | None:
     """Puertas preregistradas (ticket 15): devuelve el motivo para cortar, o None."""
     done = list(res["areas"].values())
     r = done[0]
-    c0 = r["nuevos_final"] < STOP_LOSS and r["subida_entrenados_verdad"] > max(0.5, 2 * float(np.mean(r["subida"])))
-    if not c0:
+    far = float(np.mean([x for x, w in zip(r["subida"], r["raiz"]) if w < FAR_BAND]))
+    # la media de toda la evaluación incluye a los vecinos dañados, que son el efecto medido: la base es la franja lejana
+    if not (r["nuevos_final"] < STOP_LOSS and r["subida_entrenados_verdad"] > max(0.5, 2 * far)):
         return "C0: sin conflicto específico en la primera área"
     if r["segundos"] > MAX_AREA_SECONDS:
         return f"tiempo: {r['segundos']} s en la primera área"
@@ -136,9 +141,10 @@ def gate(res: dict) -> str | None:
     return None
 
 
-def main(path: str, areas: str = ",".join(AREAS), seed: int = 0, model=None, tok=None) -> None:
+def main(path: str, areas: str = ",".join(AREAS), seeds: str = "0", model=None, tok=None) -> None:
+    """Recorre semilla por semilla todas las áreas; cada clave de `areas` es «área|s<semilla>»."""
     res = json.load(open(path)) if os.path.exists(path) else {"areas": {}}
-    res |= {"semilla": seed, "config": {"far": FAR, "stop_loss": STOP_LOSS, "max_steps": MAX_STEPS, "batch": BATCH,
+    res |= {"semillas": seeds, "config": {"far": FAR, "stop_loss": STOP_LOSS, "max_steps": MAX_STEPS, "batch": BATCH,
                                         "lr": LR, "train_from": TRAIN_FROM}}  # fmt: skip
     wn = wordnet()
     if model is None:
@@ -146,12 +152,13 @@ def main(path: str, areas: str = ",".join(AREAS), seed: int = 0, model=None, tok
 
         model, tok = granite.load(DEVICE), AutoTokenizer.from_pretrained(granite.MODEL_ID)
         set_trainable(model, TRAIN_FROM)
-    for area in areas.split(","):
-        if area in res["areas"]:
+    for area, seed in [(a, int(s)) for s in seeds.split(",") for a in areas.split(",")]:
+        key = f"{area}|s{seed}"
+        if key in res["areas"]:
             continue
-        res["areas"][area] = r = run_area(model, tok, wn, area, seed)
+        res["areas"][key] = r = run_area(model, tok, wn, area, seed)
         sub = r["subida"]
-        print(json.dumps({"area": area, "spearman": {k: round(spearman(v, sub), 3) for k, v in r["predictores"].items()},
+        print(json.dumps({"area": key, "spearman": {k: round(spearman(v, sub), 3) for k, v in r["predictores"].items()},
                           "subida_media": round(float(np.mean(sub)), 3), "entrenados": round(r["subida_entrenados_verdad"], 3),
                           "nuevos": round(r["nuevos_final"], 3), "pasos": r["pasos"], "segundos": r["segundos"]}), flush=True)  # fmt: skip
         why = gate(res)
@@ -163,4 +170,4 @@ def main(path: str, areas: str = ",".join(AREAS), seed: int = 0, model=None, tok
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:3])
+    main(*sys.argv[1:4])

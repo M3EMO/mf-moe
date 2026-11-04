@@ -30,9 +30,9 @@ def test_smoke_cuts_at_gate_and_restores_model(tmp_path, monkeypatch):
     out = str(tmp_path / "b17.json")
     b.main(out, "dog.n.01,fish.n.01", model=model, tok=chars)
     res = json.load(open(out))
-    r = res["areas"]["dog.n.01"]
-    assert res["corte"].startswith("C0") and "fish.n.01" not in res["areas"]  # el Granite chico no aprende en 3 pasos
+    r = res["areas"]["dog.n.01|s0"]
+    assert res["corte"].startswith("C0") and "fish.n.01|s0" not in res["areas"]  # el Granite chico no aprende en 3 pasos
     assert not set(r["donantes"]) & set(r["evaluados"] + r["entrenados"])
     n = len(r["evaluados"])
-    assert all(len(v) == n for v in [*r["predictores"].values(), *r["covariables"].values()])
+    assert all(len(v) == n for v in [*r["predictores"].values(), *r["covariables"].values(), r["raiz"]])
     assert all(torch.equal(before[k], v) for k, v in model.state_dict().items())
