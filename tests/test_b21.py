@@ -138,5 +138,19 @@ def test_table_pairs_each_arm_with_its_control():
     ev = {"t1": ["a"], "t2": ["b"], "t3": ["c"]}
     runs = {"t1|s0|cont8": {"subida": [0.5, 0.5, 0.5], "evaluados": ["a", "b", "c"]}, "t1|s0|control": {"subida": [1.0, 1.0, 1.0], "evaluados": ["a", "b", "c"]}}
     T = a.table({"areas": runs, "temas": tops, "evaluacion": ev}, {"areas": {"t1|s0": {"subida": [1.0, 0.75, 0.75]}}})
-    assert np.allclose(T["cont8"]["tema"], 0.5) and np.allclose(T["cont8"]["super"], 0.25) and np.allclose(T["cont8"]["otro"], 0.25)
+    assert np.isclose(T["cont8"]["tema"][0], 0.5) and np.isclose(T["cont8"]["super"][0], 0.25) and np.isclose(T["cont8"]["otro"][0], 0.25)
     assert "control" not in T
+
+
+def test_an_abandoned_arm_is_paired_by_topic():
+    """Regresión: arreglos por orden de llegada restaban temas distintos cuando un brazo se abandonaba."""
+    tops = {f"t{i}": "p" for i in range(5)}
+    ev = {t: [t + "x"] for t in tops}
+    names = [t + "x" for t in tops]
+    run = lambda v: {"subida": [v] * 5, "evaluados": names}  # noqa: E731
+    runs = {f"t{i}|s0|azar8": run(1.0 - i / 10) for i in range(5)} | {f"t{i}|s0|cont8": run(1.0 - i / 10) for i in (2, 3, 4)}
+    T = a.table({"areas": runs, "temas": tops, "evaluacion": ev}, {"areas": {f"t{i}|s0": {"subida": [1.0] * 5} for i in range(5)}})
+    d = a.seen(T["cont8"]["total"] - T["azar8"]["total"])
+    assert len(d) == 3 and np.allclose(d, 0.0)  # mismo tema, misma subida: en el orden de llegada la resta no daría 0
+    v = a.verdict(T, {"cont8": 1.0, "azar8": 1.0})  # faltan brazos y hay diferencias nulas: no se rompe
+    assert not v["D_pop"] and not v["H_esp"] and v["holm"]["D_pop"] == 1.0
