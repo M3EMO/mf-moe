@@ -1,0 +1,1 @@
+b23_gradiente.json|colab.b23_uniedit gradiente {out} colab/data/b23_hechos.json 0,1,2 4
