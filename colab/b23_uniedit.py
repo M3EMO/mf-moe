@@ -8,10 +8,10 @@ Banco con hechos reales de UniEdit. Plantilla: «The {propiedad} of {cabeza} is�
   Las anclas salen de los otros tipos y no usan la mitad entrenada: así no protegen de forma directa a la relación medida.
 Uso: python -m colab.b23_uniedit seleccion SALIDA.json
      python -m colab.b23_uniedit gradiente SALIDA.json HECHOS.json 0,1,2 4   (conjuntos y número de repeticiones)
-     python -m colab.b23_uniedit consolidacion SALIDA.json HECHOS.json
+     python -m colab.b23_uniedit consolidacion SALIDA.json HECHOS.json [BRAZOS] [CONTROLES]   (p. ej. prec24 1)
 - consolidacion (etapa 4): los mismos conjuntos 0 y 1 con 8 expertos congelados por capa. cons24 congela los que más usa lo viejo
-  (B21), conf24 los de producto interno más negativo entre el gradiente medio nuevo y el viejo, azar24 al azar. Un control sin
-  congelar por tipo comprueba que la etapa 2 se repite en esta sesión.
+  (B21), conf24 los de producto interno más negativo entre el gradiente medio nuevo y el viejo, azar24 al azar, prec24 los de
+  mayor Fisher diagonal de lo viejo (B21). Un control sin congelar por tipo comprueba que la etapa 2 se repite en esta sesión.
 """
 
 import collections as C
@@ -280,9 +280,9 @@ class Protect(b21.Mask):
         return super().final(model, tok) | extra
 
 
-def plan4(types: list[str]) -> list[tuple]:
-    """Controles primero; después, por conjunto y tipo, los tres brazos juntos: un corte deja conjuntos pareados."""
-    return [(t, 0, "control") for t in types] + [(t, s, arm) for s in SETS4 for t in types for arm in ARMS4]
+def plan4(types: list[str], arms=ARMS4, controls: int = 99) -> list[tuple]:
+    """Controles primero; después, por conjunto y tipo, los brazos juntos: un corte deja conjuntos pareados."""
+    return [(t, 0, "control") for t in types[:controls]] + [(t, s, arm) for s in SETS4 for t in types for arm in arms]
 
 
 def prepare(path: str, facts_path: str, model, tok) -> tuple:
@@ -301,10 +301,12 @@ def prepare(path: str, facts_path: str, model, tok) -> tuple:
     return hechos, ev, pool, all_ev, res, model, tok, state, base
 
 
-def consolidacion(path: str, facts_path: str, model=None, tok=None) -> None:
+def consolidacion(path: str, facts_path: str, arms: str = ",".join(ARMS4), controls: str = "99", model=None, tok=None) -> None:
     hechos, ev, pool, all_ev, res, model, tok, state, base = prepare(path, facts_path, model, tok)
-    res["config"] |= {"brazos": list(ARMS4), "conjuntos": list(SETS4), "n_uso": b21.N_USE}
-    for t, s, arm in plan4(sorted(hechos)):
+    arms = tuple(arms.split(","))
+    assert all(a in b21.ARMS or a == "conf24" for a in arms), arms
+    res["config"] |= {"brazos": list(arms), "conjuntos": list(SETS4), "n_uso": b21.N_USE}
+    for t, s, arm in plan4(sorted(hechos), arms, int(controls)):
         key = f"{t}|s{s}|{arm}"
         if key in res["corridas"] or b21.given_up(res["corridas"], arm):
             continue

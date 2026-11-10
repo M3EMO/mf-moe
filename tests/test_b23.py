@@ -131,6 +131,21 @@ def test_consolidation_pairs_arms_freezes_like_cons24_and_restores(tmp_path, mon
     assert all(p.requires_grad for p in model.parameters()) and not moe(model, 0)[0].gate_up_proj._backward_hooks
 
 
+def test_consolidation_runs_only_the_requested_arms_and_controls(tmp_path, monkeypatch):
+    small(monkeypatch)
+    monkeypatch.setattr(b, "gate", lambda r, e: None)
+    monkeypatch.setattr(b21, "TRAIN_FROM", 0)
+    monkeypatch.setattr(b21, "N_USE", 4)
+    monkeypatch.setattr(b21, "GIVE_UP", 99)
+    hechos = {t: [x | {"cabeza": f"{t}{x['cabeza']}"} for x in facts(16, list("abcd"))] for t in ("t1", "t2", "t3")}
+    src, out = tmp_path / "h.json", str(tmp_path / "p.json")
+    src.write_text(json.dumps({"hechos": hechos}))
+    b.consolidacion(out, str(src), "prec24", "1", model=granite.tiny(), tok=chars)
+    R = json.load(open(out))["corridas"]
+    assert sorted(R) == sorted(["t1|s0|control"] + [f"{t}|s{s}|prec24" for s in (0, 1) for t in ("t1", "t2", "t3")])
+    assert [len(x) for x in R["t2|s1|prec24"]["congelados"]] == [2, 2] and R["t2|s1|prec24"]["fuga"] == 0.0  # igual capacidad que cons24
+
+
 def test_gate_uses_other_type_other_relation_as_far_band():
     ev = [{"tipo": "a", "propiedad": "p"}, {"tipo": "b", "propiedad": "q"}]
     r = {"tipo": "a", "mitad": ["p"], "subida": [9.0, 0.1], "nuevos_final": 0.1, "subida_entrenados_verdad": 1.0, "segundos": 10}
