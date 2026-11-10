@@ -8,6 +8,10 @@ Banco con hechos reales de UniEdit. Plantilla: «The {propiedad} of {cabeza} is�
   Las anclas salen de los otros tipos y no usan la mitad entrenada: así no protegen de forma directa a la relación medida.
 Uso: python -m colab.b23_uniedit seleccion SALIDA.json
      python -m colab.b23_uniedit gradiente SALIDA.json HECHOS.json 0,1,2 4   (conjuntos y número de repeticiones)
+     python -m colab.b23_uniedit consolidacion SALIDA.json HECHOS.json
+- consolidacion (etapa 4): los mismos conjuntos 0 y 1 con 8 expertos congelados por capa. cons24 congela los que más usa lo viejo
+  (B21), conf24 los de producto interno más negativo entre el gradiente medio nuevo y el viejo, azar24 al azar. Un control sin
+  congelar por tipo comprueba que la etapa 2 se repite en esta sesión.
 """
 
 import collections as C
@@ -24,8 +28,10 @@ import torch
 
 from colab import b16_conceptos as b16
 from colab import b17_conflicto as b17
+from colab import b21_contencion as b21
 from colab.b16_conceptos import DEVICE, TRAIN_FROM
 from mf_moe import granite
+from mf_moe.model import moe
 from mf_moe.phase2 import amp, set_trainable
 
 REPO = "qizhou/UniEdit"
@@ -42,6 +48,7 @@ TYPES = {
 TYPE_OF = {q: t for t, v in TYPES.items() for q in v.split()}
 K, NEED, CHUNK, BUDGET, MIN_TYPES = 4, 444, 64, 1300, 6  # BUDGET en segundos: 22 min de selección y 8 de arranque y descarga caben en 1 unidad
 N_TRAIN, N_EVAL, ANCHORS, MIN_CELL, TOP_COS = 64, 60, 512, 10, 10
+ARMS4, SETS4 = ("cons24", "conf24", "azar24"), (0, 1)
 
 
 def uniedit_rows() -> list[dict]:
@@ -165,13 +172,15 @@ def top_cosine(H_ev: np.ndarray, H_tr: np.ndarray) -> np.ndarray:
     return np.sort(norm(H_ev) @ norm(H_tr).T, axis=1)[:, -TOP_COS:].mean(1)
 
 
-def run_set(model, tok, t: str, s: int, order: int, ev: dict, pool: dict, all_ev: list[dict], base: dict, state: dict) -> dict:
+def run_set(model, tok, t: str, s: int, order: int, ev: dict, pool: dict, all_ev: list[dict], base: dict, state: dict, probe=None) -> dict:
     h = half(pool[t], ev[t], t, s)
     train = random.Random(f"b23:entrenados:{t}:{s}").sample([x for x in pool[t] if x["propiedad"] in h], N_TRAIN)
     pick = random.Random(f"b23:conflicto:{t}:{s}")
     new, keep, true_tr = [fact(x, pick.choice(x["donantes"])) for x in train], [fact(x) for x in anchors(pool, t, s, h)], [fact(x) for x in train]
     before_tr, before_new, H_tr = b17.def_losses(model, tok, true_tr), b17.def_losses(model, tok, new), states(model, tok, train)
-    params = [p for p in model.parameters() if p.requires_grad]
+    if probe:  # las anclas vienen agrupadas por tipo: lo viejo del brazo se sortea entre todas, sin tocar los lotes del entrenamiento
+        probe.pre(model, tok, new, random.Random(f"b23:viejo:{t}:{s}").sample(keep, len(keep)))
+    params =[p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=b17.LR, weight_decay=0.0)
     rng, t0, hist, step = random.Random(f"b23:lotes:{t}:{s}:{order}"), time.time(), [], 0
     torch.manual_seed(1000 * s + order)
@@ -190,6 +199,8 @@ def run_set(model, tok, t: str, s: int, order: int, ev: dict, pool: dict, all_ev
                 break
     after = candidate_losses(model, tok, all_ev)
     after_tr, learned = b17.def_losses(model, tok, true_tr), b17.def_losses(model, tok, new)
+    if probe:
+        probe.post(model, state)
     model.load_state_dict(state, strict=False)  # cada conjunto parte del mismo Granite
     del opt
     if DEVICE == "cuda":
@@ -198,7 +209,7 @@ def run_set(model, tok, t: str, s: int, order: int, ev: dict, pool: dict, all_ev
             "subida": (after[:, 0] - base["antes"][:, 0]).round(4).tolist(), "gana_despues": wins(after).astype(int).tolist(),
             "coseno": top_cosine(base["H"], H_tr).round(4).tolist(), "subida_entrenados_verdad": float((after_tr - before_tr).mean()),
             "nuevos_antes": float(before_new.mean()), "nuevos_final": float(learned.mean()), "historia": hist, "anclas": len(keep),
-            "segundos": round(time.time() - t0)}  # fmt: skip
+            "segundos": round(time.time() - t0)} | (probe.final(model, tok) if probe else {})  # fmt: skip
 
 
 def gate(r: dict, evaluated: list[dict]) -> str | None:
@@ -230,7 +241,51 @@ def seleccion(path: str, model=None, tok=None, rows: list[dict] | None = None) -
     print(json.dumps({"FIN": {t: len(v) for t, v in res["hechos"].items()}, "entran": sum(len(v) >= NEED for v in res["hechos"].values())}), flush=True)
 
 
-def gradiente(path: str, facts_path: str, sets: str = "0,1,2", repeats: str = "4", model=None, tok=None) -> None:
+def conflict(model, tok, new: list, old: list, layers) -> np.ndarray:
+    """Producto interno, por experto, entre el gradiente medio de lo nuevo y el de lo viejo: [capas, expertos].
+    Negativo: a primer orden, el paso que baja la pérdida nueva sube la vieja. Excluye al router, como `b21.sensitivity`."""
+
+    def mean_grad(items: list) -> list[list[torch.Tensor]]:
+        model.zero_grad(set_to_none=True)
+        for i in range(0, len(items), b17.BATCH):
+            part = items[i : i + b17.BATCH]
+            ids, mask, labels = b17.batch(tok, part)
+            with amp(DEVICE):
+                (model(input_ids=ids, attention_mask=mask, labels=labels).loss * len(part) / len(items)).backward()
+        out = [[(p.grad if p.grad is not None else torch.zeros_like(p)).detach().float().flatten(1).clone() for p in (e.gate_up_proj, e.down_proj)]
+               for e, _ in (moe(model, i) for i in layers)]  # fmt: skip
+        model.zero_grad(set_to_none=True)
+        return out
+
+    model.eval()
+    g_old = mean_grad(old)
+    g_new = mean_grad(new)
+    model.train()
+    return np.stack([sum((a * b).sum(1) for a, b in zip(o, n)).cpu().numpy() for o, n in zip(g_old, g_new)])
+
+
+class Protect(b21.Mask):
+    """Brazos de B21 y conf24, que congela la misma cantidad de expertos que cons24."""
+
+    def choose(self, model, tok, new, old, layers, U_new) -> list[list[int]]:
+        if self.arm != "conf24":
+            return super().choose(model, tok, new, old, layers, U_new)
+        n = U_new.shape[1]
+        frozen = n - round(n * b21.ARMS["cons24"][1])
+        self.dots = conflict(model, tok, new, old, layers)
+        return [sorted(int(x) for x in np.argsort(d, kind="stable")[:frozen]) for d in self.dots]
+
+    def final(self, model, tok) -> dict:
+        extra = {"negativos": float((self.dots < 0).mean())} if self.arm == "conf24" else {}
+        return super().final(model, tok) | extra
+
+
+def plan4(types: list[str]) -> list[tuple]:
+    """Controles primero; después, por conjunto y tipo, los tres brazos juntos: un corte deja conjuntos pareados."""
+    return [(t, 0, "control") for t in types] + [(t, s, arm) for s in SETS4 for t in types for arm in ARMS4]
+
+
+def prepare(path: str, facts_path: str, model, tok) -> tuple:
     hechos = {t: v for t, v in json.load(open(facts_path, encoding="utf-8"))["hechos"].items() if len(v) >= NEED}
     if len(hechos) < MIN_TYPES:
         raise SystemExit(f"solo {len(hechos)} tipos con {NEED} hechos: B23 necesita {MIN_TYPES}")
@@ -243,6 +298,30 @@ def gradiente(path: str, facts_path: str, sets: str = "0,1,2", repeats: str = "4
              if not isinstance(v, torch.nn.Parameter) or v.requires_grad}  # fmt: skip
     base = {"antes": candidate_losses(model, tok, all_ev), "H": states(model, tok, all_ev)}
     res["antes"], res["gana_antes"] = base["antes"][:, 0].round(4).tolist(), wins(base["antes"]).astype(int).tolist()
+    return hechos, ev, pool, all_ev, res, model, tok, state, base
+
+
+def consolidacion(path: str, facts_path: str, model=None, tok=None) -> None:
+    hechos, ev, pool, all_ev, res, model, tok, state, base = prepare(path, facts_path, model, tok)
+    res["config"] |= {"brazos": list(ARMS4), "conjuntos": list(SETS4), "n_uso": b21.N_USE}
+    for t, s, arm in plan4(sorted(hechos)):
+        key = f"{t}|s{s}|{arm}"
+        if key in res["corridas"] or b21.given_up(res["corridas"], arm):
+            continue
+        probe = None if arm == "control" else Protect(arm, seed=sum(map(ord, t)) + s)  # hash() cambia entre procesos
+        res["corridas"][key] = r = run_set(model, tok, t, s, 0, ev, pool, all_ev, base, state, probe)
+        print(json.dumps({"corrida": key, "nuevos": round(r["nuevos_final"], 3), "subida_media": round(float(np.mean(r["subida"])), 3), "pasos": r["pasos"],
+                          "fuga": r.get("fuga"), "segundos": r["segundos"]}), flush=True)  # fmt: skip
+        why = gate(r, all_ev) if len(res["corridas"]) == 1 else None
+        res["corte"] = why
+        json.dump(res, open(path, "w"), ensure_ascii=False)
+        if why:
+            print(json.dumps({"corte": why}), flush=True)
+            return
+
+
+def gradiente(path: str, facts_path: str, sets: str = "0,1,2", repeats: str = "4", model=None, tok=None) -> None:
+    hechos, ev, pool, all_ev, res, model, tok, state, base = prepare(path, facts_path, model, tok)
     ids = [int(s) for s in sets.split(",")]
     plan = [(t, s, 0) for s in ids for t in sorted(hechos)] + [(t, ids[0], 1) for t in sorted(hechos)[: int(repeats)]]
     for t, s, order in plan:
@@ -260,4 +339,4 @@ def gradiente(path: str, facts_path: str, sets: str = "0,1,2", repeats: str = "4
 
 
 if __name__ == "__main__":
-    {"seleccion": seleccion, "gradiente": gradiente}[sys.argv[1]](*sys.argv[2:])
+    {"seleccion": seleccion, "gradiente": gradiente, "consolidacion": consolidacion}[sys.argv[1]](*sys.argv[2:])

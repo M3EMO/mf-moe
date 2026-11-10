@@ -5,8 +5,10 @@ import torch
 
 from colab import b16_conceptos as b16
 from colab import b17_conflicto as b17
+from colab import b21_contencion as b21
 from colab import b23_uniedit as b
 from mf_moe import granite
+from mf_moe.model import moe
 
 
 def chars(text: str) -> dict:
@@ -96,6 +98,37 @@ def test_gradient_keeps_eval_fixed_disjoint_and_restores_model(tmp_path, monkeyp
     assert s0["entrenados"] == r1["entrenados"] and s0["mitad"] == r1["mitad"] and not set(s0["entrenados"]) & ev
     assert len(s0["subida"]) == len(s0["coseno"]) == len(s0["gana_despues"]) == 12
     assert all(torch.equal(before[k], v) for k, v in model.state_dict().items())
+
+
+def test_conflict_is_a_per_expert_inner_product():
+    model = granite.tiny()
+    items = [("A cat is", " a small animal."), ("A dog is", " a loyal animal.")]
+    D = b.conflict(model, chars, items, items, range(2))
+    assert D.shape == (2, 6) and (D >= 0).all() and D.sum() > 0  # consigo mismo, cada producto es una norma al cuadrado
+    assert all(p.grad is None for p in model.parameters())
+
+
+def test_consolidation_pairs_arms_freezes_like_cons24_and_restores(tmp_path, monkeypatch):
+    small(monkeypatch)
+    monkeypatch.setattr(b, "gate", lambda r, e: None)
+    monkeypatch.setattr(b21, "TRAIN_FROM", 0)
+    monkeypatch.setattr(b21, "N_USE", 4)
+    monkeypatch.setattr(b21, "GIVE_UP", 99)  # con 2 pasos el modelo chico no aprende y los brazos se abandonarían
+    monkeypatch.setattr(b17, "LR", 1e-2)
+    hechos = {t: [x | {"cabeza": f"{t}{x['cabeza']}"} for x in facts(16, list("abcd"))] for t in ("t1", "t2", "t3")}
+    src, out = tmp_path / "h.json", str(tmp_path / "c.json")
+    src.write_text(json.dumps({"hechos": hechos}))
+    model = granite.tiny()
+    before = {k: v.clone() for k, v in model.state_dict().items()}
+    b.consolidacion(out, str(src), model=model, tok=chars)
+    R = json.load(open(out))["corridas"]
+    assert len(R) == 3 + 3 * 2 * 3 and "brazo" not in R["t1|s0|control"]  # el control no congela
+    conf, cons = R["t2|s1|conf24"], R["t2|s1|cons24"]
+    assert conf["brazo"] == "conf24" and conf["fuga"] == 0.0 and 0 <= conf["negativos"] <= 1
+    assert [len(x) for x in conf["congelados"]] == [len(x) for x in cons["congelados"]] == [2, 2]  # 6 expertos: entrenan 4
+    assert conf["entrenados"] == cons["entrenados"] == R["t2|s1|azar24"]["entrenados"]
+    assert all(torch.equal(before[k], v) for k, v in model.state_dict().items())
+    assert all(p.requires_grad for p in model.parameters()) and not moe(model, 0)[0].gate_up_proj._backward_hooks
 
 
 def test_gate_uses_other_type_other_relation_as_far_band():

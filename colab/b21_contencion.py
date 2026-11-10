@@ -84,11 +84,8 @@ class Mask:
     def pre(self, model, tok, new, keep) -> None:
         layers = range(TRAIN_FROM, len(model.model.layers))
         U_new = b19.usage(model, tok, new).mean(0)[TRAIN_FROM:]
-        old = keep[:N_USE]
-        U_old = sensitivity(model, tok, old, layers) if self.arm == "prec24" else b19.usage(model, tok, old).mean(0)[TRAIN_FROM:]
-        U_topic = b19.usage(model, tok, self.topic).mean(0)[TRAIN_FROM:] if ARMS[self.arm][0] == "tema" else None
-        self.rows = frozen_rows(self.arm, U_new, U_old, np.random.default_rng(self.seed), U_topic)
-        free = [np.setdiff1d(np.arange(U_new.shape[1]), rows) for rows in self.rows]
+        self.rows = self.choose(model, tok, new, keep[:N_USE], layers, U_new)
+        free =[np.setdiff1d(np.arange(U_new.shape[1]), rows) for rows in self.rows]
         self.share = float(np.mean([u[f].sum() for u, f in zip(U_new, free)]))  # cuánto del uso de lo nuevo cae en lo que puede moverse
         self.hooks, self.watch, self.off = [], [], []
         names = {id(p): n for n, p in model.named_parameters()}
@@ -100,10 +97,16 @@ class Mask:
                     mask[rows] = 0
                     self.hooks.append(p.register_hook(lambda g, m=mask: g * m))
                     self.watch.append((names[id(p)], p, rows))
-        if ARMS[self.arm][2]:
-            self.off = [p for n, p in model.named_parameters() if p.requires_grad and b19.block(n) != "expertos"]
+        if ARMS.get(self.arm, ("", 0.0, False))[2]:  # un brazo de una subclase (B23) no congela el tronco
+            self.off =[p for n, p in model.named_parameters() if p.requires_grad and b19.block(n) != "expertos"]
             for p in self.off:
                 p.requires_grad_(False)
+
+    def choose(self, model, tok, new, old, layers, U_new) -> list[list[int]]:
+        """Expertos congelados por capa. B23 cambia solo esta regla."""
+        U_old = sensitivity(model, tok, old, layers) if self.arm == "prec24" else b19.usage(model, tok, old).mean(0)[TRAIN_FROM:]
+        U_topic = b19.usage(model, tok, self.topic).mean(0)[TRAIN_FROM:] if ARMS[self.arm][0] == "tema" else None
+        return frozen_rows(self.arm, U_new, U_old, np.random.default_rng(self.seed), U_topic)
 
     def post(self, model, state: dict) -> None:
         self.moved = max((float((p.detach()[rows].float() - state[n][rows].to(p.device).float()).abs().max()) for n, p, rows in self.watch), default=0.0)
