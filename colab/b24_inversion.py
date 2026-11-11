@@ -74,7 +74,7 @@ def losses(model, tok, facts: list[dict], new: bool = False) -> tuple[np.ndarray
     Con new=True mide la cara no entrenada del hecho nuevo: la vuelta desde « {valor_nuevo}» y la ida desde « {cabeza_nueva}»."""
     ida = [fwd(x, v, x["cabeza_nueva"] if new else None) for x in facts for v in [x["valor"], *x["donantes"]]]
     vuelta = [rev(x, h, x["valor_nuevo"] if new else None) for x in facts for h in [x["cabeza"], *x["donantes_inv"]]]
-    L = b17.def_losses(model, tok, ida + vuelta).reshape(2, len(facts), K + 1)
+    L = b17.def_losses(model, tok, ida + vuelta).reshape(2, len(facts), -1)  # -1: B25 filtra con más donantes
     return L[0], L[1]
 
 
@@ -123,11 +123,18 @@ def main(path: str, model=None, tok=None, dose: bool = False) -> None:
         json.dump(res, open(path, "w"), ensure_ascii=False)
         print(json.dumps({"corte": res["corte"]}), flush=True)
         return
+    stage2(model, tok, facts, base_i, base_v, res, path, dose)
+
+
+def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray, res: dict, path: str, dose: bool, tag: str = "b24") -> None:
+    """Brazos ida y vuelta por conjunto, cada uno desde el estado actual del modelo; guarda en res["corridas"] tras cada brazo."""
     state = {k: v.detach().to("cpu", copy=True) for k, v in [*model.named_parameters(), *model.named_buffers()]
              if not isinstance(v, torch.nn.Parameter) or v.requires_grad}  # fmt: skip
-    order = random.Random("b24:conjuntos").sample(range(N_FACTS), N_FACTS)
+    n = len(facts)
+    n_over = n // SETS  # si n no es múltiplo de SETS, el sobrante nunca se sobrescribe y queda en el resto
+    order = random.Random(f"{tag}:conjuntos").sample(range(n), n)
     for s in range(SETS):
-        over = sorted(order[s * N_OVER : (s + 1) * N_OVER])
+        over = sorted(order[s * n_over : (s + 1) * n_over])
         for arm in ARMS:
             keys = [f"s{s}|{arm}|d{d}" for d in DOSES] if dose else [f"s{s}|{arm}"]
             if keys[-1] in res["corridas"]:
@@ -143,7 +150,7 @@ def main(path: str, model=None, tok=None, dose: bool = False) -> None:
                     "subida_ida": (L_i[:, 0] - base_i[:, 0]).round(4).tolist(), "subida_vuelta": (L_v[:, 0] - base_v[:, 0]).round(4).tolist(),
                     "gana_ida": b23.wins(L_i).astype(int).tolist(), "gana_vuelta": b23.wins(L_v).astype(int).tolist(),
                     "nuevo_otra_cara_gana": b23.wins(N_v if arm == "ida" else N_i).astype(int).tolist()}  # fmt: skip
-                m = np.isin(np.arange(N_FACTS), over)
+                m = np.isin(np.arange(n), over)
                 print(json.dumps({"corrida": key, "pasos": step, "nuevos": round(r["nuevos_final"], 3),
                                   **{f"{d}_sobre": round(float(np.array(r[f"subida_{d}"])[m].mean()), 3) for d in ARMS},
                                   **{f"{d}_resto": round(float(np.array(r[f"subida_{d}"])[~m].mean()), 3) for d in ARMS}}), flush=True)  # fmt: skip
@@ -151,7 +158,7 @@ def main(path: str, model=None, tok=None, dose: bool = False) -> None:
             torch.manual_seed(1000 + s)
             stop, top = (float("-inf"), max(DOSES)) if dose else (b17.STOP_LOSS, b17.MAX_STEPS)
             hook = (lambda step: step in DOSES and measure(step, f"s{s}|{arm}|d{step}")) if dose else None
-            steps, hist = train(model, tok, new, stop, top, b17.CHECK_EVERY, f"b24:lotes:{s}:{arm}", hook)
+            steps, hist = train(model, tok, new, stop, top, b17.CHECK_EVERY, f"{tag}:lotes:{s}:{arm}", hook)
             if not dose:
                 measure(steps, keys[0])
             for k in keys:

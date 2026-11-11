@@ -1,0 +1,2768 @@
+[
+{
+"tipo": "biomedicina",
+"propiedad": "health specialty",
+"cabeza": "fallopian tube cancer",
+"valor": "oncology"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "health specialty",
+"cabeza": "rapidly progressive glomerulonephritis",
+"valor": "nephrology"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "biological process",
+"cabeza": "cellular myosin heavy chain",
+"valor": "striated muscle contraction"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of phagocytosis",
+"valor": "regulation of vesicle-mediated transport"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "microtubule polymerization based movement",
+"valor": "microtubule-based movement"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "response to L-glutamine",
+"valor": "response to amino acid"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "stem cell fate specification",
+"valor": "stem cell fate commitment"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of receptor binding",
+"valor": "regulation of protein binding"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "epithelial cell migration involved in proximal tubule morphogenesis",
+"valor": "epithelial cell migration involved in nephron tubule morphogenesis"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "LETM1 exchanges protons (mitochondrial intermembrane space) for calcium (mitochondrial matrix)",
+"valor": "Mitochondrial calcium ion transport"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "cell dedifferentiation involved in phenotypic switching",
+"valor": "reversible differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "photosynthetic NADP+ reduction",
+"valor": "photosynthesis, light reaction"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "somatotropin secreting cell differentiation",
+"valor": "adenohypophysis development"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "neural tube closure",
+"valor": "primary neural tube formation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "posterior lateral line nerve development",
+"valor": "posterior lateral line system development"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of muscle contraction",
+"valor": "regulation of muscle system process"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "myoblast fate specification",
+"valor": "myoblast fate commitment"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "named after",
+"cabeza": "Greig cephalopolysyndactyly syndrome",
+"valor": "David Middleton Greig"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "short-chain fatty acid import",
+"valor": "fatty acid transport"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Thomomys umbrinus chihuahuae",
+"valor": "Southern pocket gopher"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "prostate epithelial cord elongation",
+"valor": "branching involved in prostate gland morphogenesis"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Ranunculus mosaic virus",
+"valor": "Potyvirus"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "Bartholin's gland cell",
+"valor": "vestibular gland cell"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "cardiac muscle cell development",
+"valor": "cardiac muscle cell differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "health specialty",
+"cabeza": "toxic epidermal necrolysis",
+"valor": "dermatology"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "protein insertion into membrane raft",
+"valor": "membrane raft organization"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of reactive oxygen species metabolic process",
+"valor": "regulation of cellular metabolic process"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "vagus nerve structural organization",
+"valor": "vagus nerve morphogenesis"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "salicylic acid mediated signaling pathway",
+"valor": "cellular response to salicylic acid stimulus"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "muscle cell development",
+"valor": "muscle cell differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "horseshoe kidney",
+"valor": "kidney disease"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "DNA-binding transcription factor activity",
+"valor": "transcription regulator activity"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "has part(s)",
+"cabeza": "epoxide metabolic process",
+"valor": "epoxy compound"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "edmontosaurini",
+"valor": "saurolophinae"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "osteoclast development",
+"valor": "osteoclast differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "cardiac muscle cell proliferation",
+"valor": "cardiac muscle tissue growth"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "has part(s)",
+"cabeza": "cilium-dependent cell motility",
+"valor": "cilium movement"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "development of secondary male sexual characteristics",
+"valor": "male sex differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "photoreceptor cell development",
+"valor": "photoreceptor cell differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "reductive pentose-phosphate cycle",
+"valor": "carbon fixation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "interleukin-6-mediated signaling pathway",
+"valor": "cellular response to interleukin-6"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "myoblast fate commitment",
+"valor": "myoblast differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "T-helper 1 cell differentiation",
+"valor": "T-helper 1 type immune response"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "olfactory bulb development",
+"valor": "olfactory lobe development"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "adenylate cyclase regulator activity",
+"valor": "cyclase inhibitor activity"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "has part(s)",
+"cabeza": "nuclear mRNA surveillance of mRNA 3'-end processing",
+"valor": "nuclear polyadenylation-dependent mRNA catabolic process"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "bronchiole development",
+"valor": "respiratory tube development"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Cistus × hybridus nothosubsp. grandiflorus",
+"valor": "Cistus hybridus"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of arachidonic acid secretion",
+"valor": "regulation of icosanoid secretion"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "intracellular transport of virus",
+"valor": "viral life cycle"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "discoverer or inventor",
+"cabeza": "general adaptation syndrome",
+"valor": "Hans Selye"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "followed by",
+"cabeza": "prophase",
+"valor": "mitotic prometaphase"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "T-helper cell lineage commitment",
+"valor": "T-helper cell differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "mitochondrial respirasome",
+"valor": "mitochondrial inner membrane"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "encoded by",
+"cabeza": "Nuclear factor of-activated T-cells 5",
+"valor": "NFAT5"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "camera-type eye morphogenesis",
+"valor": "camera-type eye development"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Psyllium seed husks",
+"valor": "Plantaginaceae"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "eosinophil fate commitment",
+"valor": "eosinophil differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Duck hepatitis B virus",
+"valor": "Avihepadnavirus"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "IL37(?-218) translocates from the cytosol to the nucleus",
+"valor": "Interleukin-37 signaling"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "endocardial cell development",
+"valor": "endocardial cell differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "cerebellar cortex structural organization",
+"valor": "anatomical structure arrangement"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "Bolwig's organ morphogenesis",
+"valor": "Bolwig's organ development"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "biological process",
+"cabeza": "RNA 2'-phosphotransferase-like protein SCO3953",
+"valor": "tRNA splicing, via endonucleolytic cleavage and ligation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "has part(s)",
+"cabeza": "cadmium ion homeostasis",
+"valor": "cadmium cation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "forebrain neuroblast differentiation",
+"valor": "forebrain generation of neurons"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of skeletal muscle adaptation",
+"valor": "regulation of muscle adaptation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "photosynthetic membrane",
+"valor": "thylakoid"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "aldehyde-lyase activity",
+"valor": "carbon-carbon lyase activity"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "envenomation resulting in zymogen activation in other organism",
+"valor": "envenomation resulting in modulation of process in other organism"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "deltoid tuberosity development",
+"valor": "anatomical structure development"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "lipid homeostasis",
+"valor": "chemical homeostasis"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Pea enation mosaic virus",
+"valor": "Enamovirus"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Chickpea chlorotic stunt virus",
+"valor": "Polerovirus"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "transforming growth factor beta receptor signaling pathway",
+"valor": "cellular response to transforming growth factor beta stimulus"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "mitochondrial matrix",
+"valor": "intracellular organelle lumen"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of cell proliferation involved in tissue homeostasis",
+"valor": "regulation of cell population proliferation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "mitral valve morphogenesis",
+"valor": "atrioventricular valve morphogenesis"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "lateral motor column neuron differentiation",
+"valor": "spinal cord motor neuron differentiation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Harvey murine sarcoma virus",
+"valor": "Gammaretrovirus"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "spermatid nucleus differentiation",
+"valor": "spermatid development"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "sinoatrial node cell development",
+"valor": "cardiac pacemaker cell development"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "encoded by",
+"cabeza": "Nuclear receptor-interacting protein 1",
+"valor": "NRIP1"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "pulmonary valve formation",
+"valor": "pulmonary valve morphogenesis"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "Wnt-activated signaling pathway involved in forebrain neuron fate commitment",
+"valor": "commitment of multipotent stem cells to neuronal lineage in forebrain"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "has part(s)",
+"cabeza": "Evasion of Oxidative Stress Induced Senescence Due to p14ARF Defects",
+"valor": "p14ARF mutant does not translocate to the nucleus"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "nuclear periphery",
+"valor": "cellular anatomical entity"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "cardiac chamber formation",
+"valor": "cardiac chamber morphogenesis"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of ribosomal large subunit export from nucleus",
+"valor": "regulation of ribosomal subunit export from nucleus"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "health specialty",
+"cabeza": "hyperinsulinemia",
+"valor": "endocrinology"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "cell proliferation involved in imaginal disc-derived wing morphogenesis",
+"valor": "cell population proliferation"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "followed by",
+"cabeza": "virion assembly",
+"valor": "viral release from host cell"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "iron ion homeostasis",
+"valor": "transition metal ion homeostasis"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "aortic valve formation",
+"valor": "aortic valve morphogenesis"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "heterodontosauridae",
+"valor": "ornithopoda"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "polyamine metabolic process",
+"valor": "cellular biogenic amine metabolic process"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "fibronectin fibril",
+"valor": "extracellular matrix"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "meiotic chromosome segregation",
+"valor": "meiotic nuclear division"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Halanaerobiales",
+"valor": "Clostridia"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "Platelet calcium homeostasis",
+"valor": "Platelet homeostasis"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "officeholder",
+"cabeza": "Minister of the Environment",
+"valor": "Steven Guilbeault"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "applies to jurisdiction",
+"cabeza": "The Social Security Commissioners (Appeals to the Courts) Regulations 1980",
+"valor": "United Kingdom"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "strategic regional authority mayor",
+"valor": "Directly elected mayors in England and Wales"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "maintained by",
+"cabeza": "Therapeutic Goods Amendment (2016 Measures No. 1) Act 2017",
+"valor": "Department of Health"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Minister of Planning, investment and Economic development",
+"valor": "Ministry of Planning and International Cooperation (Somalia)"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Chairman of Iseyin local government",
+"valor": "supervisory councillors of Iseyin local government"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "mayor of Moral de Calatrava",
+"valor": "alcalde"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "Geoinformation scientist",
+"valor": "geospatial scientist"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "chaplain",
+"valor": "priest"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Minister of Energy of Morocco",
+"valor": "Ministry of Energy Transition and Sustainable Development"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Undersecretary of Agriculture of Greece",
+"valor": "Government of Greece"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Medical Preparations (Control of Amphetamine) (Amendment) Regulations, 1970",
+"valor": "Health Act, 1947"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Chief Statistician of the United States",
+"valor": "Federal Statistical System of the United States"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Road Traffic (Speed Limits) (County of Kilkenny) Regulations, 1968",
+"valor": "Road Traffic Act, 1961"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Sea Fisheries (Conservation and Rational Exploitation) (No. 2) Order, 1978",
+"valor": "Fisheries (Amendment) Act, 1962"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "maintained by",
+"cabeza": "Social Security Legislation Amendment (Fair Incentives to Work) Act 2012",
+"valor": "Department of Social Services"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "officeholder",
+"cabeza": "President of the Constitutional Court of Korea",
+"valor": "Lee Jongseok"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Minister of Gender Equality and Family Welfare",
+"valor": "Cabinet of Mauritius"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Private Security (Licence Fees) Regulations 2013",
+"valor": "Private Security Services Act, 2004"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Sea-Fisheries (Community Control System) (Amendment) Regulations 2017",
+"valor": "Sea-Fisheries and Maritime Jurisdiction Act, 2006"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Secretary of State for Finance and Budget",
+"valor": "Government of Chad"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Double Taxation Relief (Taxes on Income) (Malaysia) Order 2011",
+"valor": "Taxes Consolidation Act, 1997"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "European Union (Renewable Energy) (Amendment) Regulations 2020.",
+"valor": "European Communities Act, 1972"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Valuation Appeal (Fees) Regulations, 1996",
+"valor": "Valuation Act, 1988"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "applies to jurisdiction",
+"cabeza": "deputy of the province of Santa Cruz",
+"valor": "Santa Cruz Province"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "North Carolina Commissioner of Labor",
+"valor": "North Carolina Council of State"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Minister of Domestic Trade of Cuba",
+"valor": "Cabinet of Cuba"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Santa Clara County Health Officer",
+"valor": "Santa Clara County Public Health Department"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "Mayor of Cottonwood Heights, Utah",
+"valor": "mayor of a place in Utah"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "councilor of Merlo Partido",
+"valor": "Deliberative Council of Merlo Partido"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "councilor of San Miguel Partido",
+"valor": "Deliberative Council of San Miguel Partido"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "country",
+"cabeza": "Vice President and Minister of Institutional Relations",
+"valor": "Spain"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "replaced by",
+"cabeza": "Cabinet Secretary for Health, Well-being & Sport",
+"valor": "Cabinet Secretary for Health and Social Services"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "South African Citizens (Irish Citizenship Rights) Order, 1950",
+"valor": "Irish Nationality and Citizenship Act, 1935"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Mayor of Porto Alegre",
+"valor": "municipal prefecture of Porto Alegre"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Mobile Equipment (Cape Town Convention) (Aircraft Protocol) Order 2017",
+"valor": "International Interests in Mobile Equipment (Cape Town Convention) Act, 2005"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "Mayor of Elk Grove, California",
+"valor": "mayor of a place in California"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "Mayor of Hot Springs, Arkansas",
+"valor": "mayor of a place in Arkansas"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Minister of Civil Defence",
+"valor": "Cabinet of New Zealand"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Deputy Prime Minister for Good Governance",
+"valor": "Council of Ministers of Bulgaria"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "officeholder",
+"cabeza": "Chief Financial Officer of Florida",
+"valor": "Jimmy Patronis"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Minister of Legal Affairs (Myanmar)",
+"valor": "Cabinet of Myanmar"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Wildlife (Wild Birds) (Open Seasons) (Amendment) Order, 1991",
+"valor": "Wildlife Act, 1976"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "maintained by",
+"cabeza": "National Greenhouse and Energy Reporting Amendment Act 2009",
+"valor": "Department of the Environment and Energy"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Secretary of the Department of Energy and Environment",
+"valor": "Arkansas Department of Environmental Quality"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Chairman of Ifako-Ijaye local government",
+"valor": "supervisory councillors of Ifako-Ijaye local government"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Minister of Infrastructure, Economic Affairs and Sports",
+"valor": "Cabinet of Liechtenstein"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Minister of Culture, Tourism and Civil Aviation",
+"valor": "Council of Ministers of Nepal"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Minister of National Solidarity, Social Affairs, Human Rights and Gender",
+"valor": "Council of Ministers"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "officeholder",
+"cabeza": "Lieutenant Governor of Delaware",
+"valor": "Bethany Hall-Long"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Deputy Minister of Agriculture",
+"valor": "Cabinet of Malawi"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Minister of Climate",
+"valor": "Ministry of Climate"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Minister for Equality",
+"valor": "Ministry of Equality"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Deputy Prime Minister of Oman",
+"valor": "Cabinet of Oman"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Minister of the Environment, Housing and Territorial Development",
+"valor": "Ministry of Environment and Sustainable Development"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Municipal Secretary of Health of Salvador, Bahia",
+"valor": "Secretaria Municipal da Saúde de Salvador"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Minister of Agriculture of Samoa",
+"valor": "Cabinet of Samoa"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "minister of economic coordination",
+"valor": "economy minister"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Social Welfare (Employers' Pay-Related Social Insurance Exemption Scheme) Regulations, 1996",
+"valor": "Social Welfare (Consolidation) Act, 1993"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Minister of Energy and Mineral Resources",
+"valor": "Cabinet of Indonesia"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "country",
+"cabeza": "Piazza d'Oro",
+"valor": "Italy"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "has use",
+"cabeza": "Uluburun shipwreck",
+"valor": "museum ship"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "has part(s)",
+"cabeza": "Oslo Paleontological Museum",
+"valor": "Paleontological collections, Oslo"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Building on Goce Delčev Str. nu. 31, Štip",
+"valor": "Štip Municipality"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "heritage designation",
+"cabeza": "High Island Early Medieval Ecclesiastical Site",
+"valor": "national monument of Ireland"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "operator",
+"cabeza": "Twin Waterfalls Memorial Plant Preserve",
+"valor": "Michigan Nature Association"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "operator",
+"cabeza": "OYO Flagship 76298 Prime Suites",
+"valor": "OYO Rooms"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "location",
+"cabeza": "Rocky Mountain Dinosaur Resource Center",
+"valor": "U.S. Route 24 in Colorado"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Beitou Museum",
+"valor": "Beitou District"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "parent organization",
+"cabeza": "Department of Terrestrial Magnetism",
+"valor": "Carnegie Institution for Science"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "parent organization",
+"cabeza": "Solar Energy Technologies Office",
+"valor": "United States Department of Energy"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "heritage designation",
+"cabeza": "Sant'Anna Social Center",
+"valor": "Italian national heritage"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "associated electoral district",
+"cabeza": "Stanton Surgery",
+"valor": "Bury St Edmunds and Stowmarket"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "country",
+"cabeza": "Liaoning Provincial Institute of Agricultural Mechanization",
+"valor": "People's Republic of China"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "member of",
+"cabeza": "Lithuanian Theater, Music and Cinema Museum",
+"valor": "Lithuanian Museum Association"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "heritage designation",
+"cabeza": "Hargreaves Homestead Rural Historic District",
+"valor": "National Register of Historic Places listed place"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "affiliation",
+"cabeza": "Söğüt Ertuğrul Gazi Museum",
+"valor": "Museum Directorate of Bilecik"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in/on physical feature",
+"cabeza": "53 Mountstuart Road, Rothesay, Bute",
+"valor": "Isle of Bute"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "operator",
+"cabeza": "Washington Natural Resources Conservation Area",
+"valor": "Washington Department of Natural Resources"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "National Afrikaans Literary Museum and Documentation Centre",
+"valor": "Bloemfontein"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in time zone",
+"cabeza": "Struggle Museum of Yogyakarta",
+"valor": "UTC+07:00"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "heritage designation",
+"cabeza": "Quilombo Castorina Maria da Conceição",
+"valor": "quilombo listed by the Federal Constitution of Brazil of 1988"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "part of",
+"cabeza": "Wimbledon Bridge",
+"valor": "A219 road"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "operator",
+"cabeza": "Fulbourn Health Centre",
+"valor": "NHS Cambridgeshire and Peterborough Integrated Care Board"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "industry",
+"cabeza": "Crowne Plaza Hunter Valley",
+"valor": "accommodation"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "parent organization",
+"cabeza": "Ospedale Santa Maria alle Scotte",
+"valor": "Azienda Ospedaliera Universitaria Senese"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Storgården",
+"valor": "Frederikssund Municipality"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "affiliation",
+"cabeza": "Ancient Theatre of Halicarnassus",
+"valor": "Museum Directorate of Bodrum Underwater Archaeology"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Flynn Glacier",
+"valor": "Antarctic Treaty area"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "operator",
+"cabeza": "National Museum of Colonial History, Kogi state.",
+"valor": "National Commission for Museums and Monuments"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "associated electoral district",
+"cabeza": "Mingulay, village and field system",
+"valor": "Na h-Eileanan an Iar"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in/on physical feature",
+"cabeza": "Kamburu Hydroelectric Power Station",
+"valor": "Tana River"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Satellite Town, Jhang",
+"valor": "Jhang District"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "operator",
+"cabeza": "Wycliffe Surgery",
+"valor": "NHS Devon Integrated Care Board"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "heritage designation",
+"cabeza": "21 Market Square in Ząbkowice Śląskie",
+"valor": "immovable monument in Poland"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "associated electoral district",
+"cabeza": "St Cybi's Church",
+"valor": "Dwyfor Meirionnydd"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "heritage designation",
+"cabeza": "Sovetsky avenue, 105 (Cherepovets)",
+"valor": "regional cultural heritage site in Russia"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "heritage designation",
+"cabeza": "Site of the First Congress of the Chinese Communist Party",
+"valor": "Major Historical and Cultural Site Protected at the National Level"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Au Château des Loups Rouges",
+"valor": "J.-H. Rosny aîné"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "The IMA List of Minerals (March 2018)",
+"valor": "International Mineralogical Association - Commission on new minerals, nomenclature and classification"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "main subject",
+"cabeza": "Climatic change, agriculture and settlement",
+"valor": "global warming"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "part of",
+"cabeza": "Mind Playing Tricks on Me",
+"valor": "We Can't Be Stopped"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "place of publication",
+"cabeza": "Contemporary Art Society for Wales : 50th anniversary exhibition",
+"valor": "Cardiff"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "country of origin",
+"cabeza": "Zoku Owarimonogatari",
+"valor": "Japan"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "main subject",
+"cabeza": "Carry Nation",
+"valor": "Carrie Nation"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Call of the Wild",
+"valor": "Jack London"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "main subject",
+"cabeza": "Theory and Practice of Muslim State in India",
+"valor": "Medieval India"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "genre",
+"cabeza": "Saint Francis Receiving the Stigmata",
+"valor": "religious art"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "genre",
+"cabeza": "Kidz Sports: Crazy Mini Golf 2",
+"valor": "miniature golf video game"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "part of",
+"cabeza": "Florilegium: (page 44 verso) Pepper Plant",
+"valor": "Florilegium (A Book of Flower Studies)"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "collection",
+"cabeza": "Jerusalem Landscape",
+"valor": "Israel Museum"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "follows",
+"cabeza": "Ai no Kisetsu",
+"valor": "Tegami"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "The Aesthetic Dimension",
+"valor": "Herbert Marcuse"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "main subject",
+"cabeza": "Hitler: A Short Biography",
+"valor": "Adolf Hitler"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "place of publication",
+"cabeza": "Derecho civil español",
+"valor": "Salamanca"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "genre",
+"cabeza": "Social Theory of International Politics",
+"valor": "international relations theory"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Infected",
+"valor": "Scott Sigler"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "followed by",
+"cabeza": "Workin' On a Groovy Thing",
+"valor": "Wedding Bell Blues"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "main subject",
+"cabeza": "Death by Black Hole",
+"valor": "astrophysics"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "collection",
+"cabeza": "Horticulture School Marienfelde",
+"valor": "Digitale Landesbibliothek Berlin"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "followed by",
+"cabeza": "The Charles Avery Story",
+"valor": "The Mary Halstead Story"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "subclass of",
+"cabeza": "Internal Security Act, 1982",
+"valor": "apartheid legislation"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "followed by",
+"cabeza": "The Sarah Drummond Story",
+"valor": "The Sally Potter Story"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "publisher",
+"cabeza": "The Urban Fantasy Anthology",
+"valor": "Tachyon Publications"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "main subject",
+"cabeza": "Occupational Outlook Handbook",
+"valor": "career counseling"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "creator",
+"cabeza": "Interior of the Choir of Saint Bavo's Church at Haarlem",
+"valor": "Pieter Jansz. Saenredam"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Spice and Wolf, vol. 15",
+"valor": "Isuna Hasekura"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "genre",
+"cabeza": "The Best Horror of the Year: Volume Twelve",
+"valor": "horror fiction"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Undoing Gender",
+"valor": "Judith Butler"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "main subject",
+"cabeza": "Byzantium: The Surprising Life of a Medieval Empire",
+"valor": "Byzantine Empire"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Truth and Tolerance",
+"valor": "Benedict XVI"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Iraqi Special Security Organization",
+"valor": "Baghdad"
+},
+{
+"tipo": "organizacion",
+"propiedad": "member of",
+"cabeza": "The Livestock Conservancy",
+"valor": "International Association of Agricultural Museums"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Swedish Waste Management",
+"valor": "Malmö"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Hewlett Packard Labs",
+"valor": "Palo Alto"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Ba'ath Party",
+"valor": "Damascus"
+},
+{
+"tipo": "organizacion",
+"propiedad": "replaced by",
+"cabeza": "Australian Stock Exchange",
+"valor": "Australian Securities Exchange"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Syracuse University Department of Finance and Managerial Statistics",
+"valor": "Martin J. Whitman School of Management"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Bernstein Center for Computational Neuroscience Göttingen",
+"valor": "Bernstein Network"
+},
+{
+"tipo": "organizacion",
+"propiedad": "field of work",
+"cabeza": "Institut für moderne Kunst Nürnberg",
+"valor": "modern art"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Canadian Bioinformatics Workshops",
+"valor": "Toronto"
+},
+{
+"tipo": "organizacion",
+"propiedad": "replaced by",
+"cabeza": "Malvern Instruments",
+"valor": "Malvern Panalytical Ltd"
+},
+{
+"tipo": "organizacion",
+"propiedad": "chairperson",
+"cabeza": "Charles and Lynn Schusterman Family Philanthropies",
+"valor": "Stacy H. Schusterman"
+},
+{
+"tipo": "organizacion",
+"propiedad": "owned by",
+"cabeza": "H. H. Tammen & Co.",
+"valor": "Harry Heye Tammen"
+},
+{
+"tipo": "organizacion",
+"propiedad": "affiliation",
+"cabeza": "IDF Military Colleges",
+"valor": "Israel Defense Forces"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Connecticut Distance Learning Consortium",
+"valor": "Charter Oak State College"
+},
+{
+"tipo": "organizacion",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Akademie für Ethik in der Medizin",
+"valor": "Göttingen"
+},
+{
+"tipo": "organizacion",
+"propiedad": "chairperson",
+"cabeza": "Dawat-e-Islami",
+"valor": "Ilyas Qadri"
+},
+{
+"tipo": "organizacion",
+"propiedad": "field of work",
+"cabeza": "Civil Defense of the State of Acre",
+"valor": "emergency management"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "94th Flying Training Squadron",
+"valor": "United States Air Force Academy"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Vanderbilt Department of Biomedical Informatics",
+"valor": "Vanderbilt University School of Medicine"
+},
+{
+"tipo": "organizacion",
+"propiedad": "replaced by",
+"cabeza": "U.S. Geological Survey Biological Resources Division",
+"valor": "USGS Ecosystems Mission Area"
+},
+{
+"tipo": "organizacion",
+"propiedad": "country",
+"cabeza": "Universität Regensburg Molecular Microbiology and Gene Therapy Unit",
+"valor": "Germany"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Morgan Technical Ceramics",
+"valor": "Stourport-on-Severn"
+},
+{
+"tipo": "organizacion",
+"propiedad": "chairperson",
+"cabeza": "Kenya African National Union",
+"valor": "Gideon Moi"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Democritus University of Thrace Department of Molecular Biology and Genetics",
+"valor": "Alexandroupolis"
+},
+{
+"tipo": "organizacion",
+"propiedad": "chairperson",
+"cabeza": "Deutscher Tonkünstlerverband",
+"valor": "Christian Höppner"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "UAE University Department of Psychology and Counseling",
+"valor": "Al Ain"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Wydawnictwo Literackie",
+"valor": "Kraków"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "The Camille and Henry Dreyfus Foundation",
+"valor": "New York City"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Electricity Supply Commission of Malawi",
+"valor": "Blantyre"
+},
+{
+"tipo": "organizacion",
+"propiedad": "industry",
+"cabeza": "Wesleyan Philosophical Society",
+"valor": "higher education"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Etablissement public d'aménagement de Paris-Saclay",
+"valor": "France"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "International Centre for Theoretical Physics",
+"valor": "Trieste"
+},
+{
+"tipo": "organizacion",
+"propiedad": "replaced by",
+"cabeza": "Union for the Coordination of Transmission of Electricity",
+"valor": "European Network of Transmission System Operators for Electricity"
+},
+{
+"tipo": "organizacion",
+"propiedad": "main subject",
+"cabeza": "Climate Justice Action",
+"valor": "climate change"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "E Ink Corporation",
+"valor": "E Ink Holdings"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "National Civil Aviation Agency of Brazil",
+"valor": "Brasília"
+},
+{
+"tipo": "organizacion",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Divine Word Seminary",
+"valor": "Tagaytay"
+},
+{
+"tipo": "organizacion",
+"propiedad": "country",
+"cabeza": "Pedagogical Society of Vojvodina",
+"valor": "Serbia"
+},
+{
+"tipo": "organizacion",
+"propiedad": "member of",
+"cabeza": "Catholic University of Colombia",
+"valor": "Association of Colombian Universities"
+},
+{
+"tipo": "organizacion",
+"propiedad": "followed by",
+"cabeza": "Golden West Financial",
+"valor": "Wachovia"
+},
+{
+"tipo": "organizacion",
+"propiedad": "country",
+"cabeza": "Unified Metropolitan Transportation Authority, Hyderabad",
+"valor": "India"
+},
+{
+"tipo": "organizacion",
+"propiedad": "affiliation",
+"cabeza": "Federation of Revolutionary Syndicalist Organizations of Brazil",
+"valor": "International Confederation of Labor"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Dalhousie University Department of Physiology and Biophysics",
+"valor": "Halifax"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Counseling Association of Nigeria",
+"valor": "Abuja"
+},
+{
+"tipo": "organizacion",
+"propiedad": "field of work",
+"cabeza": "Japan NGO Coalition against Racial Discrimination",
+"valor": "anti-Japanese sentiment"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Enschede Public Library Foundation",
+"valor": "Enschede central public library"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Kyushu Institute of Technology",
+"valor": "Kitakyushu"
+},
+{
+"tipo": "organizacion",
+"propiedad": "country",
+"cabeza": "Oromo Federalist Congress",
+"valor": "Ethiopia"
+},
+{
+"tipo": "organizacion",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Australian Psychological Society",
+"valor": "Melbourne"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Anambra State ICT Agency",
+"valor": "Awka"
+},
+{
+"tipo": "organizacion",
+"propiedad": "founded by",
+"cabeza": "Propaganda Games",
+"valor": "Disney Interactive Studios"
+},
+{
+"tipo": "organizacion",
+"propiedad": "founded by",
+"cabeza": "Dharmanandan Diamonds",
+"valor": "Laljibhai Patel"
+},
+{
+"tipo": "organizacion",
+"propiedad": "organization directed by the office or position",
+"cabeza": "Société nationale d'agriculture de France",
+"valor": "Academy of Agriculture of France"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Rehabilitation Research and Development Service",
+"valor": "Veterans Health Administration Office of Research and Development"
+},
+{
+"tipo": "organizacion",
+"propiedad": "part of",
+"cabeza": "Ecology and Global Change",
+"valor": "School of Geography"
+},
+{
+"tipo": "organizacion",
+"propiedad": "chairperson",
+"cabeza": "Qatar Foundation",
+"valor": "Princess Hind bint Hamad of Qatar"
+},
+{
+"tipo": "organizacion",
+"propiedad": "legal form",
+"cabeza": "Iwaizumi Holdings",
+"valor": "kabushiki gaisha"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Instituto de Seguros Sociales",
+"valor": "Bogotá"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "HSBC Turkey",
+"valor": "The Hongkong and Shanghai Banking Corporation Limited"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Yale University Department of Computational Biology and Bioinformatics",
+"valor": "New Haven"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Chicago Pneumatic",
+"valor": "Atlas Copco"
+},
+{
+"tipo": "organizacion",
+"propiedad": "replaced by",
+"cabeza": "Gender Equality Ombud",
+"valor": "Equality and Anti-Discrimination Ombud"
+},
+{
+"tipo": "organizacion",
+"propiedad": "field of work",
+"cabeza": "Birmingham Astronomical Society",
+"valor": "amateur astronomy"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Florida Literacy Coalition, Inc.",
+"valor": "Orlando"
+},
+{
+"tipo": "organizacion",
+"propiedad": "has part(s)",
+"cabeza": "Supreme Muslim Council",
+"valor": "Palestine Arab Congress"
+},
+{
+"tipo": "organizacion",
+"propiedad": "replaced by",
+"cabeza": "Tokyo Chuo Seika Co., Ltd",
+"valor": "Tokyo City Seika Co., Ltd."
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "University of Delaware Department of Chemistry and Biochemistry",
+"valor": "Newark"
+},
+{
+"tipo": "organizacion",
+"propiedad": "stock exchange",
+"cabeza": "Arena Hospitality Group d.d.",
+"valor": "Zagreb Stock Exchange"
+},
+{
+"tipo": "organizacion",
+"propiedad": "member of",
+"cabeza": "Russell Sage Foundation",
+"valor": "Association of American University Presses"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Petras Ilgūnas",
+"valor": "Šiauliai"
+},
+{
+"tipo": "persona",
+"propiedad": "languages spoken, written or signed",
+"cabeza": "Rodrigo Quintero Murguía",
+"valor": "Spanish"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Bengt Hultqvist",
+"valor": "Kiruna"
+},
+{
+"tipo": "persona",
+"propiedad": "country of citizenship",
+"cabeza": "Hugo T. Salonen",
+"valor": "Finland"
+},
+{
+"tipo": "persona",
+"propiedad": "member of political party",
+"cabeza": "Abdul Hadi Arghandiwal",
+"valor": "Hezb-e Islami Gulbuddin"
+},
+{
+"tipo": "persona",
+"propiedad": "sibling",
+"cabeza": "Matthew F. Colovin",
+"valor": "Patrick Colovin"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Ho-Kwang Mao",
+"valor": "Mao Sen"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Světlana Sýkorová",
+"valor": "Prague"
+},
+{
+"tipo": "persona",
+"propiedad": "sibling",
+"cabeza": "Aly Ben Salem",
+"valor": "Mohamed Ben Salem (1915-2001)"
+},
+{
+"tipo": "persona",
+"propiedad": "country of citizenship",
+"cabeza": "Izabela Krzemińska",
+"valor": "Poland"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Sarah Coleman",
+"valor": "Thomas Coleman"
+},
+{
+"tipo": "persona",
+"propiedad": "spouse",
+"cabeza": "Janet Elizabeth Barrington",
+"valor": "Archibald Charles Barrington"
+},
+{
+"tipo": "persona",
+"propiedad": "country of citizenship",
+"cabeza": "Adeyemi Onabowale",
+"valor": "Nigeria"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Vítězslav Kadlčík",
+"valor": "Liberec"
+},
+{
+"tipo": "persona",
+"propiedad": "sibling",
+"cabeza": "Florence Hayward",
+"valor": "Frederick Britten Burden"
+},
+{
+"tipo": "persona",
+"propiedad": "sibling",
+"cabeza": "Henry Monro",
+"valor": "Edward Monro"
+},
+{
+"tipo": "persona",
+"propiedad": "sibling",
+"cabeza": "Jaroslav Kamper",
+"valor": "Otakar Kamper"
+},
+{
+"tipo": "persona",
+"propiedad": "child",
+"cabeza": "Liu Shu-hsien",
+"valor": "James Liu"
+},
+{
+"tipo": "persona",
+"propiedad": "residence",
+"cabeza": "Rosemary Odinga",
+"valor": "Nairobi"
+},
+{
+"tipo": "persona",
+"propiedad": "languages spoken, written or signed",
+"cabeza": "Jakub Koníček",
+"valor": "Czech"
+},
+{
+"tipo": "persona",
+"propiedad": "sibling",
+"cabeza": "Kristen Faye Klaveness",
+"valor": "Torvald Klaveness"
+},
+{
+"tipo": "persona",
+"propiedad": "employer",
+"cabeza": "I. V. Subba Rao",
+"valor": "Acharya N. G. Ranga Agricultural University"
+},
+{
+"tipo": "persona",
+"propiedad": "affiliation",
+"cabeza": "Krzysztof Majcher",
+"valor": "Department of Mechanics of Structures and Urban Engineering, Wrocław University of Technology"
+},
+{
+"tipo": "persona",
+"propiedad": "native language",
+"cabeza": "Katarzyna Olbrycht",
+"valor": "Polish"
+},
+{
+"tipo": "persona",
+"propiedad": "sibling",
+"cabeza": "Endre Mokry",
+"valor": "Sámuel Mokry"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Taras Shukhevych",
+"valor": "Volodymyr Shukhevych"
+},
+{
+"tipo": "persona",
+"propiedad": "sibling",
+"cabeza": "Daidōji Kanekatsu",
+"valor": "Daidōji Sukechika"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Siti Kasim",
+"valor": "Malacca"
+},
+{
+"tipo": "persona",
+"propiedad": "country of citizenship",
+"cabeza": "John Walsh",
+"valor": "Ireland"
+},
+{
+"tipo": "persona",
+"propiedad": "sibling",
+"cabeza": "Friedrich Georg von Bunge",
+"valor": "Alexander Bunge"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Olaf Anton Broch",
+"valor": "Olaf Broch"
+},
+{
+"tipo": "persona",
+"propiedad": "child",
+"cabeza": "Karl Johann, Ritter von Reimann",
+"valor": "Olga Julie Maria Emilie Reimann"
+},
+{
+"tipo": "persona",
+"propiedad": "spouse",
+"cabeza": "Milica Antić Gaber",
+"valor": "Slavko Gaber"
+},
+{
+"tipo": "persona",
+"propiedad": "member of political party",
+"cabeza": "Zhang Kejian",
+"valor": "Chinese Communist Party"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Abu Reza Fazlul Haque Bablu",
+"valor": "Mymensingh District"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Antonín Hyška",
+"valor": "Bubeneč"
+},
+{
+"tipo": "persona",
+"propiedad": "employer",
+"cabeza": "Stefan Raimund Maschek",
+"valor": "Max Planck Institute for Physics"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Gabriel Nunes",
+"valor": "José Nunes"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Reetta Rönkä",
+"valor": "Matti Rönkä"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Anna Kennedy",
+"valor": "Middlesbrough"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Felix Ryde",
+"valor": "Hans Ryde"
+},
+{
+"tipo": "persona",
+"propiedad": "spouse",
+"cabeza": "Luther Hess",
+"valor": "Harriet Hess"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Bhaskar Ramchandra Tambe",
+"valor": "Gwalior"
+},
+{
+"tipo": "persona",
+"propiedad": "languages spoken, written or signed",
+"cabeza": "Mohammad Bijankhan",
+"valor": "Persian"
+},
+{
+"tipo": "persona",
+"propiedad": "employer",
+"cabeza": "Ryo Negishi",
+"valor": "Niigata University"
+},
+{
+"tipo": "persona",
+"propiedad": "child",
+"cabeza": "Gabor Forgacs",
+"valor": "Andras Forgacs"
+},
+{
+"tipo": "persona",
+"propiedad": "child",
+"cabeza": "Sir William Bond",
+"valor": "Thomas Bond"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Muhammad ibn Sahnun",
+"valor": "Kairouan"
+},
+{
+"tipo": "persona",
+"propiedad": "child",
+"cabeza": "Gustav Nebehay",
+"valor": "Christian M. Nebehay"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Paul T. Wild",
+"valor": "Richard Stephen Wild"
+},
+{
+"tipo": "persona",
+"propiedad": "child",
+"cabeza": "Eduard Johannes Laurens Führi",
+"valor": "Hans Herbert Moritz Fuhri"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Johanna Code",
+"valor": "Richard Code"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Maksimilijan Kovač",
+"valor": "Celje"
+},
+{
+"tipo": "persona",
+"propiedad": "member of political party",
+"cabeza": "C. M. Sundaram",
+"valor": "Nationalist Congress Party"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Masha Kaplan",
+"valor": "Mordechai Weingarten"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Márton Ernő Balázs",
+"valor": "Márton Balázs"
+},
+{
+"tipo": "persona",
+"propiedad": "spouse",
+"cabeza": "Nina Mikkonen",
+"valor": "Timo T. A. Mikkonen"
+},
+{
+"tipo": "persona",
+"propiedad": "spouse",
+"cabeza": "Marek Prchal",
+"valor": "Dita Pecháčková"
+},
+{
+"tipo": "persona",
+"propiedad": "educated at",
+"cabeza": "Veljko Despotović",
+"valor": "University of Belgrade Faculty of Architecture"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Álvaro de Sousa Rego",
+"valor": "Lisbon"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Henry M. Munro",
+"valor": "Annapolis County"
+},
+{
+"tipo": "persona",
+"propiedad": "member of political party",
+"cabeza": "Gertrud Sauerborn",
+"valor": "Christian Democratic Union"
+},
+{
+"tipo": "persona",
+"propiedad": "place of burial",
+"cabeza": "Jindřich Vodák",
+"valor": "Olšany Cemetery"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Einar Thorgilsson",
+"valor": "Thorgils Oddson"
+},
+{
+"tipo": "persona",
+"propiedad": "father",
+"cabeza": "Henry Keteltas",
+"valor": "Eugene Keteltas"
+},
+{
+"tipo": "persona",
+"propiedad": "child",
+"cabeza": "Tibor Kozma",
+"valor": "Zsolt Kozma"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Karl Albrecht Wilhelm von Auer",
+"valor": "Kaliningrad"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Organometallic Atom Transfer Radical Polymerisation Initiators",
+"valor": "organocobalt compound"
+},
+{
+"tipo": "publicacion",
+"propiedad": "owned by",
+"cabeza": "Diegesis: Interdisziplinäres E-Journal für Erzählforschung",
+"valor": "University of Wuppertal"
+},
+{
+"tipo": "publicacion",
+"propiedad": "author",
+"cabeza": "Foundations of Kinetic Theory",
+"valor": "Mark Kac"
+},
+{
+"tipo": "publicacion",
+"propiedad": "owned by",
+"cabeza": "Statistics and public policy (Philadelphia, Pa.)",
+"valor": "American Statistical Association"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "ECS Electrochemistry Letters",
+"valor": "Electrochemical Society"
+},
+{
+"tipo": "publicacion",
+"propiedad": "replaced by",
+"cabeza": "Comparative biochemistry and physiology. Part C, Pharmacology, toxicology & endocrinology",
+"valor": "Comparative Biochemistry and Physiology C: Toxicology and Pharmacology"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Polyelectrolyte Brushes",
+"valor": "polymer brushes"
+},
+{
+"tipo": "publicacion",
+"propiedad": "owned by",
+"cabeza": "Greenpeace Magazin",
+"valor": "Greenpeace Media GmbH"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "Fetal Diagnosis and Therapy",
+"valor": "Karger Publishers"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "The Public Eye",
+"valor": "Political Research Associates"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "Journal of Materials Science: Materials in Electronics",
+"valor": "Springer Science+Business Media"
+},
+{
+"tipo": "publicacion",
+"propiedad": "followed by",
+"cabeza": "Petronius' linguistic resources",
+"valor": "Parenthetical remarks in the Silvae"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Self-Supervised Bug Detection and Repair",
+"valor": "neurips21-self-supervised-bug-detection-and-repair"
+},
+{
+"tipo": "publicacion",
+"propiedad": "part of the series",
+"cabeza": "Proceedings of the Workshop on Interactive Adaptive Learning (IAL 2021)",
+"valor": "CEUR Workshop Proceedings"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Un Pharmacien malacologiste, César Récluz",
+"valor": "César A. Récluz"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Journal of Intellectual & Developmental Disability",
+"valor": "intellectual disability"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Hrvatska Revija za Rehabilitacijska Istraživanja",
+"valor": "public health"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "Texas Review of Law and Politics",
+"valor": "University of Texas School of Law"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "International Journal of Nanotechnology",
+"valor": "Inderscience Publishers"
+},
+{
+"tipo": "publicacion",
+"propiedad": "replaced by",
+"cabeza": "NIOSH/OSHA pocket guide to chemical hazards (78-210, fourth printing) (superseded)",
+"valor": "NIOSH pocket guide to chemical hazards (78-210, fifth printing) (superseded)"
+},
+{
+"tipo": "publicacion",
+"propiedad": "place of publication",
+"cabeza": "Liberia Herald",
+"valor": "Monrovia"
+},
+{
+"tipo": "publicacion",
+"propiedad": "followed by",
+"cabeza": "Iskander and the idea of Iran",
+"valor": "Josephus’ Esther and diaspora Judaism"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "Works on the Foundations of Statistical Physics",
+"valor": "Journal of the American Statistical Association"
+},
+{
+"tipo": "publicacion",
+"propiedad": "editor",
+"cabeza": "Discrete and Computational Geometry",
+"valor": "Herbert Edelsbrunner"
+},
+{
+"tipo": "publicacion",
+"propiedad": "part of",
+"cabeza": "Science Studies, Montana College of Agriculture and Mechanic Arts. Botany",
+"valor": "Science Studies of the Montana College of Agriculture"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "CD95-induced cell death is mediated by reactive oxygen species",
+"valor": "Free Radical Biology and Medicine"
+},
+{
+"tipo": "publicacion",
+"propiedad": "owned by",
+"cabeza": "Earth Negotiations Bulletin",
+"valor": "International Institute for Sustainable Development"
+},
+{
+"tipo": "publicacion",
+"propiedad": "part of the series",
+"cabeza": "Status of the Yucca Moth (Tegeticula yuccasella) in Alberta",
+"valor": "Alberta Wildlife Status Reports"
+},
+{
+"tipo": "publicacion",
+"propiedad": "place of publication",
+"cabeza": "Inflation and inflation expectations in Sweden",
+"valor": "Stockholm"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Cosmic impact: What are the odds?",
+"valor": "Younger Dryas impact hypothesis"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Water resources of the Little River basin, Louisiana",
+"valor": "drainage basin"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "Russian Mathematical Surveys",
+"valor": "Steklov Institute of Mathematics"
+},
+{
+"tipo": "publicacion",
+"propiedad": "author",
+"cabeza": "Escritos científicos : ciencias naturales Argentinas",
+"valor": "Francisco Javier Muñiz"
+},
+{
+"tipo": "publicacion",
+"propiedad": "owned by",
+"cabeza": "Stem Cell Reports",
+"valor": "International Society for Stem Cell Research"
+},
+{
+"tipo": "publicacion",
+"propiedad": "author",
+"cabeza": "NIOSH Analytical Method, Methylal (Dimethoxymethane), SCP-S71",
+"valor": "National Institute for Occupational Safety and Health"
+},
+{
+"tipo": "publicacion",
+"propiedad": "followed by",
+"cabeza": "The Byzantine Successor State",
+"valor": "The Germanic Successor States"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "Comets and Prebiotic Organic Molecules on Early Earth",
+"valor": "Comets and the Origin and Evolution of Life"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Irrigation in Mesilla valley, New Mexico",
+"valor": "agricultural irrigation"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Journal of Algebraic Geometry",
+"valor": "mathematics"
+},
+{
+"tipo": "publicacion",
+"propiedad": "performing organization",
+"cabeza": "Design, synthesis, & biological evaluation of nanoparticle drug delivery systems",
+"valor": "University of Pittsburgh"
+},
+{
+"tipo": "publicacion",
+"propiedad": "country of origin",
+"cabeza": "Nutrition and aging (Amsterdam, Netherlands)",
+"valor": "Kingdom of the Netherlands"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "California Code of Regulations",
+"valor": "California Office of Administrative Law"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "Exposé",
+"valor": "Apple"
+},
+{
+"tipo": "software_datos",
+"propiedad": "operator",
+"cabeza": "National Hydrography Dataset",
+"valor": "United States Geological Survey"
+},
+{
+"tipo": "software_datos",
+"propiedad": "has use",
+"cabeza": "Cellebrite UFED",
+"valor": "computer forensics"
+},
+{
+"tipo": "software_datos",
+"propiedad": "maintained by",
+"cabeza": "Maryland's National Register Properties",
+"valor": "Maryland Historical Trust"
+},
+{
+"tipo": "software_datos",
+"propiedad": "operator",
+"cabeza": "Virtual Shtetl",
+"valor": "Museum of the History of Polish Jews"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "Cilk Plus",
+"valor": "Intel"
+},
+{
+"tipo": "software_datos",
+"propiedad": "parent organization",
+"cabeza": "RPG Geek",
+"valor": "BoardGameGeek"
+},
+{
+"tipo": "software_datos",
+"propiedad": "sponsor",
+"cabeza": "PRRI/RNS Religion News Survey, June 2011",
+"valor": "Public Religion Research Institute"
+},
+{
+"tipo": "software_datos",
+"propiedad": "programmed in",
+"cabeza": "emacs-dracula-theme",
+"valor": "Emacs Lisp"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "SHELXL",
+"valor": "George M. Sheldrick"
+},
+{
+"tipo": "software_datos",
+"propiedad": "creator",
+"cabeza": "LGBTQ Religious Archives Network",
+"valor": "Center for LGBTQ and Gender Studies in Religion"
+},
+{
+"tipo": "software_datos",
+"propiedad": "creator",
+"cabeza": "Digital Guide to the Cultural Heritage of Andalusia",
+"valor": "Andalusian Institute of Historical Heritage"
+},
+{
+"tipo": "software_datos",
+"propiedad": "published in",
+"cabeza": "Minnesota Plant List",
+"valor": "Minnesota Wildflowers: A Field Guide to the Flora of Minnesota"
+},
+{
+"tipo": "software_datos",
+"propiedad": "part of",
+"cabeza": "Research and teaching corpus of spoken German",
+"valor": "Archive for Spoken German"
+},
+{
+"tipo": "software_datos",
+"propiedad": "owned by",
+"cabeza": "Hockey Reference",
+"valor": "Sports Reference, LLC"
+},
+{
+"tipo": "software_datos",
+"propiedad": "operating system",
+"cabeza": "OpenVAS",
+"valor": "Unix-like operating system"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "MapleSim",
+"valor": "Waterloo Maple"
+},
+{
+"tipo": "software_datos",
+"propiedad": "publisher",
+"cabeza": "répertoire géographique des communes",
+"valor": "Institut national de l'information géographique et forestière"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "Apache Excalibur",
+"valor": "Apache Software Foundation"
+},
+{
+"tipo": "software_datos",
+"propiedad": "operator",
+"cabeza": "Scientific Database of China Plant Species",
+"valor": "Kunming Institute of Botany"
+},
+{
+"tipo": "software_datos",
+"propiedad": "sponsor",
+"cabeza": "National Survey of Family Growth - (2013-2015) Female Respondent File",
+"valor": "National Center for Health Statistics"
+},
+{
+"tipo": "software_datos",
+"propiedad": "sponsor",
+"cabeza": "Typology of Dutch Catholic Parishes, 2003",
+"valor": "Radboud University Nijmegen"
+},
+{
+"tipo": "software_datos",
+"propiedad": "main subject",
+"cabeza": "Celestial Atlas",
+"valor": "astronomy"
+},
+{
+"tipo": "software_datos",
+"propiedad": "discoverer or inventor",
+"cabeza": "Viterbi algorithm",
+"valor": "Andrew Viterbi"
+},
+{
+"tipo": "software_datos",
+"propiedad": "has use",
+"cabeza": "Gale–Shapley algorithm",
+"valor": "stable marriage problem"
+},
+{
+"tipo": "software_datos",
+"propiedad": "discoverer or inventor",
+"cabeza": "Goertzel algorithm",
+"valor": "Gerald Goertzel"
+},
+{
+"tipo": "software_datos",
+"propiedad": "owned by",
+"cabeza": "Women in Refrigerators",
+"valor": "Gail Simone"
+},
+{
+"tipo": "software_datos",
+"propiedad": "has use",
+"cabeza": "Perl Compatible Regular Expressions",
+"valor": "pattern matching"
+},
+{
+"tipo": "software_datos",
+"propiedad": "main subject",
+"cabeza": "Associació d'Escriptors en Llengua Catalana - author pages",
+"valor": "Catalan literature"
+},
+{
+"tipo": "software_datos",
+"propiedad": "replaced by",
+"cabeza": "Apache Commons HttpClient",
+"valor": "Apache HttpComponents Client"
+},
+{
+"tipo": "software_datos",
+"propiedad": "industry",
+"cabeza": "Internationale Fachmesse für Sportartikel und Sportmode",
+"valor": "sport industry"
+},
+{
+"tipo": "software_datos",
+"propiedad": "main subject",
+"cabeza": "Stanford Sentiment Treebank",
+"valor": "sentiment analysis"
+},
+{
+"tipo": "software_datos",
+"propiedad": "publisher",
+"cabeza": "Litchfield Ledger",
+"valor": "Litchfield Historical Society"
+},
+{
+"tipo": "software_datos",
+"propiedad": "main subject",
+"cabeza": "hymnary.org",
+"valor": "Christian hymn"
+},
+{
+"tipo": "software_datos",
+"propiedad": "part of",
+"cabeza": "IBM Tivoli Storage Manager",
+"valor": "Tivoli Software"
+},
+{
+"tipo": "software_datos",
+"propiedad": "owned by",
+"cabeza": "Monuments of the city of Madrid",
+"valor": "Madrid City Council"
+},
+{
+"tipo": "software_datos",
+"propiedad": "discoverer or inventor",
+"cabeza": "random forest",
+"valor": "Leo Breiman"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "Model for Prediction Across Scales",
+"valor": "National Center for Atmospheric Research"
+},
+{
+"tipo": "software_datos",
+"propiedad": "part of",
+"cabeza": "Maui Invasive Species Committee - Pest Surveys - 1996-2011",
+"valor": "Global Biodiversity Information Facility"
+},
+{
+"tipo": "software_datos",
+"propiedad": "author",
+"cabeza": "Fréquentation des Musées de France",
+"valor": "Ministry of Culture of France"
+},
+{
+"tipo": "software_datos",
+"propiedad": "publisher",
+"cabeza": "Buildings in Sweden",
+"valor": "Swedish Centre for Architecture and Design"
+},
+{
+"tipo": "software_datos",
+"propiedad": "operator",
+"cabeza": "Catalogue of Life in Taiwan",
+"valor": "Biodiversity Research Center, Academia Sinica"
+},
+{
+"tipo": "software_datos",
+"propiedad": "discoverer or inventor",
+"cabeza": "AlexNet",
+"valor": "Alexander Krizhevsky"
+},
+{
+"tipo": "software_datos",
+"propiedad": "followed by",
+"cabeza": "Xilinx ISE",
+"valor": "Xilinx Vivado"
+},
+{
+"tipo": "software_datos",
+"propiedad": "programmed in",
+"cabeza": "libde265",
+"valor": "C++"
+},
+{
+"tipo": "software_datos",
+"propiedad": "sponsor",
+"cabeza": "Global Attitudes Project, Spring 2013, 39 Nation Survey",
+"valor": "Pew Research Center"
+},
+{
+"tipo": "software_datos",
+"propiedad": "maintained by",
+"cabeza": "Beliefs and Inter-Church Relations, Lutheran Church-Missouri Synod, 1987",
+"valor": "Association of Religion Data Archives"
+},
+{
+"tipo": "software_datos",
+"propiedad": "programmed in",
+"cabeza": "Leiningen",
+"valor": "Clojure"
+},
+{
+"tipo": "software_datos",
+"propiedad": "creator",
+"cabeza": "Tacoma-Pierce County Buildings Index",
+"valor": "Tacoma Public Library"
+},
+{
+"tipo": "software_datos",
+"propiedad": "operating system",
+"cabeza": "Microsoft Dynamics C5",
+"valor": "Microsoft Windows"
+},
+{
+"tipo": "software_datos",
+"propiedad": "creator",
+"cabeza": "Search Engine Watch",
+"valor": "Danny Sullivan"
+}
+]
