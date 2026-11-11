@@ -8,7 +8,8 @@ Granite no trae nada de antes. Ida: «The {propiedad} of {cabeza} is» + « {val
 - Etapa 2: por conjunto (SETS conjuntos disjuntos de N_OVER hechos), dos brazos que parten de la etapa 1:
   «ida» enseña « {valor_nuevo}.» en la ida; «vuelta» enseña « {cabeza_nueva}.» en la vuelta. Sin anclas.
 - Medida: subida de la pérdida del hecho viejo en cada dirección, para los sobrescritos y para los no tocados.
-Uso: python -m colab.b24_inversion SALIDA.json
+- Modo «dosis»: la etapa 2 no para por pérdida; corre hasta max(DOSES) pasos y mide en cada paso de DOSES.
+Uso: python -m colab.b24_inversion SALIDA.json [dosis]
 """
 
 import json
@@ -33,6 +34,7 @@ STOP1, MAX_STEPS1, CHECK1, GATE1 = 0.25, 2000, 50, 0.9
 PROPS = ("founder", "director", "author", "inventor", "architect", "composer", "designer", "discoverer")
 SYLLABLES = "ka lo vi dre mor tal sen qui bar nu fel gra osh pe zin ru tov ela mi dak sor ven hal it jo cre wes pul amb yri".split()
 ARMS = ("ida", "vuelta")
+DOSES = (10, 40, 160)  # 10 repite B24: con las mismas semillas, la etapa 2 de B24 paró siempre en el paso 10
 
 
 def names(n: int, rng: random.Random, taken: set[str]) -> list[str]:
@@ -76,8 +78,8 @@ def losses(model, tok, facts: list[dict], new: bool = False) -> tuple[np.ndarray
     return L[0], L[1]
 
 
-def train(model, tok, items: list[tuple[str, str]], stop: float, max_steps: int, check: int, key: str) -> tuple[int, list[dict]]:
-    """AdamW como B23, de a lotes de BATCH; para cuando la pérdida media de `items` baja de `stop`."""
+def train(model, tok, items: list[tuple[str, str]], stop: float, max_steps: int, check: int, key: str, hook=None) -> tuple[int, list[dict]]:
+    """AdamW como B23, de a lotes de BATCH; para cuando la pérdida media de `items` baja de `stop`. `hook(step)` corre tras cada paso."""
     params = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=b17.LR, weight_decay=0.0)
     rng, t0, hist, step = random.Random(key), time.time(), [], 0
@@ -88,6 +90,8 @@ def train(model, tok, items: list[tuple[str, str]], stop: float, max_steps: int,
         torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step()
         opt.zero_grad(set_to_none=True)
+        if hook:
+            hook(step)
         if step % check == 0:
             cur = float(b17.def_losses(model, tok, items).mean())
             hist.append({"paso": step, "perdida": round(cur, 4), "segundos": round(time.time() - t0)})
@@ -99,11 +103,11 @@ def train(model, tok, items: list[tuple[str, str]], stop: float, max_steps: int,
     return step, hist
 
 
-def main(path: str, model=None, tok=None) -> None:
+def main(path: str, model=None, tok=None, dose: bool = False) -> None:
     facts = bank()
     res = json.load(open(path)) if os.path.exists(path) else {"corridas": {}}
     res["config"] = {"n_hechos": N_FACTS, "conjuntos": SETS, "n_sobrescritos": N_OVER, "k": K, "stop1": STOP1, "max_pasos1": MAX_STEPS1,
-                     "puerta1": GATE1, "lr": b17.LR, "batch": b17.BATCH, "stop2": b17.STOP_LOSS, "max_pasos2": b17.MAX_STEPS}  # fmt: skip
+                     "puerta1": GATE1, "lr": b17.LR, "batch": b17.BATCH, "stop2": b17.STOP_LOSS, "max_pasos2": b17.MAX_STEPS, "dosis": list(DOSES) if dose else None}  # fmt: skip
     res["banco"] = facts
     model, tok = b23.load(model, tok, True)
     torch.manual_seed(0)
@@ -125,28 +129,37 @@ def main(path: str, model=None, tok=None) -> None:
     for s in range(SETS):
         over = sorted(order[s * N_OVER : (s + 1) * N_OVER])
         for arm in ARMS:
-            key = f"s{s}|{arm}"
-            if key in res["corridas"]:
+            keys = [f"s{s}|{arm}|d{d}" for d in DOSES] if dose else [f"s{s}|{arm}"]
+            if keys[-1] in res["corridas"]:
                 continue
             new = [fwd(facts[i], facts[i]["valor_nuevo"]) if arm == "ida" else rev(facts[i], facts[i]["cabeza_nueva"]) for i in over]
+
+            def measure(step: int, key: str) -> None:
+                L_i, L_v = losses(model, tok, facts)
+                N_i, N_v = losses(model, tok, [facts[i] for i in over], new=True)
+                res["corridas"][key] = r = {
+                    "conjunto": s, "brazo": arm, "sobrescritos": over, "pasos": step,
+                    "nuevos_final": float(b17.def_losses(model, tok, new).mean()),
+                    "subida_ida": (L_i[:, 0] - base_i[:, 0]).round(4).tolist(), "subida_vuelta": (L_v[:, 0] - base_v[:, 0]).round(4).tolist(),
+                    "gana_ida": b23.wins(L_i).astype(int).tolist(), "gana_vuelta": b23.wins(L_v).astype(int).tolist(),
+                    "nuevo_otra_cara_gana": b23.wins(N_v if arm == "ida" else N_i).astype(int).tolist()}  # fmt: skip
+                m = np.isin(np.arange(N_FACTS), over)
+                print(json.dumps({"corrida": key, "pasos": step, "nuevos": round(r["nuevos_final"], 3),
+                                  **{f"{d}_sobre": round(float(np.array(r[f"subida_{d}"])[m].mean()), 3) for d in ARMS},
+                                  **{f"{d}_resto": round(float(np.array(r[f"subida_{d}"])[~m].mean()), 3) for d in ARMS}}), flush=True)  # fmt: skip
+
             torch.manual_seed(1000 + s)
-            steps, hist = train(model, tok, new, b17.STOP_LOSS, b17.MAX_STEPS, b17.CHECK_EVERY, f"b24:lotes:{s}:{arm}")
-            L_i, L_v = losses(model, tok, facts)
-            N_i, N_v = losses(model, tok, [facts[i] for i in over], new=True)
-            res["corridas"][key] = r = {
-                "conjunto": s, "brazo": arm, "sobrescritos": over, "pasos": steps, "historia": hist,
-                "nuevos_final": float(b17.def_losses(model, tok, new).mean()),
-                "subida_ida": (L_i[:, 0] - base_i[:, 0]).round(4).tolist(), "subida_vuelta": (L_v[:, 0] - base_v[:, 0]).round(4).tolist(),
-                "gana_ida": b23.wins(L_i).astype(int).tolist(), "gana_vuelta": b23.wins(L_v).astype(int).tolist(),
-                "nuevo_otra_cara_gana": b23.wins(N_v if arm == "ida" else N_i).astype(int).tolist()}  # fmt: skip
+            stop, top = (float("-inf"), max(DOSES)) if dose else (b17.STOP_LOSS, b17.MAX_STEPS)
+            hook = (lambda step: step in DOSES and measure(step, f"s{s}|{arm}|d{step}")) if dose else None
+            steps, hist = train(model, tok, new, stop, top, b17.CHECK_EVERY, f"b24:lotes:{s}:{arm}", hook)
+            if not dose:
+                measure(steps, keys[0])
+            for k in keys:
+                res["corridas"][k]["historia"] = hist
             model.load_state_dict(state, strict=False)  # cada brazo parte de la etapa 1
             json.dump(res, open(path, "w"), ensure_ascii=False)
-            m = np.isin(np.arange(N_FACTS), over)
-            print(json.dumps({"corrida": key, "pasos": steps, "nuevos": round(r["nuevos_final"], 3),
-                              **{f"{d}_sobre": round(float(np.array(r[f"subida_{d}"])[m].mean()), 3) for d in ARMS},
-                              **{f"{d}_resto": round(float(np.array(r[f"subida_{d}"])[~m].mean()), 3) for d in ARMS}}), flush=True)  # fmt: skip
     print(json.dumps({"FIN": len(res["corridas"])}), flush=True)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], dose=sys.argv[2:] == ["dosis"])

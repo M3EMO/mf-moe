@@ -53,3 +53,17 @@ def test_arms_cover_bank_restart_from_stage_one_and_resume(tmp_path, monkeypatch
     b.main(out, model=granite.tiny(), tok=chars)
     again = json.load(open(out))
     assert again["repeticiones1"] == 1 and again["corridas"]["s1|ida"] == gone
+
+
+def test_dose_mode_measures_each_dose_and_first_dose_matches_the_stopping_run(tmp_path, monkeypatch):
+    small(monkeypatch, 0.0)
+    monkeypatch.setattr(b, "DOSES", (1, 3))
+    monkeypatch.setattr(b17, "MAX_STEPS", 1)
+    b.main(str(tmp_path / "s.json"), model=granite.tiny(), tok=chars)
+    b.main(str(tmp_path / "d.json"), model=granite.tiny(), tok=chars, dose=True)
+    S, D = (json.load(open(tmp_path / f))["corridas"] for f in ("s.json", "d.json"))
+    assert sorted(D) == sorted(f"{k}|d{d}" for k in S for d in (1, 3))
+    assert all(D[f"{k}|d3"]["pasos"] == 3 and D[f"{k}|d3"]["historia"][-1]["paso"] == 3 for k in S)
+    # la dosis 1 es la corrida que para en el paso 1: la medida intercalada no cambia el entrenamiento
+    assert all(D[f"{k}|d1"]["subida_ida"] == S[k]["subida_ida"] and D[f"{k}|d1"]["subida_vuelta"] == S[k]["subida_vuelta"] for k in S)
+    assert D["s0|ida|d1"]["subida_ida"] != D["s0|ida|d3"]["subida_ida"]
