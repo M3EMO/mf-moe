@@ -1,0 +1,2 @@
+b23_cuant.json|colab.b23_uniedit consolidacion {out} colab/data/b23_hechos.json cuant4,cuant2 1
+b23_inversos.json|colab.b23_uniedit inversos {out} colab/data/b23_hechos.json

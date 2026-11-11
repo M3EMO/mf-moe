@@ -12,6 +12,8 @@ Uso: python -m colab.b23_uniedit seleccion SALIDA.json
 - consolidacion (etapa 4): los mismos conjuntos 0 y 1 con 8 expertos congelados por capa. cons24 congela los que más usa lo viejo
   (B21), conf24 los de producto interno más negativo entre el gradiente medio nuevo y el viejo, azar24 al azar, prec24 los de
   mayor Fisher diagonal de lo viejo (B21). Un control sin congelar por tipo comprueba que la etapa 2 se repite en esta sesión.
+  cuant4 y cuant2 (candidato 2) congelan los expertos de cons24 y los guardan en 4 o 2 bits antes de entrenar.
+     python -m colab.b23_uniedit inversos SALIDA.json HECHOS.json   (candidato 1: cuántos hechos conoce Granite al revés)
 """
 
 import collections as C
@@ -49,6 +51,7 @@ TYPE_OF = {q: t for t, v in TYPES.items() for q in v.split()}
 K, NEED, CHUNK, BUDGET, MIN_TYPES = 4, 444, 64, 1300, 6  # BUDGET en segundos: 22 min de selección y 8 de arranque y descarga caben en 1 unidad
 N_TRAIN, N_EVAL, ANCHORS, MIN_CELL, TOP_COS = 64, 60, 512, 10, 10
 ARMS4, SETS4 = ("cons24", "conf24", "azar24"), (0, 1)
+BITS, GROUP, K_INV = {"cuant4": 4, "cuant2": 2}, 128, 9  # K_INV: con 9 cabezas, un hecho desconocido pasa al revés por azar con p ≈ 0,1 · 0,9
 
 
 def uniedit_rows() -> list[dict]:
@@ -280,6 +283,43 @@ class Protect(b21.Mask):
         return super().final(model, tok) | extra
 
 
+def fake_quant(w: torch.Tensor, bits: int, group: int = GROUP) -> torch.Tensor:
+    """Redondeo al más cercano con escala y cero por grupo de `group` entradas (RTN asimétrico, la línea base de GPTQ)."""
+    g = w.float().reshape(*w.shape[:-1], -1, min(group, w.shape[-1]))
+    lo, hi = g.amin(-1, keepdim=True), g.amax(-1, keepdim=True)
+    s = ((hi - lo) / (2**bits - 1)).clamp_min(1e-12)
+    return (((g - lo) / s).round().clamp(0, 2**bits - 1) * s + lo).reshape(w.shape).to(w.dtype)
+
+
+class Quant(Protect):
+    """Candidato 2: congela los expertos de cons24 y los guarda cuantizados. El router de esas filas queda en fp32 y congelado."""
+
+    def __init__(self, arm: str, seed: int, facts: list[dict]):
+        super().__init__(arm, seed)
+        self.bits, self.facts = BITS[arm], facts
+
+    def choose(self, model, tok, new, old, layers, U_new) -> list[list[int]]:
+        return b21.frozen_rows("cons24", U_new, b21.b19.usage(model, tok, old).mean(0)[b21.TRAIN_FROM :], np.random.default_rng(self.seed))
+
+    def pre(self, model, tok, new, keep) -> None:
+        super().pre(model, tok, new, keep)
+        self.ref = []
+        with torch.no_grad():
+            for _, p, rows in self.watch:
+                if p.dim() == 3:  # gate_up_proj y down_proj: [expertos, salida, entrada]
+                    p[rows] = fake_quant(p[rows], self.bits)
+                    self.ref.append((p, rows, p[rows].detach().cpu().clone()))
+        self.before = candidate_losses(model, tok, self.facts)[:, 0]  # daño de cuantizar solo, antes de entrenar
+
+    def post(self, model, state: dict) -> None:
+        super().post(model, state)
+        self.error = self.moved  # contra el Granite original: error de cuantizar más lo que se haya movido
+        self.moved = max((float((p.detach()[rows].float().cpu() - q.float()).abs().max()) for p, rows, q in self.ref), default=0.0)
+
+    def final(self, model, tok) -> dict:
+        return super().final(model, tok) | {"bits": self.bits, "grupo": GROUP, "error_cuant": self.error, "antes_cuant": self.before.round(4).tolist()}
+
+
 def plan4(types: list[str], arms=ARMS4, controls: int = 99) -> list[tuple]:
     """Controles primero; después, por conjunto y tipo, los brazos juntos: un corte deja conjuntos pareados."""
     return [(t, 0, "control") for t in types[:controls]] + [(t, s, arm) for s in SETS4 for t in types for arm in arms]
@@ -304,13 +344,14 @@ def prepare(path: str, facts_path: str, model, tok) -> tuple:
 def consolidacion(path: str, facts_path: str, arms: str = ",".join(ARMS4), controls: str = "99", model=None, tok=None) -> None:
     hechos, ev, pool, all_ev, res, model, tok, state, base = prepare(path, facts_path, model, tok)
     arms = tuple(arms.split(","))
-    assert all(a in b21.ARMS or a == "conf24" for a in arms), arms
+    assert all(a in b21.ARMS or a in ("conf24", *BITS) for a in arms), arms
     res["config"] |= {"brazos": list(arms), "conjuntos": list(SETS4), "n_uso": b21.N_USE}
     for t, s, arm in plan4(sorted(hechos), arms, int(controls)):
         key = f"{t}|s{s}|{arm}"
         if key in res["corridas"] or b21.given_up(res["corridas"], arm):
             continue
-        probe = None if arm == "control" else Protect(arm, seed=sum(map(ord, t)) + s)  # hash() cambia entre procesos
+        seed = sum(map(ord, t)) + s  # hash() cambia entre procesos
+        probe = None if arm == "control" else Quant(arm, seed, all_ev) if arm in BITS else Protect(arm, seed)
         res["corridas"][key] = r = run_set(model, tok, t, s, 0, ev, pool, all_ev, base, state, probe)
         print(json.dumps({"corrida": key, "nuevos": round(r["nuevos_final"], 3), "subida_media": round(float(np.mean(r["subida"])), 3), "pasos": r["pasos"],
                           "fuga": r.get("fuga"), "segundos": r["segundos"]}), flush=True)  # fmt: skip
@@ -340,5 +381,46 @@ def gradiente(path: str, facts_path: str, sets: str = "0,1,2", repeats: str = "4
             return
 
 
+def reverse(x: dict, head: str | None = None, value: str | None = None) -> tuple[str, str]:
+    return f"{value or x['valor']} is the {x['propiedad']} of", f" {head or x['cabeza']}."
+
+
+def inversos(path: str, facts_path: str, model=None, tok=None) -> None:
+    """Conteo para el candidato 1: F0 al revés. La cabeza real gana a K_INV cabezas de igual propiedad y otro valor; es piso si
+    también gana con un valor ajeno de esa propiedad. Un hecho conocido en las dos direcciones pasa F0 y no es piso al revés."""
+    hechos = json.load(open(facts_path, encoding="utf-8"))["hechos"]
+    pairs = C.defaultdict(set)
+    for v in hechos.values():
+        for x in v:
+            pairs[x["propiedad"]].add((x["cabeza"], x["valor"]))
+    fresh = model is None
+    model, tok = load(model, tok, False)
+    if fresh:
+        model.to(torch.bfloat16)  # shortcut: bf16 para compartir la L4 con el entrenamiento; un hecho en el borde puede cambiar
+    res = json.load(open(path)) if os.path.exists(path) else {"tipos": {}}
+    for t in sorted(hechos):
+        if t in res["tipos"]:
+            continue
+        rows, items = [], []
+        for x in hechos[t]:
+            rng = random.Random(f"b23:inversos:{x['cabeza']}:{x['propiedad']}")
+            other = sorted({(h, v) for h, v in pairs[x["propiedad"]] if v.lower() != x["valor"].lower() and h != x["cabeza"]})
+            if len({h for h, _ in other}) < K_INV:
+                continue
+            heads = rng.sample(sorted({h for h, _ in other}), K_INV)
+            rows.append({"cabeza": x["cabeza"], "propiedad": x["propiedad"], "donantes": heads, "valor_ajeno": rng.choice(other)[1]})
+            items += [reverse(x, h) for h in [x["cabeza"], *heads]] + [reverse(x, h, rows[-1]["valor_ajeno"]) for h in [x["cabeza"], *heads]]
+        L = b17.def_losses(model, tok, items).reshape(-1, 2, K_INV + 1) if rows else np.zeros((0, 2, K_INV + 1))
+        for r, k, f in zip(rows, wins(L[:, 0]), wins(L[:, 1])):
+            r |= {"inverso": int(k), "piso": int(f)}
+        count = lambda v: {"n": len(v), "inverso": sum(r["inverso"] for r in v), "ambos": sum(r["inverso"] and not r["piso"] for r in v)}
+        res["tipos"][t] = {"hechos": rows, "conteo": count(rows), "sin_donantes": len(hechos[t]) - len(rows),
+                           "por_propiedad": {p: count([r for r in rows if r["propiedad"] == p]) for p in sorted({r["propiedad"] for r in rows})}}  # fmt: skip
+        json.dump(res, open(path, "w"), ensure_ascii=False)
+        print(json.dumps({"tipo": t} | res["tipos"][t]["conteo"]), flush=True)
+    need = N_TRAIN + N_EVAL
+    print(json.dumps({"FIN": {t: v["conteo"]["ambos"] for t, v in res["tipos"].items()}, "tipos_con_" + str(need): sum(v["conteo"]["ambos"] >= need for v in res["tipos"].values())}), flush=True)
+
+
 if __name__ == "__main__":
-    {"seleccion": seleccion, "gradiente": gradiente, "consolidacion": consolidacion}[sys.argv[1]](*sys.argv[2:])
+    {"seleccion": seleccion, "gradiente": gradiente, "consolidacion": consolidacion, "inversos": inversos}[sys.argv[1]](*sys.argv[2:])

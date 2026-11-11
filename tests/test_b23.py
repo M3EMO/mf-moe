@@ -146,6 +146,50 @@ def test_consolidation_runs_only_the_requested_arms_and_controls(tmp_path, monke
     assert [len(x) for x in R["t2|s1|prec24"]["congelados"]] == [2, 2] and R["t2|s1|prec24"]["fuga"] == 0.0  # igual capacidad que cons24
 
 
+def test_fake_quant_keeps_levels_per_group_and_is_idempotent():
+    w = torch.randn(3, 4, 256)
+    q = b.fake_quant(w, 2)
+    assert q.shape == w.shape and all(len(torch.unique(g)) <= 4 for g in q.reshape(-1, 128))
+    assert torch.allclose(b.fake_quant(q, 2), q, atol=1e-6) and (b.fake_quant(w, 4) - w).abs().max() < (q - w).abs().max()
+
+
+def test_quantized_arms_freeze_cons24_rows_store_them_quantized_and_restore(tmp_path, monkeypatch):
+    small(monkeypatch)
+    monkeypatch.setattr(b, "gate", lambda r, e: None)
+    monkeypatch.setattr(b21, "TRAIN_FROM", 0)
+    monkeypatch.setattr(b21, "N_USE", 4)
+    monkeypatch.setattr(b21, "GIVE_UP", 99)
+    hechos = {t: [x | {"cabeza": f"{t}{x['cabeza']}"} for x in facts(16, list("abcd"))] for t in ("t1", "t2", "t3")}
+    src, out = tmp_path / "h.json", str(tmp_path / "q.json")
+    src.write_text(json.dumps({"hechos": hechos}))
+    model = granite.tiny()
+    before = {k: v.clone() for k, v in model.state_dict().items()}
+    b.consolidacion(out, str(src), "cons24,cuant2", "0", model=model, tok=chars)
+    res = json.load(open(out))
+    q, c = res["corridas"]["t2|s1|cuant2"], res["corridas"]["t2|s1|cons24"]
+    assert q["congelados"] == c["congelados"] and q["fuga"] == 0.0 and q["error_cuant"] > 0 and q["bits"] == 2
+    assert len(q["antes_cuant"]) == len(res["antes"]) and q["antes_cuant"] != res["antes"]
+    assert all(torch.equal(before[k], v) for k, v in model.state_dict().items())
+
+
+def test_reverse_count_marks_known_and_floor(tmp_path, monkeypatch):
+    # c0 se conoce al revés solo con su valor; c1 gana con cualquier valor (piso); el resto empata y no gana
+    def fake(model, tok, items):
+        return np.array([0.0 if r == " c0." and p.startswith("v0 ") else 0.0 if r == " c1." else 1.0 for p, r in items])
+
+    monkeypatch.setattr(b17, "def_losses", fake)
+    monkeypatch.setattr(b, "K_INV", 4)
+    hechos = {"t1": facts(12, list("ab")), "t2": [x | {"cabeza": f"t2{x['cabeza']}"} for x in facts(3, ["z"])]}
+    src, out = tmp_path / "h.json", str(tmp_path / "i.json")
+    src.write_text(json.dumps({"hechos": hechos}))
+    b.inversos(out, str(src), model="m", tok=chars)
+    T = json.load(open(out))["tipos"]
+    r = {x["cabeza"]: x for x in T["t1"]["hechos"]}
+    assert (r["c0"]["inverso"], r["c0"]["piso"]) == (1, 0) and (r["c1"]["inverso"], r["c1"]["piso"]) == (1, 1) and r["c2"]["inverso"] == 0
+    assert T["t1"]["conteo"] == {"n": 12, "inverso": 2, "ambos": 1} and all(x["cabeza"] not in r[x["cabeza"]]["donantes"] for x in T["t1"]["hechos"])
+    assert T["t2"]["conteo"]["n"] == 0 and T["t2"]["sin_donantes"] == 3  # 3 cabezas no alcanzan para K donantes
+
+
 def test_gate_uses_other_type_other_relation_as_far_band():
     ev = [{"tipo": "a", "propiedad": "p"}, {"tipo": "b", "propiedad": "q"}]
     r = {"tipo": "a", "mitad": ["p"], "subida": [9.0, 0.1], "nuevos_final": 0.1, "subida_entrenados_verdad": 1.0, "segundos": 10}
