@@ -172,6 +172,41 @@ def test_quantized_arms_freeze_cons24_rows_store_them_quantized_and_restore(tmp_
     assert all(torch.equal(before[k], v) for k, v in model.state_dict().items())
 
 
+def test_gptq_is_rtn_with_identity_and_beats_it_on_correlated_inputs():
+    torch.manual_seed(0)
+    w, X = torch.randn(3, 8, 256), torch.randn(4000, 256) @ torch.randn(256, 256) / 16
+    H = (X.T @ X).expand(3, 256, 256).clone()
+    assert torch.allclose(b.gptq(w, torch.eye(256).expand(3, 256, 256).clone(), 4), b.fake_quant(w, 4), atol=1e-6)
+    q = b.gptq(w, H, 4)
+    assert all(len(torch.unique(g)) <= 16 for g in q.reshape(-1, 128))
+    err = lambda z: float(((w - z) @ X.T).pow(2).sum())
+    assert err(q) < 0.8 * err(b.fake_quant(w, 4))
+    H[0] = 0  # un experto sin tokens de calibración queda con RTN, no en cero
+    assert torch.allclose(b.gptq(w, H, 4)[0], b.fake_quant(w, 4)[0], atol=1e-6)
+
+
+def test_gptq_arm_copies_cached_rows_pairs_rtn_damage_and_restores(tmp_path, monkeypatch):
+    small(monkeypatch)
+    monkeypatch.setattr(b, "gate", lambda r, e: None)
+    monkeypatch.setattr(b21, "TRAIN_FROM", 0)
+    monkeypatch.setattr(b21, "N_USE", 4)
+    monkeypatch.setattr(b21, "GIVE_UP", 99)
+    monkeypatch.setattr(b, "calib_ids", lambda tok: torch.randint(0, 256, (8, 32), generator=torch.Generator().manual_seed(0)))
+    hechos = {t: [x | {"cabeza": f"{t}{x['cabeza']}"} for x in facts(16, list("abcd"))] for t in ("t1", "t2", "t3")}
+    src, out = tmp_path / "h.json", str(tmp_path / "g.json")
+    src.write_text(json.dumps({"hechos": hechos}))
+    model = granite.tiny()
+    before = {k: v.clone() for k, v in model.state_dict().items()}
+    b.consolidacion(out, str(src), "cuant4,gptq4", "0", model=model, tok=chars)
+    res = json.load(open(out))
+    assert res["gptq"]["error_relativo"] < 1 and res["gptq"]["tramos"] == 8
+    for t in ("t1", "t2", "t3"):
+        g, r = res["corridas"][f"{t}|s1|gptq4"], res["corridas"][f"{t}|s1|cuant4"]
+        assert g["congelados"] == r["congelados"] and g["fuga"] == 0.0 and g["metodo"] == "gptq" and r["metodo"] == "rtn"
+        assert g["antes_rtn"] == r["antes_cuant"] and g["antes_cuant"] != r["antes_cuant"]  # el control pareado repite a cuant4
+    assert all(torch.equal(before[k], v) for k, v in model.state_dict().items())
+
+
 def test_reverse_count_marks_known_and_floor(tmp_path, monkeypatch):
     # c0 se conoce al revés solo con su valor; c1 gana con cualquier valor (piso); el resto empata y no gana
     def fake(model, tok, items):

@@ -12,7 +12,8 @@ Uso: python -m colab.b23_uniedit seleccion SALIDA.json
 - consolidacion (etapa 4): los mismos conjuntos 0 y 1 con 8 expertos congelados por capa. cons24 congela los que más usa lo viejo
   (B21), conf24 los de producto interno más negativo entre el gradiente medio nuevo y el viejo, azar24 al azar, prec24 los de
   mayor Fisher diagonal de lo viejo (B21). Un control sin congelar por tipo comprueba que la etapa 2 se repite en esta sesión.
-  cuant4 y cuant2 (candidato 2) congelan los expertos de cons24 y los guardan en 4 o 2 bits antes de entrenar.
+  cuant4 y cuant2 (candidato 2) congelan los expertos de cons24 y los guardan en 4 o 2 bits antes de entrenar (RTN).
+  gptq4 hace lo mismo con GPTQ, calibrado con 128 tramos de WikiText-2.
      python -m colab.b23_uniedit inversos SALIDA.json HECHOS.json   (candidato 1: cuántos hechos conoce Granite al revés)
 """
 
@@ -27,6 +28,7 @@ os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from colab import b16_conceptos as b16
 from colab import b17_conflicto as b17
@@ -51,7 +53,8 @@ TYPE_OF = {q: t for t, v in TYPES.items() for q in v.split()}
 K, NEED, CHUNK, BUDGET, MIN_TYPES = 4, 444, 64, 1300, 6  # BUDGET en segundos: 22 min de selección y 8 de arranque y descarga caben en 1 unidad
 N_TRAIN, N_EVAL, ANCHORS, MIN_CELL, TOP_COS = 64, 60, 512, 10, 10
 ARMS4, SETS4 = ("cons24", "conf24", "azar24"), (0, 1)
-BITS, GROUP, K_INV = {"cuant4": 4, "cuant2": 2}, 128, 9  # K_INV: con 9 cabezas, un hecho desconocido pasa al revés por azar con p ≈ 0,1 · 0,9
+BITS, GROUP, K_INV = {"cuant4": 4, "cuant2": 2, "gptq4": 4}, 128, 9  # K_INV: con 9 cabezas, un hecho desconocido pasa al revés por azar con p ≈ 0,1 · 0,9
+CALIB, CALIB_LEN, DAMP = 128, 2048, 0.01  # los valores por defecto de GPTQ: 128 tramos de 2048 tokens y 1 % de amortiguación
 
 
 def uniedit_rows() -> list[dict]:
@@ -291,24 +294,115 @@ def fake_quant(w: torch.Tensor, bits: int, group: int = GROUP) -> torch.Tensor:
     return (((g - lo) / s).round().clamp(0, 2**bits - 1) * s + lo).reshape(w.shape).to(w.dtype)
 
 
-class Quant(Protect):
-    """Candidato 2: congela los expertos de cons24 y los guarda cuantizados. El router de esas filas queda en fp32 y congelado."""
+def gptq(w: torch.Tensor, H: torch.Tensor, bits: int, group: int = GROUP, damp: float = DAMP) -> torch.Tensor:
+    """GPTQ (Frantar et al., 2023) para todos los expertos a la vez. w: [expertos, salida, entrada]; H: [expertos, entrada, entrada].
+    Usa la grilla de `fake_quant`, así la única diferencia con RTN es la corrección del error. Con H = I da lo mismo que RTN.
+    Una entrada sin tokens de calibración no se pone en cero, como hace GPTQ, sino que queda con RTN: el modelo se evalúa con otro texto."""
+    W, H = w.float().clone(), H.float().clone()
+    n, g = W.shape[-1], min(group, W.shape[-1])
+    diag = torch.diagonal(H, dim1=1, dim2=2)
+    diag[diag == 0] = 1.0
+    diag += damp * diag.mean(-1, keepdim=True)
+    U = torch.linalg.cholesky(torch.cholesky_inverse(torch.linalg.cholesky(H)), upper=True)
+    Q, maxq = torch.zeros_like(W), 2**bits - 1
+    for a in range(0, n, g):  # un bloque por grupo, como GPTQ con blocksize = groupsize
+        W1, E1, U1 = W[..., a : a + g].clone(), torch.zeros_like(W[..., a : a + g]), U[:, a : a + g, a : a + g]
+        lo, hi = W1.amin(-1), W1.amax(-1)
+        s = ((hi - lo) / maxq).clamp_min(1e-12)
+        for i in range(W1.shape[-1]):
+            q = ((W1[..., i] - lo) / s).round().clamp(0, maxq) * s + lo
+            Q[..., a + i] = q
+            E1[..., i] = err = (W1[..., i] - q) / U1[:, i, i, None]
+            W1[..., i:] -= err[..., None] * U1[:, None, i, i:]
+        W[..., a + g :] -= E1 @ U[:, a : a + g, a + g :]
+    return Q.to(w.dtype)
 
-    def __init__(self, arm: str, seed: int, facts: list[dict]):
+
+def calib_ids(tok, n: int = CALIB, length: int = CALIB_LEN) -> torch.Tensor:
+    """Como GPTQ: n tramos al azar de `length` tokens del texto de entrenamiento de WikiText-2. Calibrar con los hechos evaluados
+    sería ajustar sobre la prueba; con las anclas, darle al cuantizador lo que el brazo después repasa."""
+    import pandas as pd
+    from huggingface_hub import hf_hub_download
+
+    f = hf_hub_download("Salesforce/wikitext", "wikitext-2-raw-v1/train-00000-of-00001.parquet", repo_type="dataset")
+    ids = tok("\n\n".join(pd.read_parquet(f)["text"]))["input_ids"]
+    rng = random.Random("b23:calibracion")
+    return torch.tensor([ids[i : i + length] for i in (rng.randrange(len(ids) - length) for _ in range(n))])
+
+
+@torch.no_grad()
+def hessians(model, ids: torch.Tensor, layers, batch: int = 4) -> dict[int, list[torch.Tensor]]:
+    """Por capa, [X^T X de la entrada de gate_up_proj, ídem de down_proj, tokens] de cada experto, con el ruteo de Granite.
+    Shortcut: todas las capas salen del modelo sin cuantizar; GPTQ propaga el error de una capa a la siguiente."""
+    rs = {i: moe(model, i)[1] for i in layers}
+    model.eval()
+    for r in rs.values():
+        r.record = True
+    out = {}
+    for k in range(0, len(ids), batch):
+        with amp(DEVICE):
+            model(input_ids=ids[k : k + batch].to(DEVICE))
+        for i, r in rs.items():
+            ex, (hs, _, idx) = moe(model, i)[0], r.last
+            gu, dn = ex.gate_up_proj, ex.down_proj
+            acc = out.setdefault(i, [hs.new_zeros(gu.shape[0], gu.shape[2], gu.shape[2], dtype=torch.float32),
+                                     hs.new_zeros(dn.shape[0], dn.shape[2], dn.shape[2], dtype=torch.float32), hs.new_zeros(gu.shape[0], dtype=torch.float32)])  # fmt: skip
+            for e in range(gu.shape[0]):
+                x = hs[(idx == e).any(-1)].float()
+                gate, up = F.linear(x, gu[e].float()).chunk(2, dim=-1)
+                a = ex.act_fn(gate) * up
+                acc[0][e] += x.T @ x
+                acc[1][e] += a.T @ a
+                acc[2][e] += len(x)
+    for r in rs.values():
+        r.record = False
+    model.train()
+    return out
+
+
+def gptq_cache(model, tok, bits: int, layers, ids: torch.Tensor | None = None) -> tuple[dict[str, torch.Tensor], dict]:
+    """Los expertos de todas las capas entrenables cuantizados con GPTQ, en CPU. Una vez por sesión: cada corrida parte del mismo
+    Granite y solo cambia qué filas copia. Control positivo: el error de reconstrucción sobre la calibración debe bajar contra RTN."""
+    ids = calib_ids(tok) if ids is None else ids
+    H, names = hessians(model, ids, layers), {id(p): n for n, p in model.named_parameters()}
+    cache, stats = {}, {"tramos": len(ids), "largo": int(ids.shape[1]), "capas": {}}
+    for i in layers:
+        ex, row = moe(model, i)[0], {}
+        for key, p, h in (("gate_up_proj", ex.gate_up_proj, H[i][0]), ("down_proj", ex.down_proj, H[i][1])):
+            w = p.detach().float()
+            q = gptq(w, h, bits)
+            err = [float(torch.einsum("eoi,eij,eoj->", w - z, h, w - z)) for z in (q, fake_quant(w, bits))]
+            row[key] = err[0] / max(err[1], 1e-30)
+            cache[names[id(p)]] = q.to(p.dtype).cpu()
+        stats["capas"][str(i)] = row | {"tokens_min": int(H[i][2].min()), "sin_tokens": int((H[i][2] == 0).sum())}
+        del H[i]
+    stats["error_relativo"] = float(np.mean([v for r in stats["capas"].values() for k, v in r.items() if k.endswith("proj")]))
+    return cache, stats
+
+
+class Quant(Protect):
+    """Candidato 2: congela los expertos de cons24 y los guarda cuantizados. El router de esas filas queda en fp32 y congelado.
+    gptq4 copia las filas de `cache` y mide también el daño de RTN en la misma corrida, como control pareado."""
+
+    def __init__(self, arm: str, seed: int, facts: list[dict], cache: dict | None = None):
         super().__init__(arm, seed)
-        self.bits, self.facts = BITS[arm], facts
+        self.bits, self.facts, self.cache = BITS[arm], facts, cache if arm.startswith("gptq") else None
 
     def choose(self, model, tok, new, old, layers, U_new) -> list[list[int]]:
         return b21.frozen_rows("cons24", U_new, b21.b19.usage(model, tok, old).mean(0)[b21.TRAIN_FROM :], np.random.default_rng(self.seed))
 
     def pre(self, model, tok, new, keep) -> None:
         super().pre(model, tok, new, keep)
-        self.ref = []
+        mats = [(n, p, rows) for n, p, rows in self.watch if p.dim() == 3]  # gate_up_proj y down_proj: [expertos, salida, entrada]
         with torch.no_grad():
-            for _, p, rows in self.watch:
-                if p.dim() == 3:  # gate_up_proj y down_proj: [expertos, salida, entrada]
-                    p[rows] = fake_quant(p[rows], self.bits)
-                    self.ref.append((p, rows, p[rows].detach().cpu().clone()))
+            for _, p, rows in mats:
+                p[rows] = fake_quant(p[rows], self.bits)
+        if self.cache is not None:
+            self.before_rtn = candidate_losses(model, tok, self.facts)[:, 0]
+            with torch.no_grad():
+                for n, p, rows in mats:
+                    p[rows] = self.cache[n][rows].to(p.device, p.dtype)
+        self.ref = [(p, rows, p[rows].detach().cpu().clone()) for _, p, rows in mats]
         self.before = candidate_losses(model, tok, self.facts)[:, 0]  # daño de cuantizar solo, antes de entrenar
 
     def post(self, model, state: dict) -> None:
@@ -317,7 +411,9 @@ class Quant(Protect):
         self.moved = max((float((p.detach()[rows].float().cpu() - q.float()).abs().max()) for p, rows, q in self.ref), default=0.0)
 
     def final(self, model, tok) -> dict:
-        return super().final(model, tok) | {"bits": self.bits, "grupo": GROUP, "error_cuant": self.error, "antes_cuant": self.before.round(4).tolist()}
+        extra = {"antes_rtn": self.before_rtn.round(4).tolist()} if self.cache is not None else {}
+        return super().final(model, tok) | {"bits": self.bits, "grupo": GROUP, "metodo": "gptq" if self.cache is not None else "rtn",
+                                            "error_cuant": self.error, "antes_cuant": self.before.round(4).tolist()} | extra  # fmt: skip
 
 
 def plan4(types: list[str], arms=ARMS4, controls: int = 99) -> list[tuple]:
@@ -346,16 +442,26 @@ def consolidacion(path: str, facts_path: str, arms: str = ",".join(ARMS4), contr
     arms = tuple(arms.split(","))
     assert all(a in b21.ARMS or a in ("conf24", *BITS) for a in arms), arms
     res["config"] |= {"brazos": list(arms), "conjuntos": list(SETS4), "n_uso": b21.N_USE}
+    cache = None
+    if any(a.startswith("gptq") for a in arms):
+        cache, res["gptq"] = gptq_cache(model, tok, 4, range(b21.TRAIN_FROM, len(model.model.layers)))
+        print(json.dumps({"gptq": {k: v for k, v in res["gptq"].items() if k != "capas"}}), flush=True)
+        if res["gptq"]["error_relativo"] >= 1:
+            json.dump(res, open(path, "w"), ensure_ascii=False)
+            raise SystemExit("GPTQ no reconstruye la calibración mejor que RTN: la implementación falla")
     for t, s, arm in plan4(sorted(hechos), arms, int(controls)):
         key = f"{t}|s{s}|{arm}"
         if key in res["corridas"] or b21.given_up(res["corridas"], arm):
             continue
         seed = sum(map(ord, t)) + s  # hash() cambia entre procesos
-        probe = None if arm == "control" else Quant(arm, seed, all_ev) if arm in BITS else Protect(arm, seed)
+        probe = None if arm == "control" else Quant(arm, seed, all_ev, cache) if arm in BITS else Protect(arm, seed)
         res["corridas"][key] = r = run_set(model, tok, t, s, 0, ev, pool, all_ev, base, state, probe)
         print(json.dumps({"corrida": key, "nuevos": round(r["nuevos_final"], 3), "subida_media": round(float(np.mean(r["subida"])), 3), "pasos": r["pasos"],
                           "fuga": r.get("fuga"), "segundos": r["segundos"]}), flush=True)  # fmt: skip
         why = gate(r, all_ev) if len(res["corridas"]) == 1 else None
+        if "antes_rtn" in r and not why and sum(k.endswith(f"|{arm}") for k in res["corridas"]) == 1:
+            d = [float(np.mean(r[k]) - np.mean(res["antes"])) for k in ("antes_cuant", "antes_rtn")]
+            why = f"GPTQ: el daño de cuantizar ({d[0]:.4f}) no baja del de RTN ({d[1]:.4f}) en la primera corrida" if d[0] >= d[1] else None
         res["corte"] = why
         json.dump(res, open(path, "w"), ensure_ascii=False)
         if why:

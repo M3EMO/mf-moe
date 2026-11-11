@@ -1,0 +1,1 @@
+b23_gptq.json|colab.b23_uniedit consolidacion {out} colab/data/b23_hechos.json gptq4 1
