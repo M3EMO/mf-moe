@@ -5,8 +5,11 @@ señal real. Banco, conjuntos, semillas de lotes y dosis son los de B25; solo el
 - azar: los mismos pesos, permutados entre hechos.
 - uniforme: sin pesos, solo el conjunto 0, para chequear la réplica contra B25.
 B27b (main_b): la señal sin etiqueta (probabilidad máxima del primer token, solo con la pregunta) y el oráculo fuerte (pesos 0,02 a 1,98).
+B27c (main_c): la sonda ridge sobre el estado del último token de la pregunta (capas 8, 12, 16 y 20) predice la NLL del valor real;
+cada conjunto usa una sonda ajustada sin sus hechos.
 Uso: python -m colab.b27_puerta SALIDA.json BANCO.json
      python -m colab.b27_puerta b SALIDA.json BANCO.json
+     python -m colab.b27_puerta c SALIDA.json BANCO.json CANDIDATOS.json
 """
 
 import json
@@ -24,6 +27,7 @@ from colab.b16_conceptos import DEVICE
 from mf_moe.phase2 import amp
 
 LOW, SPAN = 0.25, 1.5
+LAYERS, ALPHAS = (8, 12, 16, 20), np.logspace(0, 5, 11)
 
 
 def gate(doubt: np.ndarray, low: float = LOW, span: float = SPAN) -> np.ndarray:
@@ -47,6 +51,43 @@ def own_confidence(model, tok, facts: list[dict]) -> np.ndarray:
         out += torch.softmax(last, -1).max(-1).values.tolist()
     model.train()
     return np.array(out)
+
+
+@torch.no_grad()
+def prompt_states(model, tok, facts: list[dict], layers: tuple = LAYERS) -> np.ndarray:
+    """Estado del último token de la pregunta de la ida en cada capa de `layers`, concatenado: no ve el valor."""
+    model.eval()
+    out = []
+    for i in range(0, len(facts), b17.EVAL_BATCH):
+        rows = [tok(b24.fwd(x)[0])["input_ids"] for x in facts[i : i + b17.EVAL_BATCH]]
+        L = max(map(len, rows))
+        ids = torch.tensor([r + [0] * (L - len(r)) for r in rows], device=DEVICE)
+        mask = torch.tensor([[1] * len(r) + [0] * (L - len(r)) for r in rows], device=DEVICE)
+        with amp(DEVICE):
+            hs = model(input_ids=ids, attention_mask=mask, output_hidden_states=True).hidden_states
+        last = torch.tensor([len(r) - 1 for r in rows], device=DEVICE)
+        out.append(torch.cat([hs[l][torch.arange(len(rows)), last].float() for l in layers], -1).cpu().numpy())
+    model.train()
+    return np.concatenate(out)
+
+
+def ridge(X: np.ndarray, y: np.ndarray, X_new: np.ndarray, alphas: np.ndarray = ALPHAS) -> np.ndarray:
+    """Ridge estandarizada con intercepto; alpha por error dejando uno afuera, como RidgeCV de sklearn (forma dual: d >> n)."""
+    mu, sd = X.mean(0), X.std(0) + 1e-8
+    A, B, ym = (X - mu) / sd, (X_new - mu) / sd, y.mean()
+    S, U = np.linalg.eigh(A @ A.T)
+    S, Uy = np.clip(S, 0, None), U.T @ (y - ym)
+    loo = lambda a: np.mean(((y - ym - U @ (S / (S + a) * Uy)) / (1 - (U**2) @ (S / (S + a)) - 1 / len(y))) ** 2)  # 1/n: el intercepto
+    a = min(alphas, key=loo)
+    return ym + B @ (A.T @ (U @ (Uy / (S + a))))
+
+
+def cross_fit(X: np.ndarray, y: np.ndarray, groups: np.ndarray) -> np.ndarray:
+    """Predicción de cada grupo >= 0 con una sonda ajustada sin ese grupo; el grupo −1 solo entrena."""
+    pred = np.full(len(y), np.nan)
+    for g in np.unique(groups[groups >= 0]):
+        pred[groups == g] = ridge(X[groups != g], y[groups != g], X[groups == g])
+    return pred
 
 
 def main(path: str, bank_path: str, model=None, tok=None) -> None:
@@ -84,5 +125,29 @@ def main_b(path: str, bank_path: str, model=None, tok=None) -> None:
     b24.stage2(model, tok, facts, base_i, base_v, res, path, dose=True, tag="b25", arms=arms)
 
 
+def main_c(path: str, bank_path: str, cand_path: str, model=None, tok=None) -> None:
+    facts, cands = (json.load(open(p, encoding="utf-8")) for p in (bank_path, cand_path))
+    res = json.load(open(path)) if os.path.exists(path) else {"corridas": {}}
+    model, tok = b23.load(model, tok, True)
+    base_i, base_v = b24.losses(model, tok, facts)
+    n, key = len(facts), lambda x: (x["cabeza"], x["propiedad"])
+    order = random.Random("b25:conjuntos").sample(range(n), n)  # los conjuntos de stage2 con tag «b25»
+    group = {key(facts[i]): min(j // (n // b24.SETS), b24.SETS) for j, i in enumerate(order)}  # el sobrante es el grupo SETS
+    pool = cands + [x for x in facts if key(x) not in {key(c) for c in cands}]
+    y = b17.def_losses(model, tok, [b24.fwd(x) for x in pool])
+    pred = cross_fit(prompt_states(model, tok, pool, LAYERS), y, np.array([group.get(key(x), -1) for x in pool]))
+    where = {key(x): i for i, x in enumerate(pool)}
+    p_bank = np.array([pred[where[key(x)]] for x in facts])
+    w = gate(p_bank)
+    rho = float(np.corrcoef(np.argsort(np.argsort(p_bank)), np.argsort(np.argsort(base_i[:, 0])))[0, 1])
+    res["config"] = {"n_hechos": n, "n_sonda": len(pool), "capas": list(LAYERS), "alphas": ALPHAS.tolist(), "conjuntos": b24.SETS,
+                     "dosis": list(b24.DOSES), "sonda": [LOW, SPAN], "lr": b24.b17.LR, "batch": b24.b17.BATCH}  # fmt: skip
+    res["sonda"] = {"prediccion": p_bank.round(4).tolist(), "spearman_con_perdida_base": round(rho, 4)}
+    res["pesos"] = {"sonda": w.round(4).tolist()}
+    res["base"] = {"perdida_ida": base_i[:, 0].round(4).tolist(), "perdida_vuelta": base_v[:, 0].round(4).tolist()}
+    print(json.dumps({"sonda_spearman_con_perdida_base": res["sonda"]["spearman_con_perdida_base"]}), flush=True)
+    b24.stage2(model, tok, facts, base_i, base_v, res, path, dose=True, tag="b25", arms={"sonda": ("ida", w, None)})
+
+
 if __name__ == "__main__":
-    main_b(*sys.argv[2:4]) if sys.argv[1] == "b" else main(*sys.argv[1:3])
+    {"b": lambda: main_b(*sys.argv[2:4]), "c": lambda: main_c(*sys.argv[2:5])}.get(sys.argv[1], lambda: main(*sys.argv[1:3]))()

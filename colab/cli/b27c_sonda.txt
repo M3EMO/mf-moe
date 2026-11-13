@@ -1,0 +1,1 @@
+b27c_sonda.json|colab.b27_puerta c {out} colab/data/b27_banco.json colab/data/b25_candidatos.json
