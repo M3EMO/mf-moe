@@ -22,6 +22,7 @@ os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from colab import b17_conflicto as b17
 from colab import b23_uniedit as b23
@@ -82,15 +83,30 @@ def losses(model, tok, facts: list[dict], new: bool = False) -> tuple[np.ndarray
     return L[0], L[1]
 
 
-def train(model, tok, items: list[tuple[str, str]], stop: float, max_steps: int, check: int, key: str, hook=None) -> tuple[int, list[dict]]:
-    """AdamW como B23, de a lotes de BATCH; para cuando la pérdida media de `items` baja de `stop`. `hook(step)` corre tras cada paso."""
+def weighted_loss(logits: torch.Tensor, labels: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
+    """Entropía cruzada por token por el peso de su ejemplo, sobre los tokens válidos: con w = 1 es la pérdida media de HF."""
+    lab = labels[:, 1:]
+    ce = F.cross_entropy(logits[:, :-1].float().transpose(1, 2), lab, ignore_index=-100, reduction="none")
+    valid = lab != -100
+    return (ce * w[:, None] * valid).sum() / valid.sum()
+
+
+def train(model, tok, items: list[tuple[str, str]], stop: float, max_steps: int, check: int, key: str, hook=None,
+          weights: list[float] | None = None) -> tuple[int, list[dict]]:
+    """AdamW como B23, de a lotes de BATCH; para cuando la pérdida media de `items` baja de `stop`. `hook(step)` corre tras cada paso.
+    `weights` (B27) pesa la pérdida de cada ítem; sin pesos, el camino es el de B24 tal cual."""
     params = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(params, lr=b17.LR, weight_decay=0.0)
     rng, t0, hist, step = random.Random(key), time.time(), [], 0
     for step in range(1, max_steps + 1):
-        ids, mask, labels = b17.batch(tok, [items[i] for i in rng.sample(range(len(items)), min(b17.BATCH, len(items)))])
+        pick = rng.sample(range(len(items)), min(b17.BATCH, len(items)))
+        ids, mask, labels = b17.batch(tok, [items[i] for i in pick])
         with amp(DEVICE):
-            model(input_ids=ids, attention_mask=mask, labels=labels).loss.backward()
+            if weights is None:
+                model(input_ids=ids, attention_mask=mask, labels=labels).loss.backward()
+            else:
+                w = torch.tensor([weights[i] for i in pick], device=ids.device)
+                weighted_loss(model(input_ids=ids, attention_mask=mask).logits, labels, w).backward()
         torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step()
         opt.zero_grad(set_to_none=True)
@@ -132,9 +148,11 @@ def main(path: str, model=None, tok=None, dose: bool = False, facts: list[dict] 
 
 
 def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray, res: dict, path: str, dose: bool, tag: str = "b24",
-           doses: tuple | None = None) -> None:
-    """Brazos ida y vuelta por conjunto, cada uno desde el estado actual del modelo; guarda en res["corridas"] tras cada brazo."""
+           doses: tuple | None = None, arms: dict | None = None) -> None:
+    """Brazos por conjunto, cada uno desde el estado actual del modelo; guarda en res["corridas"] tras cada brazo.
+    `arms`: nombre -> (dirección, pesos por hecho o None, conjuntos o None para todos). Por defecto, ida y vuelta sin pesos."""
     doses = doses or DOSES
+    arms = arms or {a: (a, None, None) for a in ARMS}
     state = {k: v.detach().to("cpu", copy=True) for k, v in [*model.named_parameters(), *model.named_buffers()]
              if not isinstance(v, torch.nn.Parameter) or v.requires_grad}  # fmt: skip
     n = len(facts)
@@ -142,21 +160,24 @@ def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray
     order = random.Random(f"{tag}:conjuntos").sample(range(n), n)
     for s in range(SETS):
         over = sorted(order[s * n_over : (s + 1) * n_over])
-        for arm in ARMS:
+        for arm, (way, w, sets) in arms.items():
+            if sets is not None and s not in sets:
+                continue
             keys = [f"s{s}|{arm}|d{d}" for d in doses] if dose else [f"s{s}|{arm}"]
             if keys[-1] in res["corridas"]:
                 continue
-            new = [fwd(facts[i], facts[i]["valor_nuevo"]) if arm == "ida" else rev(facts[i], facts[i]["cabeza_nueva"]) for i in over]
+            new = [fwd(facts[i], facts[i]["valor_nuevo"]) if way == "ida" else rev(facts[i], facts[i]["cabeza_nueva"]) for i in over]
 
             def measure(step: int, key: str) -> None:
                 L_i, L_v = losses(model, tok, facts)
                 N_i, N_v = losses(model, tok, [facts[i] for i in over], new=True)
                 res["corridas"][key] = r = {
                     "conjunto": s, "brazo": arm, "sobrescritos": over, "pasos": step,
-                    "nuevos_final": float(b17.def_losses(model, tok, new).mean()),
+                    "perdida_nuevo": b17.def_losses(model, tok, new).round(4).tolist(),
                     "subida_ida": (L_i[:, 0] - base_i[:, 0]).round(4).tolist(), "subida_vuelta": (L_v[:, 0] - base_v[:, 0]).round(4).tolist(),
                     "gana_ida": b23.wins(L_i).astype(int).tolist(), "gana_vuelta": b23.wins(L_v).astype(int).tolist(),
-                    "nuevo_otra_cara_gana": b23.wins(N_v if arm == "ida" else N_i).astype(int).tolist()}  # fmt: skip
+                    "nuevo_otra_cara_gana": b23.wins(N_v if way == "ida" else N_i).astype(int).tolist()}  # fmt: skip
+                r["nuevos_final"] = float(np.mean(r["perdida_nuevo"]))
                 m = np.isin(np.arange(n), over)
                 print(json.dumps({"corrida": key, "pasos": step, "nuevos": round(r["nuevos_final"], 3),
                                   **{f"{d}_sobre": round(float(np.array(r[f"subida_{d}"])[m].mean()), 3) for d in ARMS},
@@ -165,7 +186,8 @@ def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray
             torch.manual_seed(1000 + s)
             stop, top = (float("-inf"), max(doses)) if dose else (b17.STOP_LOSS, b17.MAX_STEPS)
             hook = (lambda step: step in doses and measure(step, f"s{s}|{arm}|d{step}")) if dose else None
-            steps, hist = train(model, tok, new, stop, top, b17.CHECK_EVERY, f"{tag}:lotes:{s}:{arm}", hook)
+            steps, hist = train(model, tok, new, stop, top, b17.CHECK_EVERY, f"{tag}:lotes:{s}:{way}", hook,
+                                None if w is None else [float(w[i]) for i in over])
             if not dose:
                 measure(steps, keys[0])
             for k in keys:
