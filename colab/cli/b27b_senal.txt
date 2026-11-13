@@ -1,0 +1,1 @@
+b27b_senal.json|colab.b27_puerta b {out} colab/data/b27_banco.json

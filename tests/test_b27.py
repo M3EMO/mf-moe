@@ -37,3 +37,22 @@ def test_gate_runs_oracle_and_random_on_every_set_and_uniform_on_set_zero(tmp_pa
     expected = [f"s0|uniforme|d{d}" for d in (1, 2)] + [f"s{s}|{a}|d{d}" for s in range(2) for a in ("oraculo", "azar") for d in (1, 2)]
     assert sorted(res["corridas"]) == sorted(expected)
     assert all(len(x["perdida_nuevo"]) == len(x["sobrescritos"]) for x in res["corridas"].values())
+
+
+def test_b27b_signal_ignores_the_values_and_runs_both_arms(tmp_path, monkeypatch):
+    for k, v in {"K": 2, "SETS": 2, "DOSES": (1, 2)}.items():
+        monkeypatch.setattr(b24, k, v)
+    for k, v in {"CHECK_EVERY": 1, "BATCH": 4}.items():
+        monkeypatch.setattr(b17, k, v)
+    facts = b24.add_donors([{"propiedad": "pq"[i % 2], "cabeza": f"H{i}", "valor": f"V{i}", "valor_nuevo": f"N{i}", "cabeza_nueva": f"C{i}"}
+                            for i in range(12)], "t")  # fmt: skip
+    model = granite.tiny()
+    swapped = [x | {"valor": "Otro"} for x in facts]
+    assert np.allclose(b.own_confidence(model, chars, facts), b.own_confidence(model, chars, swapped))  # solo la pregunta
+    bank, out = str(tmp_path / "banco.json"), str(tmp_path / "r.json")
+    json.dump(facts, open(bank, "w"))
+    b.main_b(out, bank, model=model, tok=chars)
+    res = json.load(open(out))
+    strong = np.array(res["pesos"]["oraculo_fuerte"])
+    assert abs(strong.mean() - 1) < 1e-3 and abs(strong.min() - 0.02) < 1e-6
+    assert sorted(res["corridas"]) == sorted(f"s{s}|{a}|d{d}" for s in range(2) for a in ("senal", "oraculo_fuerte") for d in (1, 2))
