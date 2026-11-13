@@ -12,6 +12,7 @@ import sys
 from colab import b24_inversion as b24
 
 DOSES = (10, 40)  # las dosis donde B24 y B25 ya están medidos; en 40 la distancia entre los dos es mayor
+STOP1 = 0.16  # la pérdida con la que terminó la etapa 1 de B24: misma profundidad. Con 0,25, la vuelta ganó solo en 0,87 (E1 cortó)
 NAME = re.compile(r"[A-Z][\w'.-]*( [A-Z][\w'.-]*){1,3}")
 
 
@@ -29,7 +30,7 @@ def bank(hechos_path: str, n: int | None = None, seed: str = "b26:banco") -> lis
 
 
 def main(path: str, hechos_path: str, model=None, tok=None) -> None:
-    b24.main(path, model, tok, dose=True, facts=bank(hechos_path), doses=DOSES)
+    b24.main(path, model, tok, dose=True, facts=bank(hechos_path), doses=DOSES, stop1=STOP1)
 
 
 if __name__ == "__main__":

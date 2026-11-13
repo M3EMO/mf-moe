@@ -107,16 +107,17 @@ def train(model, tok, items: list[tuple[str, str]], stop: float, max_steps: int,
     return step, hist
 
 
-def main(path: str, model=None, tok=None, dose: bool = False, facts: list[dict] | None = None, doses: tuple | None = None) -> None:
-    facts, doses = facts or bank(), doses or DOSES
+def main(path: str, model=None, tok=None, dose: bool = False, facts: list[dict] | None = None, doses: tuple | None = None,
+         stop1: float | None = None) -> None:
+    facts, doses, stop1 = facts or bank(), doses or DOSES, stop1 or STOP1
     res = json.load(open(path)) if os.path.exists(path) else {"corridas": {}}
-    res["config"] = {"n_hechos": len(facts), "conjuntos": SETS, "n_sobrescritos": N_OVER, "k": K, "stop1": STOP1, "max_pasos1": MAX_STEPS1,
+    res["config"] = {"n_hechos": len(facts), "conjuntos": SETS, "n_sobrescritos": N_OVER, "k": K, "stop1": stop1, "max_pasos1": MAX_STEPS1,
                      "puerta1": GATE1, "lr": b17.LR, "batch": b17.BATCH, "stop2": b17.STOP_LOSS, "max_pasos2": b17.MAX_STEPS, "dosis": list(doses) if dose else None}  # fmt: skip
     res["banco"] = facts
     model, tok = b23.load(model, tok, True)
     torch.manual_seed(0)
     # shortcut: la etapa 1 no se guarda entre VMs; una VM nueva la repite con la misma semilla y suma uno a `repeticiones1`
-    steps, hist = train(model, tok, [f(x) for x in facts for f in (fwd, rev)], STOP1, MAX_STEPS1, CHECK1, "b24:etapa1")
+    steps, hist = train(model, tok, [f(x) for x in facts for f in (fwd, rev)], stop1, MAX_STEPS1, CHECK1, "b24:etapa1")
     base_i, base_v = losses(model, tok, facts)
     win = {"ida": float(b23.wins(base_i).mean()), "vuelta": float(b23.wins(base_v).mean())}
     res["repeticiones1"] = res.get("repeticiones1", -1) + 1

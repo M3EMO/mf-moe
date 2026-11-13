@@ -24,4 +24,4 @@ def test_bank_uses_real_heads_and_people_and_runs_both_doses(tmp_path, monkeypat
     out = str(tmp_path / "r.json")
     b.main(out, hp, model=granite.tiny(), tok=lambda t: {"input_ids": [ord(c) % 256 for c in t]})
     res = json.load(open(out))
-    assert res["config"]["dosis"] == [1, 2] and res["config"]["n_hechos"] == 16 and len(res["corridas"]) == 8
+    assert res["config"]["stop1"] == b.STOP1 and res["config"]["dosis"] == [1, 2] and res["config"]["n_hechos"] == 16 and len(res["corridas"]) == 8
