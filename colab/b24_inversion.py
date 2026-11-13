@@ -54,6 +54,10 @@ def bank(n: int | None = None, seed: str = "b24:banco") -> list[dict]:
     heads, values, new_v, new_h = (names(n, rng, taken) for _ in range(4))
     facts = [{"propiedad": PROPS[i % len(PROPS)], "cabeza": h, "valor": v, "valor_nuevo": nv, "cabeza_nueva": nh}
              for i, (h, v, nv, nh) in enumerate(zip(heads, values, new_v, new_h))]  # fmt: skip
+    return add_donors(facts, seed)
+
+
+def add_donors(facts: list[dict], seed: str) -> list[dict]:
     for i, x in enumerate(facts):  # donantes de igual propiedad, como en B23: compiten en cada dirección
         same = [y for j, y in enumerate(facts) if j != i and y["propiedad"] == x["propiedad"]]
         pick = random.Random(f"{seed}:donantes:{i}").sample(same, K)
@@ -103,11 +107,11 @@ def train(model, tok, items: list[tuple[str, str]], stop: float, max_steps: int,
     return step, hist
 
 
-def main(path: str, model=None, tok=None, dose: bool = False) -> None:
-    facts = bank()
+def main(path: str, model=None, tok=None, dose: bool = False, facts: list[dict] | None = None, doses: tuple | None = None) -> None:
+    facts, doses = facts or bank(), doses or DOSES
     res = json.load(open(path)) if os.path.exists(path) else {"corridas": {}}
-    res["config"] = {"n_hechos": N_FACTS, "conjuntos": SETS, "n_sobrescritos": N_OVER, "k": K, "stop1": STOP1, "max_pasos1": MAX_STEPS1,
-                     "puerta1": GATE1, "lr": b17.LR, "batch": b17.BATCH, "stop2": b17.STOP_LOSS, "max_pasos2": b17.MAX_STEPS, "dosis": list(DOSES) if dose else None}  # fmt: skip
+    res["config"] = {"n_hechos": len(facts), "conjuntos": SETS, "n_sobrescritos": N_OVER, "k": K, "stop1": STOP1, "max_pasos1": MAX_STEPS1,
+                     "puerta1": GATE1, "lr": b17.LR, "batch": b17.BATCH, "stop2": b17.STOP_LOSS, "max_pasos2": b17.MAX_STEPS, "dosis": list(doses) if dose else None}  # fmt: skip
     res["banco"] = facts
     model, tok = b23.load(model, tok, True)
     torch.manual_seed(0)
@@ -123,11 +127,13 @@ def main(path: str, model=None, tok=None, dose: bool = False) -> None:
         json.dump(res, open(path, "w"), ensure_ascii=False)
         print(json.dumps({"corte": res["corte"]}), flush=True)
         return
-    stage2(model, tok, facts, base_i, base_v, res, path, dose)
+    stage2(model, tok, facts, base_i, base_v, res, path, dose, doses=doses)
 
 
-def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray, res: dict, path: str, dose: bool, tag: str = "b24") -> None:
+def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray, res: dict, path: str, dose: bool, tag: str = "b24",
+           doses: tuple | None = None) -> None:
     """Brazos ida y vuelta por conjunto, cada uno desde el estado actual del modelo; guarda en res["corridas"] tras cada brazo."""
+    doses = doses or DOSES
     state = {k: v.detach().to("cpu", copy=True) for k, v in [*model.named_parameters(), *model.named_buffers()]
              if not isinstance(v, torch.nn.Parameter) or v.requires_grad}  # fmt: skip
     n = len(facts)
@@ -136,7 +142,7 @@ def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray
     for s in range(SETS):
         over = sorted(order[s * n_over : (s + 1) * n_over])
         for arm in ARMS:
-            keys = [f"s{s}|{arm}|d{d}" for d in DOSES] if dose else [f"s{s}|{arm}"]
+            keys = [f"s{s}|{arm}|d{d}" for d in doses] if dose else [f"s{s}|{arm}"]
             if keys[-1] in res["corridas"]:
                 continue
             new = [fwd(facts[i], facts[i]["valor_nuevo"]) if arm == "ida" else rev(facts[i], facts[i]["cabeza_nueva"]) for i in over]
@@ -156,8 +162,8 @@ def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray
                                   **{f"{d}_resto": round(float(np.array(r[f"subida_{d}"])[~m].mean()), 3) for d in ARMS}}), flush=True)  # fmt: skip
 
             torch.manual_seed(1000 + s)
-            stop, top = (float("-inf"), max(DOSES)) if dose else (b17.STOP_LOSS, b17.MAX_STEPS)
-            hook = (lambda step: step in DOSES and measure(step, f"s{s}|{arm}|d{step}")) if dose else None
+            stop, top = (float("-inf"), max(doses)) if dose else (b17.STOP_LOSS, b17.MAX_STEPS)
+            hook = (lambda step: step in doses and measure(step, f"s{s}|{arm}|d{step}")) if dose else None
             steps, hist = train(model, tok, new, stop, top, b17.CHECK_EVERY, f"{tag}:lotes:{s}:{arm}", hook)
             if not dose:
                 measure(steps, keys[0])
