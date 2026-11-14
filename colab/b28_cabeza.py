@@ -3,7 +3,7 @@ Prerregistro en el ticket 10 (mf-moe-generalidad), opción A. La cabeza es linea
 (capas de B27c) y predice la NLL propia del valor real. Entrena con los 255 candidatos fuera del banco; el banco (206) es la prueba.
 - congelada: solo la cabeza aprende; el tronco no cambia (es la sonda de B27c entrenada con AdamW).
 - conjunta: la cabeza y las capas 6-23 aprenden juntas; un KL contra el modelo de partida frena el cambio de conocimiento.
-B28b: la cabeza corre sin dropout y la conjunta arranca de la congelada; B28 falló la integridad por las dos cosas.
+B28c: el tronco aprende con 5e-6. B28b: la cabeza corre sin dropout y la conjunta arranca de la congelada; B28 falló la integridad por las dos cosas.
 Fase 2 (solo si la conjunta hereda, el control pasa y el banco no se movió): B27 sobre el modelo conjunto, brazos cabeza y oráculo.
 Uso: python -m colab.b28_cabeza SALIDA.json BANCO.json CANDIDATOS.json
 """
@@ -27,6 +27,7 @@ from mf_moe.phase2 import amp
 LAYERS = b27.LAYERS
 STEPS, EVAL_EVERY, HEAD_LR, HEAD_WD, BETA, VAL_FRAC = 300, 25, 1e-4, 1.0, 1.0, 5  # piloto en CPU sobre los estados de VH
 C1_MIN, I1_RHO, I1_SHIFT, GAIN, BOOT = 0.40, 0.90, 0.15, 0.05, 2000
+TRUNK_LR = 5e-6  # B28c: con el lr de edición (5e-5), B28b movió el banco 0,98 nats
 
 
 def rank_corr(a: np.ndarray, b: np.ndarray) -> float:
@@ -96,7 +97,7 @@ def train_head(model, tok, head, train: list[dict], val: list[dict], bank: list[
     items = [b24.fwd(x) for x in train]
     trunk = [p for p in model.parameters() if p.requires_grad] if joint else []
     groups = [{"params": list(head.parameters()), "lr": HEAD_LR, "weight_decay": HEAD_WD}]
-    opt = torch.optim.AdamW(groups + ([{"params": trunk, "lr": b17.LR, "weight_decay": 0.0}] if joint else []))
+    opt = torch.optim.AdamW(groups + ([{"params": trunk, "lr": TRUNK_LR, "weight_decay": 0.0}] if joint else []))
     y0 = b17.def_losses(model, tok, items)
     ym, ys = float(y0.mean()), float(y0.std()) + 1e-8
     rng, hist, best = random.Random(key), [], None
@@ -177,7 +178,7 @@ def main(path: str, bank_path: str, cand_path: str, model=None, tok=None) -> Non
     moved = f1["banco_antes_despues"]
     f1["I1"] = "pasa" if moved["spearman"] >= I1_RHO and moved["cambio_medio"] <= I1_SHIFT else "falla"
     f1["D1"] = decide(f1["delta"])
-    res["config"] = {"capas": list(LAYERS), "pasos": STEPS, "eval_cada": EVAL_EVERY, "lr_cabeza": HEAD_LR, "wd_cabeza": HEAD_WD, "beta_kl": BETA,
+    res["config"] = {"capas": list(LAYERS), "pasos": STEPS, "eval_cada": EVAL_EVERY, "lr_cabeza": HEAD_LR, "wd_cabeza": HEAD_WD, "beta_kl": BETA, "lr_tronco": TRUNK_LR,
                      "lr": b17.LR, "batch": b17.BATCH, "dosis": list(b24.DOSES), "conjuntos": b24.SETS, "puerta": [b27.LOW, b27.SPAN]}  # fmt: skip
     res["fase1"] = f1
     res["prediccion"] = {"cabeza_conjunta": p_joint.round(4).tolist(), "cabeza_congelada": p_frozen.round(4).tolist()}
