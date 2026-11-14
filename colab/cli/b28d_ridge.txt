@@ -1,0 +1,1 @@
+b28d_ridge.json|colab.b28_cabeza d {out} colab/data/b27_banco.json colab/data/b25_candidatos.json

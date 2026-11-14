@@ -69,3 +69,39 @@ def test_phase_one_stops_without_inheritance_and_phase_two_runs_with_it(tmp_path
     res = json.load(open(out2))
     assert sorted(res["corridas"]) == sorted(f"s{s}|{a}|d{d}" for s in range(2) for a in ("cabeza", "oraculo") for d in (1, 2))
     assert abs(np.mean(res["pesos"]["cabeza"]) - 1) < 1e-3
+
+
+def test_episode_ridge_matches_the_closed_form_ridge_and_carries_gradient():
+    rng = np.random.default_rng(0)
+    X, y = rng.normal(size=(16, 50)), rng.normal(size=16)
+    Z = torch.tensor(X, dtype=torch.float32, requires_grad=True)
+    p = b.episode_ridge(Z[:12], torch.tensor(y[:12], dtype=torch.float32), Z[12:], 3.0)
+    A = X[:12] - X[:12].mean(0)
+    w = A.T @ np.linalg.solve(A @ A.T + 3.0 * np.eye(12), y[:12] - y[:12].mean())
+    assert np.allclose(p.detach().numpy(), y[:12].mean() + (X[12:] - X[:12].mean(0)) @ w, atol=1e-4)
+    p.sum().backward()
+    assert Z.grad is not None and Z.grad.abs().sum() > 0
+
+
+def test_b28d_measures_two_replicas_and_runs_phase_two_only_when_it_inherits(tmp_path, monkeypatch):
+    facts, cands = small(monkeypatch)
+    for k, v in {"EPISODE": (3, 1), "CHECK_D": 2, "C1_MIN_D": -1.0, "I1_RHO": -1.0, "I1_SHIFT": 1e9}.items():
+        monkeypatch.setattr(b, k, v)
+    bank, cand, out = str(tmp_path / "banco.json"), str(tmp_path / "c.json"), str(tmp_path / "r.json")
+    json.dump(facts, open(bank, "w"))
+    json.dump(cands, open(cand, "w"))
+    b.main_d(out, bank, cand, model=granite.tiny(), tok=chars)
+    res = json.load(open(out))
+    reps = res["fase1"]["replicas"]
+    assert len(reps) == 2 and all(r["I1"] == "pasa" and len(r["prediccion"]) == len(facts) for r in reps)
+    assert res["corridas"] == {} or res["fase1"]["D1"] == "hereda"
+    monkeypatch.setattr(b, "decide_replicas", lambda reps: "hereda")
+    out2 = str(tmp_path / "r2.json")
+    b.main_d(out2, bank, cand, model=granite.tiny(), tok=chars)
+    assert sorted(json.load(open(out2))["corridas"]) == sorted(f"s{s}|cabeza|d{d}" for s in range(2) for d in (1, 2))
+
+
+def test_decide_replicas_needs_both_replicas():
+    ok, low = {"I1": "pasa", "delta": [0.1, 0.02, 0.2]}, {"I1": "pasa", "delta": [0.0, -0.05, 0.04]}
+    assert b.decide_replicas([ok, ok]) == "hereda" and b.decide_replicas([low, low]) == "no_hereda"
+    assert b.decide_replicas([ok, low]) == "indeterminado" and b.decide_replicas([ok, {"I1": "falla"}]) == "sin_medida"

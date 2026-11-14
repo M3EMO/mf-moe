@@ -27,7 +27,9 @@ from mf_moe.phase2 import amp
 LAYERS = b27.LAYERS
 STEPS, EVAL_EVERY, HEAD_LR, HEAD_WD, BETA, VAL_FRAC = 300, 25, 1e-4, 1.0, 1.0, 5  # piloto en CPU sobre los estados de VH
 C1_MIN, I1_RHO, I1_SHIFT, GAIN, BOOT = 0.40, 0.90, 0.15, 0.05, 2000
+C1_MIN_D = 0.45  # la ridge antes dio 0,534 en B28, B28b y B28c
 TRUNK_LR = 5e-6  # B28c: con el lr de edición (5e-5), B28b movió el banco 0,98 nats
+EPISODE, CHECK_D, REPLICAS = (12, 4), 50, 2  # B28d: soporte y consulta de cada lote, cada cuánto mide la integridad, réplicas
 
 
 def rank_corr(a: np.ndarray, b: np.ndarray) -> float:
@@ -47,7 +49,7 @@ class Head(torch.nn.Module):
 
 def snapshot(model, head, trunk: bool) -> dict:
     trunk = {k: v.detach().to("cpu", copy=True) for k, v in model.named_parameters() if v.requires_grad} if trunk else {}
-    return {"tronco": trunk, "cabeza": {k: v.detach().to("cpu", copy=True) for k, v in head.state_dict().items()}}
+    return {"tronco": trunk, "cabeza": {} if head is None else {k: v.detach().to("cpu", copy=True) for k, v in head.state_dict().items()}}
 
 
 @torch.no_grad()
@@ -196,5 +198,108 @@ def main(path: str, bank_path: str, cand_path: str, model=None, tok=None) -> Non
     b24.stage2(model, tok, facts, base_i, base_v, res, path, dose=True, tag="b25", arms=arms)
 
 
+def episode_ridge(Zs: torch.Tensor, ys: torch.Tensor, Zq: torch.Tensor, alpha: float) -> torch.Tensor:
+    """Ridge en forma dual resuelta sobre el soporte y aplicada a la consulta; diferenciable (R2D2, Bertinetto et al. 2019)."""
+    m = Zs.mean(0)
+    A, B = Zs - m, Zq - m
+    K = A @ A.T + alpha * torch.eye(len(A), device=A.device)
+    return ys.mean() + B @ (A.T @ torch.linalg.solve(K, ys - ys.mean()))
+
+
+def train_ridge_trunk(model, tok, mu: np.ndarray, sd: np.ndarray, alpha: float, train: list[dict], refs, bank: list[dict],
+                      y0_bank: np.ndarray, key: str) -> tuple[list[dict], tuple | None]:
+    """El tronco aprende a que una ridge cerrada lea su propia NLL; sin cabeza que aprender. Guarda el último punto que cumple I1."""
+    items = [b24.fwd(x) for x in train]
+    trunk = [p for p in model.parameters() if p.requires_grad]
+    opt = torch.optim.AdamW(trunk, lr=TRUNK_LR, weight_decay=0.0)
+    y0 = b17.def_losses(model, tok, items)
+    ym, ys = float(y0.mean()), float(y0.std()) + 1e-8
+    mu_t, sd_t = (torch.tensor(v, dtype=torch.float32, device=DEVICE) for v in (mu, sd))
+    rng, hist, keep, s = random.Random(key), [], None, EPISODE[0]
+    for step in range(1, STEPS + 1):
+        pick = rng.sample(range(len(items)), sum(EPISODE))
+        model.eval()  # sin dropout de atención, como B28b
+        with amp(DEVICE):
+            h, nll, logits = parts(model, tok, [items[i] for i in pick])
+        Z, t = (h.float() - mu_t) / sd_t, (nll.detach().float() - ym) / ys
+        fit = ((episode_ridge(Z[:s], t[:s], Z[s:], alpha) - t[s:]) ** 2).mean()
+        loss = fit + BETA * kl(logits, [refs[i] for i in pick])
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(trunk, 1.0)
+        opt.step()
+        opt.zero_grad(set_to_none=True)
+        if step % CHECK_D == 0:
+            yb = b17.def_losses(model, tok, [b24.fwd(x) for x in bank])
+            moved = {"spearman": round(rank_corr(y0_bank, yb), 4), "cambio_medio": round(float(np.abs(yb - y0_bank).mean()), 4)}
+            ok = moved["spearman"] >= I1_RHO and moved["cambio_medio"] <= I1_SHIFT
+            hist.append({"paso": step, "ajuste": round(float(fit.detach()), 4), "perdida": round(float(loss.detach()), 4), **moved, "I1": ok})
+            if ok:
+                keep = (step, snapshot(model, None, True)["tronco"])
+    model.train()
+    del opt
+    if DEVICE == "cuda":
+        torch.cuda.empty_cache()
+    return hist, keep
+
+
+def decide_replicas(reps: list[dict]) -> str:
+    if any(r["I1"] != "pasa" for r in reps):
+        return "sin_medida"
+    ds = [r["delta"] for r in reps]
+    if all(m >= GAIN and lo > 0 for m, lo, _ in ds):
+        return "hereda"
+    return "no_hereda" if all(hi < GAIN for _, _, hi in ds) else "indeterminado"
+
+
+def main_d(path: str, bank_path: str, cand_path: str, model=None, tok=None) -> None:
+    """B28d: la ridge cerrada lee la duda antes y después de entrenar el tronco contra una ridge por episodio; dos réplicas."""
+    facts, cands = (json.load(open(p, encoding="utf-8")) for p in (bank_path, cand_path))
+    res = json.load(open(path)) if os.path.exists(path) else {"corridas": {}}
+    model, tok = b23.load(model, tok, True)
+    key = lambda x: (x["cabeza"], x["propiedad"])
+    in_bank = {key(x) for x in facts}
+    train = [x for x in cands if key(x) not in in_bank]
+    n = len(train)
+    X0 = b27.prompt_states(model, tok, train + facts, LAYERS)
+    y0 = b17.def_losses(model, tok, [b24.fwd(x) for x in train + facts])
+    y0_bank = y0[n:]
+    p0, alpha = b27.ridge(X0[:n], y0[:n], X0[n:], return_alpha=True)
+    f1 = {"n_entrena": n, "n_banco": len(facts), "alpha": alpha, "ridge_antes": round(rank_corr(p0, y0_bank), 4)}
+    f1["C1"] = "pasa" if f1["ridge_antes"] >= C1_MIN_D else "falla"
+    refs = ref_logprobs(model, tok, [b24.fwd(x) for x in train])
+    state0 = snapshot(model, None, True)["tronco"]
+    mu, sd = X0[:n].mean(0), X0[:n].std(0) + 1e-8
+    reps, keep0 = [], None
+    for r in range(REPLICAS):
+        model.load_state_dict(state0, strict=False)
+        hist, keep = train_ridge_trunk(model, tok, mu, sd, alpha, train, refs, facts, y0_bank, f"b28d:r{r}")
+        rep = {"historia": hist, "I1": "falla" if keep is None else "pasa"}
+        if keep is not None:
+            model.load_state_dict(keep[1], strict=False)
+            X1 = b27.prompt_states(model, tok, train + facts, LAYERS)
+            y1 = b17.def_losses(model, tok, [b24.fwd(x) for x in train + facts])
+            p1 = b27.ridge(X1[:n], y1[:n], X1[n:])
+            rep |= {"paso": keep[0], "ridge_despues": round(rank_corr(p1, y1[n:]), 4), "delta": boot_delta(p0, y0_bank, p1, y1[n:]),
+                    "prediccion": p1.round(4).tolist()}  # fmt: skip
+            keep0 = keep0 or keep
+        reps.append(rep)
+    f1["replicas"], f1["D1"] = reps, decide_replicas(reps)
+    res["config"] = {"capas": list(LAYERS), "pasos": STEPS, "episodio": list(EPISODE), "medir_cada": CHECK_D, "replicas": REPLICAS, "beta_kl": BETA,
+                     "lr_tronco": TRUNK_LR, "lr": b17.LR, "batch": b17.BATCH, "dosis": list(b24.DOSES), "conjuntos": b24.SETS, "puerta": [b27.LOW, b27.SPAN]}  # fmt: skip
+    res["fase1"], res["prediccion_antes"] = f1, p0.round(4).tolist()
+    json.dump(res, open(path, "w"), ensure_ascii=False)
+    print(json.dumps({"ridge_antes": f1["ridge_antes"], "C1": f1["C1"], "D1": f1["D1"],
+                      "replicas": [{k: r.get(k) for k in ("I1", "paso", "ridge_despues", "delta")} for r in reps]}), flush=True)  # fmt: skip
+    if (f1["C1"], f1["D1"]) != ("pasa", "hereda"):
+        print(json.dumps({"FIN": 0, "sin_fase2": [f1["C1"], f1["D1"]]}), flush=True)
+        return
+    model.load_state_dict(keep0[1], strict=False)  # la fase 2 parte de la réplica 0
+    base_i, base_v = b24.losses(model, tok, facts)
+    res["base"] = {"perdida_ida": base_i[:, 0].round(4).tolist(), "perdida_vuelta": base_v[:, 0].round(4).tolist()}
+    w = b27.gate(np.array(reps[0]["prediccion"]))
+    res["pesos"] = {"cabeza": w.round(4).tolist()}
+    b24.stage2(model, tok, facts, base_i, base_v, res, path, dose=True, tag="b25", arms={"cabeza": ("ida", w, None)})
+
+
 if __name__ == "__main__":
-    main(*sys.argv[1:4])
+    main_d(*sys.argv[2:5]) if sys.argv[1] == "d" else main(*sys.argv[1:4])

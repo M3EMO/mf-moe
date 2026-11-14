@@ -71,7 +71,7 @@ def prompt_states(model, tok, facts: list[dict], layers: tuple = LAYERS) -> np.n
     return np.concatenate(out)
 
 
-def ridge(X: np.ndarray, y: np.ndarray, X_new: np.ndarray, alphas: np.ndarray = ALPHAS) -> np.ndarray:
+def ridge(X: np.ndarray, y: np.ndarray, X_new: np.ndarray, alphas: np.ndarray = ALPHAS, return_alpha: bool = False):
     """Ridge estandarizada con intercepto; alpha por error dejando uno afuera, como RidgeCV de sklearn (forma dual: d >> n)."""
     mu, sd = X.mean(0), X.std(0) + 1e-8
     A, B, ym = (X - mu) / sd, (X_new - mu) / sd, y.mean()
@@ -79,7 +79,8 @@ def ridge(X: np.ndarray, y: np.ndarray, X_new: np.ndarray, alphas: np.ndarray = 
     S, Uy = np.clip(S, 0, None), U.T @ (y - ym)
     loo = lambda a: np.mean(((y - ym - U @ (S / (S + a) * Uy)) / (1 - (U**2) @ (S / (S + a)) - 1 / len(y))) ** 2)  # 1/n: el intercepto
     a = min(alphas, key=loo)
-    return ym + B @ (A.T @ (U @ (Uy / (S + a))))
+    pred = ym + B @ (A.T @ (U @ (Uy / (S + a))))
+    return (pred, float(a)) if return_alpha else pred
 
 
 def cross_fit(X: np.ndarray, y: np.ndarray, groups: np.ndarray) -> np.ndarray:
