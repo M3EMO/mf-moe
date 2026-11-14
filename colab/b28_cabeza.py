@@ -3,6 +3,7 @@ Prerregistro en el ticket 10 (mf-moe-generalidad), opción A. La cabeza es linea
 (capas de B27c) y predice la NLL propia del valor real. Entrena con los 255 candidatos fuera del banco; el banco (206) es la prueba.
 - congelada: solo la cabeza aprende; el tronco no cambia (es la sonda de B27c entrenada con AdamW).
 - conjunta: la cabeza y las capas 6-23 aprenden juntas; un KL contra el modelo de partida frena el cambio de conocimiento.
+B28b: la cabeza corre sin dropout y la conjunta arranca de la congelada; B28 falló la integridad por las dos cosas.
 Fase 2 (solo si la conjunta hereda, el control pasa y el banco no se movió): B27 sobre el modelo conjunto, brazos cabeza y oráculo.
 Uso: python -m colab.b28_cabeza SALIDA.json BANCO.json CANDIDATOS.json
 """
@@ -102,6 +103,7 @@ def train_head(model, tok, head, train: list[dict], val: list[dict], bank: list[
     torch.manual_seed(0)
     for step in range(1, STEPS + 1):
         pick = rng.sample(range(len(items)), min(b17.BATCH, len(items)))
+        model.eval()  # sin dropout de atención (0,1): def_losses y prompt_states dejan el modelo en modo train, y el dropout rompía los rasgos y el KL
         with amp(DEVICE):
             with torch.set_grad_enabled(joint):  # congelada: el tronco ni arma el grafo
                 h, nll, logits = parts(model, tok, [items[i] for i in pick])
@@ -121,6 +123,7 @@ def train_head(model, tok, head, train: list[dict], val: list[dict], bank: list[
     if joint:
         model.load_state_dict(best[2]["tronco"], strict=False)
     head.load_state_dict(best[2]["cabeza"])
+    model.train()
     del opt
     if DEVICE == "cuda":
         torch.cuda.empty_cache()
@@ -155,11 +158,10 @@ def main(path: str, bank_path: str, cand_path: str, model=None, tok=None) -> Non
     f1 = {"n_entrena": len(train), "n_val": len(val), "n_banco": len(facts), "ridge_antes": round(rank_corr(b27.ridge(X0[:n], y0[:n], X0[n:]), y0_bank), 4)}
     Xt = X0[len(val) : n]
     head = Head(Xt.mean(0), Xt.std(0) + 1e-8).to(DEVICE)
-    init = {k: v.clone() for k, v in head.state_dict().items()}
     f1["congelada"] = train_head(model, tok, head, train, val, facts, None, False, "b28:cabeza")
     p_frozen = predict(model, tok, head, facts)
     f1["congelada"]["rho_banco"] = round(rank_corr(p_frozen, y0_bank), 4)
-    head.load_state_dict(init)
+    # la conjunta arranca de la cabeza congelada (LP-FT, Kumar et al. 2022): una cabeza al azar deforma el tronco en los primeros pasos
     refs = ref_logprobs(model, tok, [b24.fwd(x) for x in train])
     # shortcut: la fase 1 no se guarda entre VMs; una VM nueva la repite y la fase 2 puede mezclar dos modelos conjuntos casi iguales
     f1["conjunta"] = train_head(model, tok, head, train, val, facts, refs, True, "b28:cabeza")

@@ -48,6 +48,7 @@ def test_frozen_head_never_moves_the_trunk_and_joint_does(monkeypatch):
     refs = b.ref_logprobs(model, chars, [b24.fwd(x) for x in train[2:]])
     assert abs(float(b.kl(b.parts(model, chars, [b24.fwd(x) for x in train[2:4]])[2], refs[:2]))) < 1e-2  # mismo modelo: KL casi 0
     b.train_head(model, chars, head, train[2:], train[:2], facts, refs, True, "t")
+    assert model.training  # stage2 sigue en modo train
     assert any(not torch.equal(v, before[k]) for k, v in model.named_parameters())
 
 

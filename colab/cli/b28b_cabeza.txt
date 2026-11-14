@@ -1,0 +1,1 @@
+b28b_cabeza.json|colab.b28_cabeza {out} colab/data/b27_banco.json colab/data/b25_candidatos.json
