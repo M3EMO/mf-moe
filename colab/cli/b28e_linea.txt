@@ -1,0 +1,1 @@
+b28e_linea.json|colab.b27_puerta l {out} colab/data/b27_banco.json colab/data/b25_candidatos.json

@@ -6,6 +6,8 @@ Prerregistro en el ticket 10 (mf-moe-generalidad), opción A. La cabeza es linea
 B28c: el tronco aprende con 5e-6. B28b: la cabeza corre sin dropout y la conjunta arranca de la congelada; B28 falló la integridad por las dos cosas.
 Fase 2 (solo si la conjunta hereda, el control pasa y el banco no se movió): B27 sobre el modelo conjunto, brazos cabeza y oráculo.
 Uso: python -m colab.b28_cabeza SALIDA.json BANCO.json CANDIDATOS.json
+     python -m colab.b28_cabeza d SALIDA.json BANCO.json CANDIDATOS.json            (B28d)
+     python -m colab.b28_cabeza f SALIDA.json BANCO.json CANDIDATOS.json HECHOS.json (B28f: anclas y beta 10)
 """
 
 import json
@@ -30,6 +32,8 @@ C1_MIN, I1_RHO, I1_SHIFT, GAIN, BOOT = 0.40, 0.90, 0.15, 0.05, 2000
 C1_MIN_D = 0.45  # la ridge antes dio 0,534 en B28, B28b y B28c
 TRUNK_LR = 5e-6  # B28c: con el lr de edición (5e-5), B28b movió el banco 0,98 nats
 EPISODE, CHECK_D, REPLICAS = (12, 4), 50, 2  # B28d: soporte y consulta de cada lote, cada cuánto mide la integridad, réplicas
+# B28f: en B28d el KL valió 0,05 a 0,10 contra un ajuste de 0,2 a 3; beta 10 lo lleva a la escala del ajuste
+BETA_F, N_ANCHORS, ANCHOR_BATCH, STEPS_F = 10.0, 512, 16, 150
 
 
 def rank_corr(a: np.ndarray, b: np.ndarray) -> float:
@@ -207,8 +211,10 @@ def episode_ridge(Zs: torch.Tensor, ys: torch.Tensor, Zq: torch.Tensor, alpha: f
 
 
 def train_ridge_trunk(model, tok, mu: np.ndarray, sd: np.ndarray, alpha: float, train: list[dict], refs, bank: list[dict],
-                      y0_bank: np.ndarray, key: str) -> tuple[list[dict], tuple | None]:
-    """El tronco aprende a que una ridge cerrada lea su propia NLL; sin cabeza que aprender. Guarda el último punto que cumple I1."""
+                      y0_bank: np.ndarray, key: str, anchors: tuple | None = None, beta: float = BETA,
+                      steps: int = STEPS) -> tuple[list[dict], tuple | None]:
+    """El tronco aprende a que una ridge cerrada lea su propia NLL; sin cabeza que aprender. Guarda el último punto que cumple I1.
+    `anchors` (B28f): (oraciones, log-probs de partida) de hechos que la lectura no entrena; el KL los suma en cada lote."""
     items = [b24.fwd(x) for x in train]
     trunk = [p for p in model.parameters() if p.requires_grad]
     opt = torch.optim.AdamW(trunk, lr=TRUNK_LR, weight_decay=0.0)
@@ -216,14 +222,18 @@ def train_ridge_trunk(model, tok, mu: np.ndarray, sd: np.ndarray, alpha: float, 
     ym, ys = float(y0.mean()), float(y0.std()) + 1e-8
     mu_t, sd_t = (torch.tensor(v, dtype=torch.float32, device=DEVICE) for v in (mu, sd))
     rng, hist, keep, s = random.Random(key), [], None, EPISODE[0]
-    for step in range(1, STEPS + 1):
+    for step in range(1, steps + 1):
         pick = rng.sample(range(len(items)), sum(EPISODE))
+        batch, rs = [items[i] for i in pick], [refs[i] for i in pick]
+        if anchors:
+            apick = rng.sample(range(len(anchors[0])), ANCHOR_BATCH)
+            batch, rs = batch + [anchors[0][j] for j in apick], rs + [anchors[1][j] for j in apick]
         model.eval()  # sin dropout de atención, como B28b
         with amp(DEVICE):
-            h, nll, logits = parts(model, tok, [items[i] for i in pick])
-        Z, t = (h.float() - mu_t) / sd_t, (nll.detach().float() - ym) / ys
+            h, nll, logits = parts(model, tok, batch)
+        Z, t = (h[: len(pick)].float() - mu_t) / sd_t, (nll[: len(pick)].detach().float() - ym) / ys
         fit = ((episode_ridge(Z[:s], t[:s], Z[s:], alpha) - t[s:]) ** 2).mean()
-        loss = fit + BETA * kl(logits, [refs[i] for i in pick])
+        loss = fit + beta * kl(logits, rs)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(trunk, 1.0)
         opt.step()
@@ -251,8 +261,9 @@ def decide_replicas(reps: list[dict]) -> str:
     return "no_hereda" if all(hi < GAIN for _, _, hi in ds) else "indeterminado"
 
 
-def main_d(path: str, bank_path: str, cand_path: str, model=None, tok=None) -> None:
-    """B28d: la ridge cerrada lee la duda antes y después de entrenar el tronco contra una ridge por episodio; dos réplicas."""
+def main_d(path: str, bank_path: str, cand_path: str, model=None, tok=None, anchor_path: str | None = None) -> None:
+    """B28d: la ridge cerrada lee la duda antes y después de entrenar el tronco contra una ridge por episodio; dos réplicas.
+    B28f (con `anchor_path`): KL con beta 10 sobre las oraciones de entrenamiento y sobre hechos ancla fuera de los candidatos; sin fase 2."""
     facts, cands = (json.load(open(p, encoding="utf-8")) for p in (bank_path, cand_path))
     res = json.load(open(path)) if os.path.exists(path) else {"corridas": {}}
     model, tok = b23.load(model, tok, True)
@@ -267,12 +278,18 @@ def main_d(path: str, bank_path: str, cand_path: str, model=None, tok=None) -> N
     f1 = {"n_entrena": n, "n_banco": len(facts), "alpha": alpha, "ridge_antes": round(rank_corr(p0, y0_bank), 4)}
     f1["C1"] = "pasa" if f1["ridge_antes"] >= C1_MIN_D else "falla"
     refs = ref_logprobs(model, tok, [b24.fwd(x) for x in train])
+    anchors, beta, steps = None, BETA, STEPS
+    if anchor_path:
+        seen = {key(x) for x in cands} | in_bank
+        pool = [x for v in json.load(open(anchor_path, encoding="utf-8"))["hechos"].values() for x in v if key(x) not in seen]
+        a_items = [b24.fwd(x) for x in random.Random("b28f:anclas").sample(pool, min(N_ANCHORS, len(pool)))]
+        anchors, beta, steps = (a_items, ref_logprobs(model, tok, a_items)), BETA_F, STEPS_F
     state0 = snapshot(model, None, True)["tronco"]
     mu, sd = X0[:n].mean(0), X0[:n].std(0) + 1e-8
     reps, keep0 = [], None
     for r in range(REPLICAS):
         model.load_state_dict(state0, strict=False)
-        hist, keep = train_ridge_trunk(model, tok, mu, sd, alpha, train, refs, facts, y0_bank, f"b28d:r{r}")
+        hist, keep = train_ridge_trunk(model, tok, mu, sd, alpha, train, refs, facts, y0_bank, f"b28d:r{r}", anchors, beta, steps)
         rep = {"historia": hist, "I1": "falla" if keep is None else "pasa"}
         if keep is not None:
             model.load_state_dict(keep[1], strict=False)
@@ -284,13 +301,14 @@ def main_d(path: str, bank_path: str, cand_path: str, model=None, tok=None) -> N
             keep0 = keep0 or keep
         reps.append(rep)
     f1["replicas"], f1["D1"] = reps, decide_replicas(reps)
-    res["config"] = {"capas": list(LAYERS), "pasos": STEPS, "episodio": list(EPISODE), "medir_cada": CHECK_D, "replicas": REPLICAS, "beta_kl": BETA,
+    res["config"] = {"capas": list(LAYERS), "pasos": steps, "episodio": list(EPISODE), "medir_cada": CHECK_D, "replicas": REPLICAS, "beta_kl": beta,
+                     "anclas": None if anchors is None else [len(anchors[0]), ANCHOR_BATCH],
                      "lr_tronco": TRUNK_LR, "lr": b17.LR, "batch": b17.BATCH, "dosis": list(b24.DOSES), "conjuntos": b24.SETS, "puerta": [b27.LOW, b27.SPAN]}  # fmt: skip
     res["fase1"], res["prediccion_antes"] = f1, p0.round(4).tolist()
     json.dump(res, open(path, "w"), ensure_ascii=False)
     print(json.dumps({"ridge_antes": f1["ridge_antes"], "C1": f1["C1"], "D1": f1["D1"],
                       "replicas": [{k: r.get(k) for k in ("I1", "paso", "ridge_despues", "delta")} for r in reps]}), flush=True)  # fmt: skip
-    if (f1["C1"], f1["D1"]) != ("pasa", "hereda"):
+    if (f1["C1"], f1["D1"]) != ("pasa", "hereda") or anchors:  # B28f: la fase 2 sale del tope de 2 unidades; la decide el usuario
         print(json.dumps({"FIN": 0, "sin_fase2": [f1["C1"], f1["D1"]]}), flush=True)
         return
     model.load_state_dict(keep0[1], strict=False)  # la fase 2 parte de la réplica 0
@@ -302,4 +320,7 @@ def main_d(path: str, bank_path: str, cand_path: str, model=None, tok=None) -> N
 
 
 if __name__ == "__main__":
-    main_d(*sys.argv[2:5]) if sys.argv[1] == "d" else main(*sys.argv[1:4])
+    if sys.argv[1] in ("d", "f"):
+        main_d(*sys.argv[2:5], anchor_path=sys.argv[5] if sys.argv[1] == "f" else None)
+    else:
+        main(*sys.argv[1:4])

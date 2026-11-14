@@ -88,3 +88,28 @@ def test_b27c_runs_the_probe_arm_with_cross_fitted_weights(tmp_path, monkeypatch
     assert len(res["sonda"]["prediccion"]) == 12 and np.isfinite(res["sonda"]["prediccion"]).all()
     assert abs(np.mean(res["pesos"]["sonda"]) - 1) < 1e-3 and res["config"]["n_sonda"] == 20
     assert sorted(res["corridas"]) == sorted(f"s{s}|sonda|d{d}" for s in range(2) for d in (1, 2))
+
+
+def test_b28e_online_gate_starts_at_the_b27c_weights_and_rereads_the_model(tmp_path, monkeypatch):
+    for k, v in {"K": 2, "SETS": 2}.items():
+        monkeypatch.setattr(b24, k, v)
+    for k, v in {"CHECK_EVERY": 1, "BATCH": 4}.items():
+        monkeypatch.setattr(b17, k, v)
+    monkeypatch.setattr(b, "LAYERS", (1, 2))
+    monkeypatch.setattr(b, "DOSES_L", (1, 3))
+    monkeypatch.setattr(b17, "LR", 1e-2)  # un lr grande: el modelo diminuto cambia el rango de la lectura en 3 pasos
+    facts = b24.add_donors([{"propiedad": "pq"[i % 2], "cabeza": f"H{i}", "valor": f"V{i}", "valor_nuevo": f"N{i}", "cabeza_nueva": f"C{i}"}
+                            for i in range(12)], "t")  # fmt: skip
+    cands = [{"propiedad": "p", "cabeza": f"X{i}", "valor": f"W{i}"} for i in range(8)] + facts[:4]
+    bank, cand, out, out_c = (str(tmp_path / f) for f in ("banco.json", "cand.json", "r.json", "c.json"))
+    json.dump(facts, open(bank, "w"))
+    json.dump(cands, open(cand, "w"))
+    model = granite.tiny()
+    b.main_c(out_c, bank, cand, model=model, tok=chars)
+    b.main_l(out, bank, cand, model=model, tok=chars)
+    res, res_c = json.load(open(out)), json.load(open(out_c))
+    assert np.allclose(res["pesos"]["sonda_linea_paso0"], res_c["pesos"]["sonda"], atol=1e-3)  # misma sonda que B27c
+    runs = res["corridas"]
+    assert sorted(runs) == sorted(f"s{s}|sonda_linea|d{d}" for s in range(2) for d in (1, 3))
+    w0 = np.array(res["pesos"]["sonda_linea_paso0"])
+    assert any(not np.allclose(r["pesos"], w0[r["sobrescritos"]], atol=1e-4) for r in runs.values())  # relee el modelo que cambia

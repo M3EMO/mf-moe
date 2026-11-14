@@ -105,3 +105,22 @@ def test_decide_replicas_needs_both_replicas():
     ok, low = {"I1": "pasa", "delta": [0.1, 0.02, 0.2]}, {"I1": "pasa", "delta": [0.0, -0.05, 0.04]}
     assert b.decide_replicas([ok, ok]) == "hereda" and b.decide_replicas([low, low]) == "no_hereda"
     assert b.decide_replicas([ok, low]) == "indeterminado" and b.decide_replicas([ok, {"I1": "falla"}]) == "sin_medida"
+
+
+def test_b28f_adds_anchor_facts_outside_the_candidates_and_never_runs_phase_two(tmp_path, monkeypatch):
+    facts, cands = small(monkeypatch)
+    for k, v in {"EPISODE": (3, 1), "CHECK_D": 2, "STEPS_F": 4, "ANCHOR_BATCH": 2, "C1_MIN_D": -1.0, "I1_RHO": -1.0, "I1_SHIFT": 1e9}.items():
+        monkeypatch.setattr(b, k, v)
+    monkeypatch.setattr(b, "decide_replicas", lambda reps: "hereda")
+    seen = []
+    real = b.ref_logprobs
+    monkeypatch.setattr(b, "ref_logprobs", lambda m, t, items: seen.append(items) or real(m, t, items))
+    anchors = {"hechos": {"a": [{"propiedad": "r", "cabeza": f"A{i}", "valor": f"B{i}"} for i in range(5)] + cands[:3]}}
+    bank, cand, anc, out = (str(tmp_path / f) for f in ("banco.json", "c.json", "a.json", "r.json"))
+    for f, d in ((bank, facts), (cand, cands), (anc, anchors)):
+        json.dump(d, open(f, "w"))
+    b.main_d(out, bank, cand, model=granite.tiny(), tok=chars, anchor_path=anc)
+    res = json.load(open(out))
+    assert res["config"]["anclas"] == [5, 2] and res["config"]["beta_kl"] == b.BETA_F and res["config"]["pasos"] == 4
+    assert sorted(seen[1]) == sorted(b24.fwd(x) for x in anchors["hechos"]["a"][:5])  # ningún candidato ni hecho del banco
+    assert res["corridas"] == {} and len(res["fase1"]["replicas"]) == 2

@@ -150,7 +150,8 @@ def main(path: str, model=None, tok=None, dose: bool = False, facts: list[dict] 
 def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray, res: dict, path: str, dose: bool, tag: str = "b24",
            doses: tuple | None = None, arms: dict | None = None) -> None:
     """Brazos por conjunto, cada uno desde el estado actual del modelo; guarda en res["corridas"] tras cada brazo.
-    `arms`: nombre -> (dirección, pesos por hecho o None, conjuntos o None para todos). Por defecto, ida y vuelta sin pesos."""
+    `arms`: nombre -> (dirección, pesos por hecho o None, conjuntos o None para todos). Por defecto, ida y vuelta sin pesos.
+    Los pesos pueden ser una función de los índices sobrescritos (B28e, puerta en línea): se releen tras cada paso."""
     doses = doses or DOSES
     arms = arms or {a: (a, None, None) for a in ARMS}
     state = {k: v.detach().to("cpu", copy=True) for k, v in [*model.named_parameters(), *model.named_buffers()]
@@ -167,6 +168,8 @@ def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray
             if keys[-1] in res["corridas"]:
                 continue
             new = [fwd(facts[i], facts[i]["valor_nuevo"]) if way == "ida" else rev(facts[i], facts[i]["cabeza_nueva"]) for i in over]
+            online = callable(w)
+            weights = None if w is None else [float(v) for v in (w(over) if online else w[over])]
 
             def measure(step: int, key: str) -> None:
                 L_i, L_v = losses(model, tok, facts)
@@ -178,6 +181,8 @@ def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray
                     "gana_ida": b23.wins(L_i).astype(int).tolist(), "gana_vuelta": b23.wins(L_v).astype(int).tolist(),
                     "nuevo_otra_cara_gana": b23.wins(N_v if way == "ida" else N_i).astype(int).tolist()}  # fmt: skip
                 r["nuevos_final"] = float(np.mean(r["perdida_nuevo"]))
+                if online:
+                    r["pesos"] = [round(v, 4) for v in weights]
                 m = np.isin(np.arange(n), over)
                 print(json.dumps({"corrida": key, "pasos": step, "nuevos": round(r["nuevos_final"], 3),
                                   **{f"{d}_sobre": round(float(np.array(r[f"subida_{d}"])[m].mean()), 3) for d in ARMS},
@@ -185,9 +190,14 @@ def stage2(model, tok, facts: list[dict], base_i: np.ndarray, base_v: np.ndarray
 
             torch.manual_seed(1000 + s)
             stop, top = (float("-inf"), max(doses)) if dose else (b17.STOP_LOSS, b17.MAX_STEPS)
-            hook = (lambda step: step in doses and measure(step, f"s{s}|{arm}|d{step}")) if dose else None
-            steps, hist = train(model, tok, new, stop, top, b17.CHECK_EVERY, f"{tag}:lotes:{s}:{way}", hook,
-                                None if w is None else [float(w[i]) for i in over])
+
+            def hook(step: int) -> None:
+                if online:
+                    weights[:] = [float(v) for v in w(over)]
+                if dose and step in doses:
+                    measure(step, f"s{s}|{arm}|d{step}")
+
+            steps, hist = train(model, tok, new, stop, top, b17.CHECK_EVERY, f"{tag}:lotes:{s}:{way}", hook if dose or online else None, weights)
             if not dose:
                 measure(steps, keys[0])
             for k in keys:
