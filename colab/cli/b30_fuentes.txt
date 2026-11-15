@@ -1,0 +1,1 @@
+b30_fuentes.json|colab.b30_fuentes {out} colab/data/b27_banco.json

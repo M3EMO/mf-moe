@@ -32,7 +32,7 @@ def test_one_voice_with_weights_repeats_b27b_and_the_threshold_blocks_one_voice(
     b.main(out, bank, model=model, tok=chars)
     res = json.load(open(out))
     runs = res["corridas"]
-    assert len(runs) == 2 * 4 * 2
+    assert len(runs) == 2 * 4 * 2 and len(res["base"]["gana_por_frase"]) == len(b.TRAIN_T) + len(b.HELD_T)
     base_i, base_v = b24.losses(model, chars, facts)
     ref = {"corridas": {}}
     b24.stage2(model, chars, facts, base_i, base_v, ref, str(tmp_path / "s.json"), dose=True, tag="b25", doses=(1, 3),

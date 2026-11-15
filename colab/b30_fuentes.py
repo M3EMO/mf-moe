@@ -92,11 +92,14 @@ def main(path: str, bank_path: str, model=None, tok=None) -> None:
     base = b17.def_losses(model, tok, [b24.fwd(x) for x in facts])  # igual a base_i[:, 0]; la medida usa la misma llamada
     w, tau = b27.gate(base_i[:, 0], 0.02, 1.96), thresholds(base_i[:, 0])
     m0 = margins(model, tok, facts, (*TRAIN_T, *HELD_T))
+    rows = [frame(t, x, v) for t in (*TRAIN_T, *HELD_T) for x in facts for v in [x["valor"], *x["donantes"]]]
+    nt = len(TRAIN_T) + len(HELD_T)
+    wins = b23.wins(b17.def_losses(model, tok, rows).reshape(nt * len(facts), -1)).reshape(nt, len(facts)).mean(1)  # el viejo contra los donantes
     res["config"] = {"n_hechos": len(facts), "conjuntos": b24.SETS, "dosis": list(DOSES), "plantillas": list(TRAIN_T), "fuera": list(HELD_T),
                      "tau_max": TAU_MAX, "fuerte": [0.02, 1.96], "lr": b17.LR, "batch": b17.BATCH}  # fmt: skip
     res["base"] = {"perdida_ida": base_i[:, 0].round(4).tolist(), "tau": tau.tolist(), "pesos": w.round(4).tolist(),
-                   "margen": m0.round(4).tolist()}  # fmt: skip
-    print(json.dumps({"base_resiste_por_plantilla": (m0 > 0).mean(1).round(3).tolist()}), flush=True)
+                   "margen": m0.round(4).tolist(), "gana_por_frase": wins.round(4).tolist()}  # fmt: skip
+    print(json.dumps({"base_gana_por_frase": wins.round(3).tolist(), "base_resiste_por_frase": (m0 > 0).mean(1).round(3).tolist()}), flush=True)
     state = {k: v.detach().to("cpu", copy=True) for k, v in [*model.named_parameters(), *model.named_buffers()]
              if not isinstance(v, torch.nn.Parameter) or v.requires_grad}  # fmt: skip
     n = len(facts)
