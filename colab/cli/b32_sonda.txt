@@ -1,0 +1,1 @@
+b32_sonda.json|colab.b30_fuentes {out} colab/data/b27_banco.json b25 una:umbral,fuentes:umbral colab/data/b25_candidatos.json

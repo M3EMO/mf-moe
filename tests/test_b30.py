@@ -69,3 +69,24 @@ def test_b31_uses_the_sets_and_batches_of_its_tag_and_only_the_chosen_arms(tmp_p
     for s in range(2):
         assert runs[f"s{s}|una|peso|d2"]["sobrescritos"] == ref["corridas"][f"s{s}|f|d2"]["sobrescritos"]
         assert np.allclose(runs[f"s{s}|una|peso|d2"]["subida_ida"], ref["corridas"][f"s{s}|f|d2"]["subida_ida"], atol=2e-3)
+
+
+def test_b32_takes_weights_and_thresholds_from_the_probe(tmp_path, monkeypatch):
+    for k, v in {"K": 2, "SETS": 2}.items():
+        monkeypatch.setattr(b24, k, v)
+    for k, v in {"CHECK_EVERY": 1, "BATCH": 4}.items():
+        monkeypatch.setattr(b17, k, v)
+    monkeypatch.setattr(b27, "LAYERS", (1, 2))
+    monkeypatch.setattr(b, "DOSES", (1, 2))
+    facts = b24.add_donors([{"propiedad": "pq"[i % 2], "cabeza": f"H{i}", "valor": f"V{i}", "valor_nuevo": f"N{i}", "cabeza_nueva": f"C{i}"}
+                            for i in range(12)], "t")  # fmt: skip
+    cands = [{"propiedad": "pq"[i % 2], "cabeza": f"H{i}", "valor": f"V{i}"} for i in range(22)]
+    bank, cand, out = str(tmp_path / "banco.json"), str(tmp_path / "c.json"), str(tmp_path / "r.json")
+    json.dump(facts, open(bank, "w"))
+    json.dump(cands, open(cand, "w"))
+    model = granite.tiny()
+    b.main(out, bank, "b25", (("una", "umbral"),), cand, model=model, tok=chars)
+    res = json.load(open(out))
+    p = b27.probe(model, chars, facts, cands, tag="b25")[0]
+    assert res["config"]["senal"] == "sonda" and np.allclose(res["sonda"]["prediccion"], p, atol=1e-3)
+    assert res["base"]["tau"] == b.thresholds(p).tolist() and np.allclose(res["base"]["pesos"], b27.gate(p, 0.02, 1.96), atol=1e-3)

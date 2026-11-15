@@ -6,7 +6,8 @@ Prerregistro en el ticket 12 (mf-moe-generalidad). Banco, conjuntos (tag «b25»
   tau es 1 en la mitad dudosa del banco y sube hasta 8 en el hecho más seguro.
 La creencia se mide en T0 y en dos frases que ningún brazo entrena (H1 y H2): margen = pérdida del valor nuevo − la del viejo.
 B31 corre lo mismo sobre el banco de B29, con sus conjuntos (tag «b29») y otros brazos.
-Uso: python -m colab.b30_fuentes SALIDA.json BANCO.json [TAG] [BRAZOS, p. ej. una:peso,una:umbral]
+B32 cambia la señal: con CANDIDATOS, pesos y tau salen de la sonda de B27c, no de la pérdida real.
+Uso: python -m colab.b30_fuentes SALIDA.json BANCO.json [TAG] [BRAZOS, p. ej. una:peso,una:umbral] [CANDIDATOS]
 """
 
 import json
@@ -85,19 +86,24 @@ def run_arm(model, tok, facts: list[dict], over: list[int], w: np.ndarray, tau: 
     b24.train(model, tok, items, float("-inf"), max(DOSES), b17.CHECK_EVERY, key, hook, weights)
 
 
-def main(path: str, bank_path: str, tag: str = "b25", arms: tuple = ARMS, model=None, tok=None) -> None:
+def main(path: str, bank_path: str, tag: str = "b25", arms: tuple = ARMS, cand_path: str | None = None, model=None, tok=None) -> None:
     facts = json.load(open(bank_path, encoding="utf-8"))
     res = json.load(open(path)) if os.path.exists(path) else {"corridas": {}}
     model, tok = b23.load(model, tok, True)
     base_i, _ = b24.losses(model, tok, facts)
     base = b17.def_losses(model, tok, [b24.fwd(x) for x in facts])  # igual a base_i[:, 0]; la medida usa la misma llamada
-    w, tau = b27.gate(base_i[:, 0], 0.02, 1.96), thresholds(base_i[:, 0])
+    signal = base_i[:, 0]
+    if cand_path:
+        signal = b27.probe(model, tok, facts, json.load(open(cand_path, encoding="utf-8")), tag=tag)[0]
+        rho = float(np.corrcoef(np.argsort(np.argsort(signal)), np.argsort(np.argsort(base_i[:, 0])))[0, 1])
+        res["sonda"] = {"prediccion": signal.round(4).tolist(), "spearman_con_perdida_base": round(rho, 4)}
+    w, tau = b27.gate(signal, 0.02, 1.96), thresholds(signal)
     m0 = margins(model, tok, facts, (*TRAIN_T, *HELD_T))
     rows = [frame(t, x, v) for t in (*TRAIN_T, *HELD_T) for x in facts for v in [x["valor"], *x["donantes"]]]
     nt = len(TRAIN_T) + len(HELD_T)
     wins = b23.wins(b17.def_losses(model, tok, rows).reshape(nt * len(facts), -1)).reshape(nt, len(facts)).mean(1)  # el viejo contra los donantes
     res["config"] = {"n_hechos": len(facts), "conjuntos": b24.SETS, "dosis": list(DOSES), "plantillas": list(TRAIN_T), "fuera": list(HELD_T),
-                     "tau_max": TAU_MAX, "tag": tag, "brazos": ["|".join(a) for a in arms], "fuerte": [0.02, 1.96], "lr": b17.LR, "batch": b17.BATCH}  # fmt: skip
+                     "tau_max": TAU_MAX, "tag": tag, "senal": "sonda" if cand_path else "oraculo", "brazos": ["|".join(a) for a in arms], "fuerte": [0.02, 1.96], "lr": b17.LR, "batch": b17.BATCH}  # fmt: skip
     res["base"] = {"perdida_ida": base_i[:, 0].round(4).tolist(), "tau": tau.tolist(), "pesos": w.round(4).tolist(),
                    "margen": m0.round(4).tolist(), "gana_por_frase": wins.round(4).tolist()}  # fmt: skip
     print(json.dumps({"base_gana_por_frase": wins.round(3).tolist(), "base_resiste_por_frase": (m0 > 0).mean(1).round(3).tolist()}), flush=True)
@@ -121,4 +127,4 @@ def main(path: str, bank_path: str, tag: str = "b25", arms: tuple = ARMS, model=
 
 if __name__ == "__main__":
     a = sys.argv[1:]
-    main(a[0], a[1], *a[2:3], *([tuple(tuple(x.split(":")) for x in a[3].split(","))] if len(a) > 3 else []))
+    main(a[0], a[1], *a[2:3], *([tuple(tuple(x.split(":")) for x in a[3].split(","))] if len(a) > 3 else []), *a[4:5])
