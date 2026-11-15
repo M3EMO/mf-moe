@@ -1,0 +1,5122 @@
+[
+{
+"tipo": "persona",
+"propiedad": "employer",
+"cabeza": "Isidro Morales Moreno",
+"valor": "Monterrey Institute of Technology and Higher Education",
+"donantes": [
+"Gosplan",
+"Max Planck Institute for Physics",
+"Osaka Institute of Technology",
+"Indian Institute of Science, Bengaluru"
+],
+"donantes_inv": [
+"Said T. Daneshmand",
+"Katarzyna Tonska",
+"Sunil Kumar Podder",
+"Marco Roos"
+],
+"valor_nuevo": "Oshtovosh Oshven",
+"cabeza_nueva": "Cregraka Halgra"
+},
+{
+"tipo": "software_datos",
+"propiedad": "sponsor",
+"cabeza": "Darakht-e Danesh Library",
+"valor": "Canadian Women for Women in Afghanistan",
+"donantes": [
+"National Endowment for the Humanities",
+"NIOSH Pittsburgh Mining Research Division",
+"National Institute for Occupational Safety and Health",
+"Radboud University Nijmegen"
+],
+"donantes_inv": [
+"NIOSH ladder safety app",
+"Industrial sound level meter environmental testing",
+"United States Census of Religious Bodies, Expanded State File, 1906",
+"National Public Opinion Reference Survey, 2021"
+],
+"valor_nuevo": "Milo Barjo",
+"cabeza_nueva": "Sencre Pulgra"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "publisher",
+"cabeza": "Glass Geishas",
+"valor": "Hodder & Stoughton",
+"donantes": [
+"Bureau of Medicine and Surgery",
+"University of Caxias do Sul",
+"California Office of Administrative Law",
+"Wipf and Stock"
+],
+"donantes_inv": [
+"Food Analytical Methods",
+"Neurobiology (Budapest, Hungary)",
+"Digital Policy, Regulation and Governance",
+"Jurnal Psikoedukasi dan Konseling"
+],
+"valor_nuevo": "Tovhal Daktal",
+"cabeza_nueva": "Gradak Joloven"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "location",
+"cabeza": "Wallaby Men's Emu water story",
+"valor": "Art Gallery of South Australia",
+"donantes": [
+"Rhodope Mountains",
+"Zehlendorf",
+"Zik's Avenue Awka",
+"UW Medicine South Lake Union"
+],
+"donantes_inv": [
+"Helios Klinikum Emil von Behring",
+"Arts University Bournemouth School of Visual Art",
+"Tchervenata stena Biosphere Reserve",
+"Hospital Muñiz"
+],
+"valor_nuevo": "Talzin Creosh",
+"cabeza_nueva": "Drewesyri Kahal"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "Revista Digital de Iconografía Medieval",
+"valor": "Complutense University of Madrid",
+"donantes": [
+"University of Georgia",
+"Swedish Centre for Architecture and Design",
+"Open Humanities Press",
+"Maryland Department of Planning"
+],
+"donantes_inv": [
+"Art Deco Chicago: designing modern America",
+"Progress in Biophysics and Molecular Biology",
+"A Private View",
+"Travail, genre et sociétés"
+],
+"valor_nuevo": "Dretov Talwes",
+"cabeza_nueva": "Quika Zinmordre"
+},
+{
+"tipo": "persona",
+"propiedad": "employer",
+"cabeza": "Anna Latos-Bieleńska",
+"valor": "Poznań University of Medical Sciences",
+"donantes": [
+"Karolinska Institutet",
+"University of Warsaw",
+"Max Planck Institute for Physics",
+"University of Nevada, Reno School of Medicine"
+],
+"donantes_inv": [
+"Stefan Raimund Maschek",
+"Isidro Morales Moreno",
+"Marco Roos",
+"Ryo Negishi"
+],
+"valor_nuevo": "Pulambpul Talyri",
+"cabeza_nueva": "Vimibar Vijopul"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "heritage designation",
+"cabeza": "Hauptstraße 9 (Handorf)",
+"valor": "heritage monument in Lower Saxony",
+"donantes": [
+"national monument of Ireland",
+"Italian national heritage",
+"cultural monument of the Czech Republic",
+"Grade II* listed building"
+],
+"donantes_inv": [
+"Labský mlýn hydro power station",
+"Ulyanova Street, 40 (Nizhny Novgorod)",
+"Hm Young Offender Institution, West Cell Block",
+"St. Peter's First Community Church"
+],
+"valor_nuevo": "Ambbar Jofelbar",
+"cabeza_nueva": "Karuven Zindreit"
+},
+{
+"tipo": "organizacion",
+"propiedad": "main subject",
+"cabeza": "innovation lab",
+"valor": "design prototyping",
+"donantes": [
+"climate change",
+"global warming",
+"humanistic psychology",
+"mathematics"
+],
+"donantes_inv": [
+"Polyelectrolyte Brushes",
+"A Theory of Legal Order",
+"MusicaPopular.cl",
+"Hate Symbols Database"
+],
+"valor_nuevo": "Halvijo Talvi",
+"cabeza_nueva": "Wesmi Pequimor"
+},
+{
+"tipo": "organizacion",
+"propiedad": "location",
+"cabeza": "University of Washington Institute for Stem Cell & Regenerative Medicine",
+"valor": "UW Medicine South Lake Union",
+"donantes": [
+"Llantrisant Fawr",
+"Museum of Modern Art",
+"Rhodope Mountains",
+"Castle House"
+],
+"donantes_inv": [
+"Lid for a Teapot with Cherry Blossoms",
+"Physical S.E.X.",
+"One of Five Serving Bowls (Mukozuke) with Prunus Design",
+"Chhota Shigri"
+],
+"valor_nuevo": "Loyripul Felsenka",
+"cabeza_nueva": "Pulbarsor Vipezin"
+},
+{
+"tipo": "software_datos",
+"propiedad": "place of publication",
+"cabeza": "Former Members – Parliament of South Australia",
+"valor": "Adelaide",
+"donantes": [
+"Changchun",
+"Paris",
+"London",
+"Salamanca"
+],
+"donantes_inv": [
+"The Fallacy of Shiite Belief",
+"National Symbols in Modern Iran: Identity, Ethnicity, and Collective Memory",
+"Contemporary Art Society for Wales : 50th anniversary exhibition",
+"Living Skill"
+],
+"valor_nuevo": "Ittalzin Bartovsen",
+"cabeza_nueva": "Oshsor Morqui"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "national public industrial or commercial establishment without a public accountant",
+"valor": "industrial or commercial public establishment or body",
+"donantes": [
+"regulation of localization",
+"cardiac pacemaker cell development",
+"fatty acid transport",
+"regulation of ribosomal subunit export from nucleus"
+],
+"donantes_inv": [
+"aldehyde-lyase activity",
+"amine metabolic process",
+"Member of the Metropolitan Corporation Lahore",
+"response to tellurium ion"
+],
+"valor_nuevo": "Weshalka Westovyri",
+"cabeza_nueva": "Oshvi Ruambzin"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Ettore Celi",
+"valor": "Naples",
+"donantes": [
+"Brno",
+"Annapolis County",
+"Tampere",
+"Bellflower"
+],
+"donantes_inv": [
+"Primaldo Mónaco",
+"Jakob Roggeveen",
+"Elisabeth Kranz",
+"Joseph Samuel Nathaniel Tross"
+],
+"valor_nuevo": "Grapulgra Senmorhal",
+"cabeza_nueva": "Pepul Talka"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "ELIXIR",
+"valor": "Wellcome Genome Campus",
+"donantes": [
+"Bergen",
+"Stourport-on-Severn",
+"Dallas",
+"Toronto"
+],
+"donantes_inv": [
+"Wydawnictwo Literackie",
+"speedskatingbase.eu",
+"Ukrainian Supreme Liberation Council",
+"Information and Privacy Commissioner of Ontario"
+],
+"valor_nuevo": "Tovdre Westal",
+"cabeza_nueva": "Nuhallo Itjomor"
+},
+{
+"tipo": "publicacion",
+"propiedad": "author",
+"cabeza": "Medical and oeconomical botany",
+"valor": "John Lindley",
+"donantes": [
+"Tang Xianzu",
+"Rasul Jafarian",
+"José da Silva Mendes Leal",
+"Susan Margery-Jeaffreson-Lloyd"
+],
+"donantes_inv": [
+"The Aesthetic Dimension",
+"Complement to the Expanded Meaning of the Great Learning",
+"Environmetal Impact Assessment for sustainable development, the Nigerian Perspective",
+"Al-Mufassal fi 'Ahkam al-Mar'ah wa Bayt al-Muslim fi al-Shari'at al-Islamiyyah"
+],
+"valor_nuevo": "Rucre Jodak",
+"cabeza_nueva": "Peka Miyri"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Structural Engineering Research Centre",
+"valor": "Council of Scientific and Industrial Research",
+"donantes": [
+"Federal Department of Economic Affairs, Education and Research",
+"Atlas Copco",
+"National Institutes of Health",
+"Ministry of Culture of Russia"
+],
+"donantes_inv": [
+"National Vital Statistics System",
+"Office of Infrastructure",
+"Montana Office of Rural Health and Area Health Education Center",
+"Silicon Valley Power"
+],
+"valor_nuevo": "Nuela Talambpul",
+"cabeza_nueva": "Weskami Rulo"
+},
+{
+"tipo": "publicacion",
+"propiedad": "location",
+"cabeza": "Support the Construction of Daya Bay Nuclear Plant",
+"valor": "Hong Kong Baptist University Library",
+"donantes": [
+"Parque Patricios",
+"Poole",
+"Zehlendorf",
+"Rhodope Mountains"
+],
+"donantes_inv": [
+"Gjømmerdalsbreen",
+"One of Five Serving Bowls (Mukozuke) with Prunus Design",
+"Lid for a Teapot with Cherry Blossoms",
+"Hospital Muñiz"
+],
+"valor_nuevo": "Pulmorhal Drelodak",
+"cabeza_nueva": "Venvi Ambmor"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of immune system process",
+"valor": "regulation of biological process",
+"donantes": [
+"maintenance of meiotic sister chromatid cohesion, centromeric",
+"graphical model",
+"foreign minister",
+"cellular biogenic amine metabolic process"
+],
+"donantes_inv": [
+"regulation of skeletal muscle adaptation",
+"regulation of muscle contraction",
+"PX4 autopilot",
+"Camerlenghi di Comun"
+],
+"valor_nuevo": "Halwes Rupul",
+"cabeza_nueva": "Elajo Rudre"
+},
+{
+"tipo": "persona",
+"propiedad": "educated at",
+"cabeza": "Juan N. Silva Meza",
+"valor": "National Autonomous University of Mexico",
+"donantes": [
+"Hebrew University of Jerusalem",
+"University of Silesia in Katowice",
+"University of Cape Town",
+"University of Helsinki"
+],
+"donantes_inv": [
+"Alejandro G. Abadilla",
+"Wieslaw Wojcik",
+"Heather J Green",
+"Veljko Despotović"
+],
+"valor_nuevo": "Loyri Ambsormor",
+"cabeza_nueva": "Rufelgra Weswesbar"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Dietitians Registration Board Return to Practice Bye-Law 2015",
+"valor": "Health and Social Care Professionals Act, 2005",
+"donantes": [
+"Defence Act, 1954",
+"International Interests in Mobile Equipment (Cape Town Convention) Act, 2005",
+"Road Traffic Act, 1961",
+"European Communities Act, 1972"
+],
+"donantes_inv": [
+"European Union (Fluorinated Greenhouse Gas) (Amendment) Regulations 2020",
+"Public Service Pension Rights Order 2014",
+"Double Taxation Relief (Taxes on Income)(State of Israel) Order, 1995",
+"Mussel Seed (Closing of Fisheries) Regulations 2013"
+],
+"valor_nuevo": "Vendakela Pulquivi",
+"cabeza_nueva": "Wespe Dremi"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Journal of Cardiovascular Pharmacology and Therapeutics",
+"valor": "cardiology",
+"donantes": [
+"anti-racism",
+"ice hockey in Norway",
+"wireless sensor network",
+"Byzantine Empire"
+],
+"donantes_inv": [
+"Advanced Nonlinear Studies",
+"Journal of Economics and Business Research",
+"Irrigation in Mesilla valley, New Mexico",
+"Plan S for Shock: Science. Shock. Solution. Speed."
+],
+"valor_nuevo": "Halfelsen Dretal",
+"cabeza_nueva": "Nutallo Drequi"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "Nematode Specific Peptide family, group E CELE_Y38E10A.13",
+"valor": "Protein of unknown function DUF1412",
+"donantes": [
+"Global Biodiversity Information Facility",
+"Council of Ministers",
+"interphase",
+"extracellular space"
+],
+"donantes_inv": [
+"Maui Invasive Species Committee - Pest Surveys - 1996-2011",
+"red light photoreceptor activity",
+"virus receptor activity",
+"TypeI restriction modification DNA specificity protein BT_4541"
+],
+"valor_nuevo": "Ambitgra Vental",
+"cabeza_nueva": "Elaitqui Cremiven"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "South European Society and Politics",
+"valor": "political science",
+"donantes": [
+"mathematics",
+"humanistic psychology",
+"sentiment analysis",
+"Nativity of Jesus"
+],
+"donantes_inv": [
+"Journal of Intellectual & Developmental Disability",
+"Yu Shaobao cui zhong quan zhuan",
+"Climate Justice Action",
+"Journal of Economics and Business Research"
+],
+"valor_nuevo": "Drecre Oshka",
+"cabeza_nueva": "Jolo Oshdrezin"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "has part(s)",
+"cabeza": "DNA strand elongation",
+"valor": "DNA biosynthetic process",
+"donantes": [
+"nuclear polyadenylation-dependent mRNA catabolic process",
+"cilium movement",
+"p14ARF mutant does not translocate to the nucleus",
+"epoxy compound"
+],
+"donantes_inv": [
+"epoxide metabolic process",
+"DNA mismatch repair protein Msh6",
+"cilium-dependent cell motility",
+"nuclear mRNA surveillance of mRNA 3'-end processing"
+],
+"valor_nuevo": "Elaru Zinka",
+"cabeza_nueva": "Josor Puljo"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "International Journal of Polymeric Materials",
+"valor": "Taylor & Francis",
+"donantes": [
+"Academic Publishing House",
+"Thieme Medical Publishers (Germany)",
+"Bureau of Medicine and Surgery",
+"Karger Publishers"
+],
+"donantes_inv": [
+"The Public Eye",
+"Buildings in Sweden",
+"ACS combinatorial science",
+"Ligatus"
+],
+"valor_nuevo": "Rumi Venlope",
+"cabeza_nueva": "Halhalka Ruka"
+},
+{
+"tipo": "persona",
+"propiedad": "country of citizenship",
+"cabeza": "Diana Golodnitsky",
+"valor": "Israel",
+"donantes": [
+"Nigeria",
+"Ireland",
+"Taiwan",
+"United Kingdom"
+],
+"donantes_inv": [
+"Phan Nguyen Hong",
+"Bożenna Rempoła",
+"Charlotte L. Brown",
+"Arkadiusz Kosmala"
+],
+"valor_nuevo": "Itbarsen Viitdre",
+"cabeza_nueva": "Vengra Wesquimi"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Mohammed V Foundation for Solidarity",
+"valor": "Morocco",
+"donantes": [
+"Ta' Xbiex",
+"Townsville",
+"Bournemouth",
+"Telde"
+],
+"donantes_inv": [
+"Box UK",
+"University of Delaware Department of Chemistry and Biochemistry",
+"Hewlett Packard Labs",
+"Iraqi Special Security Organization"
+],
+"valor_nuevo": "Jovi Kamor",
+"cabeza_nueva": "Rudakfel Yrifelwes"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "parent organization",
+"cabeza": "Guangzhou Institute of Energy Conversion",
+"valor": "Chinese Academy of Sciences",
+"donantes": [
+"BoardGameGeek",
+"Department of Education",
+"Montana State University",
+"Council of Scientific and Industrial Research"
+],
+"donantes_inv": [
+"Al Amal Hospital Jeddah",
+"Institute for Theoretical and Experimental Physics",
+"Center for Mineral Technology",
+"Bernstein Center for Computational Neuroscience Göttingen"
+],
+"valor_nuevo": "Morgrazin Felloru",
+"cabeza_nueva": "Pulmital Graka"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "operator",
+"cabeza": "Beech Tree Medical Practice",
+"valor": "NHS Coventry and Warwickshire Integrated Care Board",
+"donantes": [
+"OYO Rooms",
+"Diocese of Romblon",
+"Kunming Institute of Botany",
+"Aneurin Bevan University Health Board"
+],
+"donantes_inv": [
+"AMC Classic Salem Valley 8",
+"National Hydrography Dataset",
+"OYO 505 Ente Space Hostel",
+"Manselton Surgery"
+],
+"valor_nuevo": "Senela Crejoit",
+"cabeza_nueva": "Elaqui Talmor"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Toshiba Nanoanalysis Corporation",
+"valor": "Kawasaki",
+"donantes": [
+"London",
+"Dubai",
+"United States Air Force Academy",
+"Berlin"
+],
+"donantes_inv": [
+"Société Industrielle et Minière du Congo Oriental",
+"Max Clean Becal Ventures Ltd",
+"IRCON International",
+"The Camille and Henry Dreyfus Foundation"
+],
+"valor_nuevo": "Josor Graoshvi",
+"cabeza_nueva": "Itambpe Ambmorsen"
+},
+{
+"tipo": "software_datos",
+"propiedad": "maintained by",
+"cabeza": "GNU SASL",
+"valor": "Simon Josefsson",
+"donantes": [
+"SIB Swiss Institute of Bioinformatics",
+"Department of the Treasury",
+"Rijkswaterstaat",
+"Norwegian Institute of bunad and folk costume"
+],
+"donantes_inv": [
+"God and Society in North America, 1996",
+"PRRI/AAR Religion, Values and Climate Change Survey, November 2014",
+"Mennonite Church Member Profile, 1989",
+"Metropolitan Area Religious Ecology, 1980"
+],
+"valor_nuevo": "Felbarbar Ambmorvi",
+"cabeza_nueva": "Dremi Petovzin"
+},
+{
+"tipo": "software_datos",
+"propiedad": "creator",
+"cabeza": "Scribe",
+"valor": "Andrew McAllister",
+"donantes": [
+"Garegin Davtyan",
+"Katrin Fleischer",
+"Elihu Vedder",
+"Eduard Seidler"
+],
+"donantes_inv": [
+"From \"Le crepuscule des nymphes\" (illustration, page 37)",
+"LGBTQ Religious Archives Network",
+"EMBOSS",
+"Skizze mit liegendet Figur, Bezeichnung (Figure Reclining) [p. 17]"
+],
+"valor_nuevo": "Venhal Felkapul",
+"cabeza_nueva": "Viquimi Nusorela"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "maintained by",
+"cabeza": "Water Legislation Amendment (Sustainable Diversion Limit Adjustment) Act 2016",
+"valor": "Department of Agriculture and Water Resources",
+"donantes": [
+"Department of the Treasury",
+"United States Geological Survey",
+"Institut de recherche et d'histoire des textes",
+"Rijkswaterstaat"
+],
+"donantes_inv": [
+"Religion and Public Life Survey, 2005",
+"Metropolitan Area Religious Ecology, 1980",
+"Pinakes",
+"Empirical Study of Religious Liberty Decisions (1986-1995)"
+],
+"valor_nuevo": "Wesit Drenusor",
+"cabeza_nueva": "Dakdrebar Tovcre"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Institute for Theoretical and Experimental Physics",
+"valor": "National Research Centre Kurchatov Institute",
+"donantes": [
+"United States Department of Energy",
+"888 Holdings",
+"RIKEN Nishina Center",
+"The Hongkong and Shanghai Banking Corporation Limited"
+],
+"donantes_inv": [
+"Pingdom",
+"Babcock Mission Critical Services Onshore",
+"Structural Engineering Research Centre",
+"State Archive of the Russian Federation"
+],
+"valor_nuevo": "Sorhalqui Dakmor",
+"cabeza_nueva": "Quitovqui Talgrasor"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "Near-Complete Genome Sequence of Ndumu Virus from Garissa, Kenya, 1997",
+"valor": "Microbiology Resource Announcements",
+"donantes": [
+"The Atlantic",
+"Toxicological Sciences",
+"Glacier Science and Environmental Change",
+"Planetary Science Vision 2050 Workshop"
+],
+"donantes_inv": [
+"Historical Glacier Fluctuations",
+"Rotational Cooling of Trapped Polyatomic Molecules",
+"The Candle",
+"Minnesota Plant List"
+],
+"valor_nuevo": "Karubar Dakvenhal",
+"cabeza_nueva": "Dakkaven Oshelaka"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Babcock Mission Critical Services Onshore",
+"valor": "Babcock International",
+"donantes": [
+"Azienda Ospedaliera Universitaria Senese",
+"Czech Academy of Sciences",
+"Commonwealth Scientific and Industrial Research Organisation",
+"Chinese Academy of Sciences"
+],
+"donantes_inv": [
+"Salem Steel Plant",
+"Blueprint for Neuroscience Research",
+"Dardanelles Fortified Area Command",
+"Institute of Psychology"
+],
+"valor_nuevo": "Grape Pecre",
+"cabeza_nueva": "Quidak Oshoshgra"
+},
+{
+"tipo": "publicacion",
+"propiedad": "place of publication",
+"cabeza": "Birthing and mothering as powerful rites of passage",
+"valor": "Minneapolis",
+"donantes": [
+"Shenyang",
+"Champaign",
+"Honolulu",
+"Boise"
+],
+"donantes_inv": [
+"Historia social del flamenco",
+"2015 Global Survey on Health Technology Assessment by National Authorities",
+"Site Selection for the First Sustainable Mars Base",
+"Svensk motortidnings månadshäfte \"Motor\""
+],
+"valor_nuevo": "Oshpulpe Rupe",
+"cabeza_nueva": "Yriitqui Senyrifel"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Chris Jiashu Xu",
+"valor": "Yangzhou",
+"donantes": [
+"Plzeň",
+"Baton Rouge",
+"Lusaka",
+"Martuni Province"
+],
+"donantes_inv": [
+"Janko Tišler",
+"Anna Kennedy",
+"Paulo Speller",
+"Carlos Beruff"
+],
+"valor_nuevo": "Rufel Halquiven",
+"cabeza_nueva": "Kacrelo Crevenfel"
+},
+{
+"tipo": "organizacion",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Rajiv Gandhi National University of Law",
+"valor": "Patiala",
+"donantes": [
+"Beitou District",
+"Bloemfontein",
+"Giza Governorate",
+"Boulder"
+],
+"donantes_inv": [
+"Solar do Barão das Laranjeiras, Rua Direita das Laranjeiras",
+"Flynn Glacier",
+"Sif Glacier",
+"Shilaidaha Kachharibari"
+],
+"valor_nuevo": "Vioshtov Itfel",
+"cabeza_nueva": "Elatal Morkafel"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "publisher",
+"cabeza": "Dictionary of National Biography, 1885–1900",
+"valor": "Smith, Elder & Co.",
+"donantes": [
+"Smithsonian Institution",
+"California Office of Administrative Law",
+"Electrochemical Society",
+"Karger Publishers"
+],
+"donantes_inv": [
+"Jurnal Psikoedukasi dan Konseling",
+"ECS Electrochemistry Letters",
+"Kinematics and Physics of Celestial Bodies",
+"Buildings in Sweden"
+],
+"valor_nuevo": "Kaqui Ambnu",
+"cabeza_nueva": "Grahalmor Quiwes"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "positive regulation of chondrocyte proliferation",
+"valor": "positive regulation of cell population proliferation",
+"donantes": [
+"general secretary",
+"response to inorganic substance",
+"mayor of a place in Norway",
+"regulation of spore-bearing organ development"
+],
+"donantes_inv": [
+"midbrain-hindbrain boundary maturation during neural plate development",
+"mayor of Garganta la Olla",
+"Elg1 RFC-like complex",
+"mayor of Frades de la Sierra"
+],
+"valor_nuevo": "Venmiven Senosh",
+"cabeza_nueva": "Tovwes Zinmigra"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Minister of Energy and Minerals",
+"valor": "Cabinet of Uganda",
+"donantes": [
+"ganglion development",
+"camera-type eye development",
+"eosinophil differentiation",
+"state property"
+],
+"donantes_inv": [
+"Minister of National Security and Intelligence",
+"Chromosome unknown C16orf89 homolog",
+"Free Improvisation",
+"Undersecretary of Agriculture of Greece"
+],
+"valor_nuevo": "Rulo Morzinsen",
+"cabeza_nueva": "Senyriela Zinven"
+},
+{
+"tipo": "organizacion",
+"propiedad": "legal form",
+"cabeza": "Shanghai Micro Electronics Equipment",
+"valor": "limited liability company",
+"donantes": [
+"privately held company",
+"Delaware corporation",
+"nonprofit organization",
+"kabushiki gaisha"
+],
+"donantes_inv": [
+"Garden gnome liberationists",
+"Tartu Students' Nature Conservation Circle",
+"Geographische Gesellschaft in München",
+"Katholische Hospitalvereinigung Thüringen"
+],
+"valor_nuevo": "Elahal Itvi",
+"cabeza_nueva": "Dakbar Zinven"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Namegata District General Hospital",
+"valor": "Ibaraki Prefecture",
+"donantes": [
+"New Valley Governorate",
+"Russian Empire",
+"Changsha",
+"Frederikssund Municipality"
+],
+"donantes_inv": [
+"Storøen Gård",
+"All Nigeria Foundation Hospital",
+"Sif Glacier",
+"American Society for Nutrition"
+],
+"valor_nuevo": "Logradre Elaven",
+"cabeza_nueva": "Pejo Talgrapul"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "triplet codon-amino acid adaptor activity",
+"valor": "protein biosynthesis",
+"donantes": [
+"cellular response to tumor necrosis factor",
+"Deliberative Council of San Miguel Partido",
+"muscle structure development",
+"posterior lateral line system development"
+],
+"donantes_inv": [
+"Toxic peptide IbsC b4665",
+"myoblast fate commitment",
+"endocardial cell development",
+"prostate epithelial cord elongation"
+],
+"valor_nuevo": "Vengradak Oshviven",
+"cabeza_nueva": "Pulwessen Tovmor"
+},
+{
+"tipo": "publicacion",
+"propiedad": "author",
+"cabeza": "Directory of environmental life scientists",
+"valor": "United States Army Corps of Engineers",
+"donantes": [
+"Francisco Javier Muñiz",
+"Hsien-Yu Liao",
+"Jack London",
+"Washington State Department of Labor and Industries"
+],
+"donantes_inv": [
+"Sadbodharatnamala",
+"The physical geology of the Grand Cañon district",
+"The Anatomy of Revolution",
+"La Condition ouvrière"
+],
+"valor_nuevo": "Sorit Yripeela",
+"cabeza_nueva": "Kait Itmormi"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Natacha Fabbri",
+"valor": "Florence",
+"donantes": [
+"Bethlehem",
+"Quezon City",
+"Clichy",
+"Kairouan"
+],
+"donantes_inv": [
+"Jake Maymudes",
+"Salvador Correia de Sá e Benevides Velasco da Câmara",
+"Constantin Cäsar Kellermann",
+"Chandrima Shaha"
+],
+"valor_nuevo": "Halcresor Wesdre",
+"cabeza_nueva": "Ambcreela Gramorosh"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Space Hawk",
+"valor": "Anthony Gilmore",
+"donantes": [
+"Keith J. Halford",
+"José da Silva Mendes Leal",
+"United States Forest Service",
+"Educational Testing Service"
+],
+"donantes_inv": [
+"Call of the Wild",
+"Learning Irish",
+"Prenatal yoga & natural birth",
+"On the anatomy of vertebrates .."
+],
+"valor_nuevo": "Felpul Oshbarka",
+"cabeza_nueva": "Visorzin Feldak"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "epithelial cell morphogenesis",
+"valor": "epithelial cell development",
+"donantes": [
+"AV node cell to bundle of His cell signaling",
+"Marvin Gaye concert",
+"A219 road",
+"somatic motor neuron fate commitment"
+],
+"donantes_inv": [
+"trachea development",
+"prostate epithelial cord elongation",
+"forebrain dorsal/ventral pattern formation",
+"eukaryotic translation initiation factor 4F complex"
+],
+"valor_nuevo": "Vizin Zinpewes",
+"cabeza_nueva": "Feltal Pulzin"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "A Scalable Hierarchical Distributed Language Model",
+"valor": "Advances in Neural Information Processing Systems 21",
+"donantes": [
+"AIP Conference Proceedings",
+"Life Is Worth Living and Other Stories",
+"Mastering Endo-Laparoscopic and Thoracoscopic Surgery",
+"The Oxford handbook of information structure"
+],
+"donantes_inv": [
+"Juridischer Diskurs und ökonomisches Kalkül",
+"Introduction : Pedagogical discourse and practices in contemporary biblical criticism",
+"VLT Adaptive Optics Imaging of QSO at z ~ 2.5",
+"Surgical Smoke: Risks and Mitigation Strategies"
+],
+"valor_nuevo": "Zinfeldre Quiyri",
+"cabeza_nueva": "Nusorru Kaven"
+},
+{
+"tipo": "persona",
+"propiedad": "residence",
+"cabeza": "Khanindra Chandra Chowdhury",
+"valor": "Guwahati",
+"donantes": [
+"Cox's Bazar",
+"Dhaka",
+"Nairobi",
+"Brunswick"
+],
+"donantes_inv": [
+"Swadhin Kumar Mandal",
+"Milagros García i Bonafé",
+"Brooklynne Bond",
+"Montagu Burrows"
+],
+"valor_nuevo": "Elapultov Taltov",
+"cabeza_nueva": "Elahalgra Wesdrefel"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "main subject",
+"cabeza": "Yu Shaobao cui zhong quan zhuan",
+"valor": "Yu Qian",
+"donantes": [
+"global warming",
+"career counseling",
+"ice hockey in Norway",
+"Adolf Hitler"
+],
+"donantes_inv": [
+"Insecta musei Graecensis",
+"Celestial Atlas",
+"Water resources of the Little River basin, Louisiana",
+"Is There Evidence for Impact-Triggered Fires at the End Pleistocene?"
+],
+"valor_nuevo": "Loit Lohal",
+"cabeza_nueva": "Vifel Vigra"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "place of publication",
+"cabeza": "The Army Medical Department 1917-1941",
+"valor": "Washington, D.C.",
+"donantes": [
+"Paris",
+"Leipzig",
+"Kolkata",
+"Barcelona"
+],
+"donantes_inv": [
+"Treatise of Fluxions, or, An Introduction to Mathematical Philosophy",
+"Textbook of Engineering Physics Part 1",
+"Historia social del flamenco",
+"Louisiana Plant Identification and Interactive Ecosystem Virtual Tours"
+],
+"valor_nuevo": "Talwes Ambvenbar",
+"cabeza_nueva": "Creelabar Morsen"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "James Cook University Department of Molecular and Cell Biology",
+"valor": "Townsville",
+"donantes": [
+"Bălți",
+"Amsterdam",
+"New Haven",
+"Lviv"
+],
+"donantes_inv": [
+"Heritage Times",
+"Nomad Health",
+"Audiovisual Media Authority",
+"Clark County Public Works"
+],
+"valor_nuevo": "Nucre Kait",
+"cabeza_nueva": "Morpe Quimizin"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "associated electoral district",
+"cabeza": "Bridge, Halbeath Tramway, Inverkeithing",
+"valor": "Cowdenbeath and Kirkcaldy",
+"donantes": [
+"Orkney and Shetland",
+"Birmingham Edgbaston",
+"Berwickshire, Roxburgh and Selkirk",
+"Bolton West"
+],
+"donantes_inv": [
+"Castle Bloody",
+"Royal Agricultural College (branch surgery)",
+"Over Chalford medieval settlement",
+"Portesham Surgery"
+],
+"valor_nuevo": "Felzinlo Dakyrisen",
+"cabeza_nueva": "Pevivi Talit"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "University of Tasmania Politics and Policy",
+"valor": "Hobart",
+"donantes": [
+"Milwaukee",
+"Bournemouth",
+"Bergen",
+"Baghdad"
+],
+"donantes_inv": [
+"Anglo-American Publishing",
+"Wydawnictwo Literackie",
+"Conseq Target Bond 2035 Účastnický Fond, Conseq Penzijní Společnost",
+"Metaverse Mod Squad"
+],
+"valor_nuevo": "Daknuosh Yrizinru",
+"cabeza_nueva": "Rupetov Mibar"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "virus receptor activity",
+"valor": "viral entry into host cell",
+"donantes": [
+"autonomic nervous system development",
+"cellular response to salicylic acid stimulus",
+"T-helper 1 type immune response",
+"X Window System"
+],
+"donantes_inv": [
+"PMP22 gene expression",
+"labyrinthine layer formation",
+"Minister of Culture",
+"Instituto Nacional de Estadística y Censo"
+],
+"valor_nuevo": "Dakka Mizin",
+"cabeza_nueva": "Vencre Dakmiwes"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "Mediterranean Diet for Primary Prevention of Cardiovascular Disease",
+"valor": "The New England Journal of Medicine",
+"donantes": [
+"Advances in Neural Information Processing Systems 21",
+"Applied Physics B",
+"Building on the Past: Papers Celebrating 150 Years of the Royal Archaeological Institute",
+"IFAC Proceedings Volumes"
+],
+"donantes_inv": [
+"Feedback control of a single atom in an optical cavity",
+"The Deepening Liturgical Crisis",
+"Migration Theory and the Migration Period",
+"Accelerated Oxidation of Ferrous Materials in Co2/co Gas Mixtures"
+],
+"valor_nuevo": "Johal Quibar",
+"cabeza_nueva": "Josen Vitovdak"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "imaginal disc-derived leg joint morphogenesis",
+"valor": "post-embryonic animal morphogenesis",
+"donantes": [
+"regulation of transcription regulatory region DNA binding",
+"cell fate commitment",
+"regulation of vesicle-mediated transport",
+"cardiac pacemaker cell development"
+],
+"donantes_inv": [
+"aldehyde-lyase activity",
+"bronchiole development",
+"congenital plasminogen activator inhibitor type 1 deficiency",
+"positive regulation of chondrocyte proliferation"
+],
+"valor_nuevo": "Nuyrital Yrilopul",
+"cabeza_nueva": "Tovka Jolo"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Gerhard Exner",
+"valor": "Hamburg",
+"donantes": [
+"Shanghai",
+"Santiago commune",
+"Bubeneč",
+"Brno"
+],
+"donantes_inv": [
+"Romuald Hengstler",
+"John Greene",
+"Henry M. Munro",
+"Antonín Hyška"
+],
+"valor_nuevo": "Felsenpe Barsenru",
+"cabeza_nueva": "Drewesmor Senfelyri"
+},
+{
+"tipo": "organizacion",
+"propiedad": "industry",
+"cabeza": "Angel's Burger",
+"valor": "gastronomy",
+"donantes": [
+"mass media",
+"sporting activities",
+"mechanical engineering",
+"agriculture"
+],
+"donantes_inv": [
+"EVBox",
+"Los Angeles Athletic Club",
+"Abiodun Farm",
+"Mission Control Space Services"
+],
+"valor_nuevo": "Cremivi Weska",
+"cabeza_nueva": "Yriambgra Rutalzin"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Abraham Johannes Andries Roux",
+"valor": "Bethlehem",
+"donantes": [
+"The Hague",
+"Prague",
+"Gothenburg",
+"Florence"
+],
+"donantes_inv": [
+"Abu Reza Fazlul Haque Bablu",
+"Marja-Liisa Riekkola",
+"Constantin Cäsar Kellermann",
+"Walter L. Huber"
+],
+"valor_nuevo": "Oshwes Feldakjo",
+"cabeza_nueva": "Venelape Talhalhal"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Agroscope",
+"valor": "Federal Department of Economic Affairs, Education and Research",
+"donantes": [
+"University of California, Davis, College of Biological Sciences",
+"Ministry of Public Health",
+"The Hongkong and Shanghai Banking Corporation Limited",
+"Ministry of Culture of Russia"
+],
+"donantes_inv": [
+"Muhlenberg College Physical Science program",
+"Vallibel Willwind",
+"Medical Park Gaziantep Hospital",
+"Syracuse University Department of Finance and Managerial Statistics"
+],
+"valor_nuevo": "Ambyri Wessorjo",
+"cabeza_nueva": "Tovhal Vigrayri"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Compsognathinae",
+"valor": "Coeluridae",
+"donantes": [
+"Lyginopteridales",
+"Cistus hybridus",
+"Southern pocket gopher",
+"Ostracoda"
+],
+"donantes_inv": [
+"edmontosaurini",
+"Malvastrum leaf curl Philippines virus",
+"Eophylica",
+"Dicaeum agile atjehense"
+],
+"valor_nuevo": "Crepulyri Talhal",
+"cabeza_nueva": "Zinmorit Dakqui"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "associated electoral district",
+"cabeza": "Portesham Surgery",
+"valor": "West Dorset",
+"donantes": [
+"Aberdeenshire North and Moray East",
+"North East Fife",
+"Cowdenbeath and Kirkcaldy",
+"Bury St Edmunds and Stowmarket"
+],
+"donantes_inv": [
+"Grove Cinema",
+"Bridge No. 1, Union Canal, Viewforth, Edinburgh",
+"Royal Agricultural College (branch surgery)",
+"31, 33, 37 High Street, Blairgowrie"
+],
+"valor_nuevo": "Mordre Gradak",
+"cabeza_nueva": "Elaquisen Elawes"
+},
+{
+"tipo": "persona",
+"propiedad": "residence",
+"cabeza": "James MacAlister",
+"valor": "Portobello",
+"donantes": [
+"Brunswick",
+"Dhaka",
+"Helsinki",
+"Bilbao"
+],
+"donantes_inv": [
+"Rima Sultana Rimu",
+"Swadhin Kumar Mandal",
+"Lisa Cylinder",
+"Amitabha Chattopadhyay"
+],
+"valor_nuevo": "Sengradak Itsenosh",
+"cabeza_nueva": "Ruoshamb Tovcre"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Constantin Cäsar Kellermann",
+"valor": "Dresden",
+"donantes": [
+"Celle",
+"Middlesbrough",
+"Paderborn",
+"Valle de Mena"
+],
+"donantes_inv": [
+"Giovanni Battista Gagliardo",
+"Bill Inmon",
+"Janko Tišler",
+"Marco Fassadoni"
+],
+"valor_nuevo": "Zincrelo Kavenqui",
+"cabeza_nueva": "Yrisordre Pultovvi"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Uuno Pietilä",
+"valor": "Tampere",
+"donantes": [
+"Austria",
+"Miskolc",
+"Lisbon",
+"Cheltenham"
+],
+"donantes_inv": [
+"John Bryan",
+"Joseph Samuel Nathaniel Tross",
+"Jose  Norambuena Canales",
+"Kazimir Abramovich"
+],
+"valor_nuevo": "Kabarsor Itela",
+"cabeza_nueva": "Venamb Itka"
+},
+{
+"tipo": "publicacion",
+"propiedad": "country",
+"cabeza": "Journal of the Selva Andina Research Society",
+"valor": "Bolivia",
+"donantes": [
+"Canada",
+"South Korea",
+"Argentina",
+"Austria"
+],
+"donantes_inv": [
+"Telangana Diagnostic Mobile App",
+"Beerenstraße 7, 7A; Glockenstraße 1",
+"The Sustainable Drainage (Appeals) (Wales) Regulations 2018",
+"39 and 40 Blackboy Road"
+],
+"valor_nuevo": "Oshambmi Crecre",
+"cabeza_nueva": "Barvenka Haljo"
+},
+{
+"tipo": "persona",
+"propiedad": "member of",
+"cabeza": "Kazymyr Yarema",
+"valor": "National Union of Journalists of Ukraine",
+"donantes": [
+"Canadian Federation for the Humanities and Social Sciences",
+"Lithuanian Museum Association",
+"BSA | The Software Alliance, Inc.",
+"Ordem dos Engenheiros"
+],
+"donantes_inv": [
+"Norwegian Electronic Health Library",
+"Portland Historical Society, Connecticut",
+"Repository Library of Estonia",
+"Indigenous Environmental Network"
+],
+"valor_nuevo": "Eladre Oshcre",
+"cabeza_nueva": "Talgrami Senjo"
+},
+{
+"tipo": "software_datos",
+"propiedad": "author",
+"cabeza": "Small Groups Survey, 1991 (Individuals Not in Groups Sample)",
+"valor": "Robert Wuthnow",
+"donantes": [
+"Donald Harden",
+"Susan Margery-Jeaffreson-Lloyd",
+"National Library of Indonesia",
+"Dmitry Marakasov"
+],
+"donantes_inv": [
+"Saanjhi Dharthi Bakhale Maanu",
+"NIOSH Analytical Method, Propylene Dichloride, SCP-S95",
+"Robust fault detection of robotic systems: New results and experiments",
+"Infected"
+],
+"valor_nuevo": "Zindre Joela",
+"cabeza_nueva": "Nupulyri Zintovven"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "maintained by",
+"cabeza": "Migration Legislation Amendment Act (No. 1) 2001",
+"valor": "Department of Home Affairs",
+"donantes": [
+"State Council of the People's Republic of China",
+"Rijkswaterstaat",
+"Department of the Environment and Energy",
+"Department of Health"
+],
+"donantes_inv": [
+"U.S. Religious Landscape Survey - Alaska and Hawaii Dataset",
+"Water Legislation Amendment (Sustainable Diversion Limit Adjustment) Act 2016",
+"Social Security and Other Legislation Amendment (Miscellaneous Measures) Act 2011",
+"Presbyterian Panel Survey, 2006-2008 - Background Survey, Clergy"
+],
+"valor_nuevo": "Talpul Venpul",
+"cabeza_nueva": "Oshsenpul Oshdakela"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Medical importance of dietary betaines",
+"valor": "biochemistry",
+"donantes": [
+"translated literature",
+"polymer brushes",
+"Nativity of Jesus",
+"agricultural irrigation"
+],
+"donantes_inv": [
+"The Gaming Licence Duty (Games) Order 1995",
+"Carry Nation",
+"O black power de Akin",
+"Irrational Man"
+],
+"valor_nuevo": "Quimi Elapul",
+"cabeza_nueva": "Tovbar Rusor"
+},
+{
+"tipo": "organizacion",
+"propiedad": "part of",
+"cabeza": "qahal",
+"valor": "Judaism",
+"donantes": [
+"Cabinet of Ghana",
+"T-helper 1 type immune response",
+"cellular response to tumor necrosis factor",
+"SRP-dependent cotranslational protein targeting to membrane"
+],
+"donantes_inv": [
+"maintenance of root meristem identity",
+"GLI1 binds HHIP gene, PTCH2 gene and BOC gene promoters",
+"interleukin-6-mediated signaling pathway",
+"alveolar secondary septum development"
+],
+"valor_nuevo": "Tovhal Dakpul",
+"cabeza_nueva": "Felwesmor Ambelapul"
+},
+{
+"tipo": "organizacion",
+"propiedad": "founded by",
+"cabeza": "Coordination Council of Islamic Revolution Forces",
+"valor": "Ali Akbar Nategh-Nouri",
+"donantes": [
+"Fabrizio Ferri",
+"Disney Interactive Studios",
+"Harry \"A\" Chesler",
+"John Sutton"
+],
+"donantes_inv": [
+"GeoEye",
+"Klyachkin clinics",
+"Vyysky plant",
+"Biodynamic Federation Demeter International"
+],
+"valor_nuevo": "Barnu Crezinela",
+"cabeza_nueva": "Taldreosh Dakit"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Zhang Xu",
+"valor": "Shanghai",
+"donantes": [
+"Christchurch",
+"Austria",
+"Bubeneč",
+"Brno"
+],
+"donantes_inv": [
+"Romuald Hengstler",
+"Jakob Roggeveen",
+"John Bryan",
+"Henry M. Munro"
+],
+"valor_nuevo": "Lohal Senzin",
+"cabeza_nueva": "Zinfel Dreven"
+},
+{
+"tipo": "organizacion",
+"propiedad": "founded by",
+"cabeza": "GeoEye",
+"valor": "Orbital Sciences Corporation",
+"donantes": [
+"Joshua Montgomery",
+"John Sutton",
+"Australian Research Council",
+"Mohammed AlSharekh"
+],
+"donantes_inv": [
+"Chesler / Dynamic",
+"Vyysky plant",
+"National Union of Greece",
+"Mycroft AI, Inc."
+],
+"valor_nuevo": "Rudakjo Vensen",
+"cabeza_nueva": "Tovruela Peyriqui"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "The Peony Pavilion - 13. Setting Out",
+"valor": "Tang Xianzu",
+"donantes": [
+"Robert Wuthnow",
+"Washington State Department of Labor and Industries",
+"Richard Owen",
+"William Smellie"
+],
+"donantes_inv": [
+"Extrasensory Perception",
+"Robust fault detection of robotic systems: New results and experiments",
+"Au Château des Loups Rouges",
+"The Aesthetic Dimension"
+],
+"valor_nuevo": "Barcrelo Sendak",
+"cabeza_nueva": "Taltalmi Pulrucre"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Rutgers University Department of Political Science",
+"valor": "New Brunswick",
+"donantes": [
+"Kirkenes",
+"Ithaca",
+"France",
+"Royal Bank Plaza"
+],
+"donantes_inv": [
+"94th Flying Training Squadron",
+"Oceanic Platform of the Canary Islands",
+"Modular Infotech Pvt. Ltd.",
+"Clark County Public Works"
+],
+"valor_nuevo": "Halitka Drebar",
+"cabeza_nueva": "Graven Jovicre"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "maintained by",
+"cabeza": "Freedom of Information Amendment (Reform) Act 2010",
+"valor": "Attorney-General's Department",
+"donantes": [
+"Department of Agriculture and Water Resources",
+"State Council of the People's Republic of China",
+"Institut de recherche et d'histoire des textes",
+"Department of the Treasury"
+],
+"donantes_inv": [
+"National Greenhouse and Energy Reporting Amendment Act 2009",
+"Transport Security Legislation Amendment Act 2017",
+"Presbyterian Panel Survey, 2015-2017 - Background Survey, Members and Elders",
+"God and Society in North America, 1996"
+],
+"valor_nuevo": "Elahalru Nusenmi",
+"cabeza_nueva": "Quika Nudak"
+},
+{
+"tipo": "persona",
+"propiedad": "country of citizenship",
+"cabeza": "Abdullah Khalifa Al Marri",
+"valor": "United Arab Emirates",
+"donantes": [
+"Ireland",
+"Bangladesh",
+"Singapore",
+"United States"
+],
+"donantes_inv": [
+"Roland T. Loto",
+"Colin Alexander Scott",
+"Wu Peng",
+"Lídia Puigvert"
+],
+"valor_nuevo": "Halgra Kavi",
+"cabeza_nueva": "Quiela Grafel"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "location",
+"cabeza": "Fragment of a Mummy Case",
+"valor": "Worcester Art Museum",
+"donantes": [
+"UW Medicine South Lake Union",
+"Bolgatanga",
+"Rhodope Mountains",
+"U.S. Route 24 in Colorado"
+],
+"donantes_inv": [
+"Tchervenata stena Biosphere Reserve",
+"First Bank Nigeria, Awka",
+"University of Washington Institute for Stem Cell & Regenerative Medicine",
+"Support the Construction of Daya Bay Nuclear Plant"
+],
+"valor_nuevo": "Morrutov Wesosh",
+"cabeza_nueva": "Ambpelo Weslobar"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "country",
+"cabeza": "Nsongezi Archaeological site",
+"valor": "Uganda",
+"donantes": [
+"Japan",
+"Romania",
+"Switzerland",
+"Russia"
+],
+"donantes_inv": [
+"The Air Quality Standards Regulations (Northern Ireland) 2010",
+"CurrencyTransfer.com",
+"Kennels at Bodorgan home farm",
+"The Home Energy Efficiency Scheme (Amendment) (Wales) Regulations 2000"
+],
+"valor_nuevo": "Zinambvi Vital",
+"cabeza_nueva": "Daktov Nupeyri"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "maintained by",
+"cabeza": "Australian Education Amendment Act 2017",
+"valor": "Department of Education and Training",
+"donantes": [
+"Department of Social Services",
+"Department of Home Affairs",
+"Norwegian Institute of bunad and folk costume",
+"Simon Josefsson"
+],
+"donantes_inv": [
+"Presbyterian Panel Survey, May 2004 - Disabilities Issues, Clergy",
+"Clean Energy (Excise Tariff Legislation Amendment) Act 2012",
+"Presbyterian Panel Survey, August 2004 - Energy Issues, All",
+"God and Society in North America, 1996"
+],
+"valor_nuevo": "Nulo Halbardak",
+"cabeza_nueva": "Kavivi Tovtal"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Modular Infotech Pvt. Ltd.",
+"valor": "Pune",
+"donantes": [
+"New York City",
+"Dallas",
+"Amsterdam",
+"Kitakyushu"
+],
+"donantes_inv": [
+"Dalhousie University Department of Biochemistry and Molecular Biology",
+"myTribe Insurance",
+"Democritus University of Thrace Department of Molecular Biology and Genetics",
+"Nadace Jedličkova ústavu"
+],
+"valor_nuevo": "Yrisenmor Pulkaela",
+"cabeza_nueva": "Grasentov Sorpuljo"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "owned by",
+"cabeza": "The Comedy Store",
+"valor": "Mitzi Shore",
+"donantes": [
+"Sports Reference, LLC",
+"National Amusements",
+"International Institute for Sustainable Development",
+"University of Szczecin"
+],
+"donantes_inv": [
+"Monuments of the city of Madrid",
+"Stem Cell Reports",
+"Diegesis: Interdisziplinäres E-Journal für Erzählforschung",
+"Hockey Reference"
+],
+"valor_nuevo": "Talnudre Pevenhal",
+"cabeza_nueva": "Yricre Halloru"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Eophylica",
+"valor": "Rhamnaceae",
+"donantes": [
+"Burkholderiales",
+"Enamovirus",
+"Spirochaetales",
+"Ostracoda"
+],
+"donantes_inv": [
+"Sulfolobus tengchongensis spindle-shaped virus",
+"Sida mosaic Sinaloa virus",
+"Prochorites",
+"Equine herpesvirus 5"
+],
+"valor_nuevo": "Minuamb Quiela",
+"cabeza_nueva": "Vendrecre Nupul"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "skeletal muscle satellite cell commitment",
+"valor": "cell fate commitment",
+"donantes": [
+"cyclase inhibitor activity",
+"cardiac pacemaker cell development",
+"economy minister",
+"anatomical structure maturation"
+],
+"donantes_inv": [
+"medulla oblongata development",
+"mayor of San Andrés del Rabanedo",
+"mayor of Garganta la Olla",
+"establishment of integrated proviral latency"
+],
+"valor_nuevo": "Felcrebar Elakanu",
+"cabeza_nueva": "Sorelahal Gracreven"
+},
+{
+"tipo": "software_datos",
+"propiedad": "publisher",
+"cabeza": "Register of Local Entities",
+"valor": "Ministry of Finance and Public Administration",
+"donantes": [
+"Virginia Polytechnic Institute and State University Department of Forest Resources and Environmental Conservation",
+"California Office of Administrative Law",
+"Open Humanities Press",
+"Wiley-Blackwell"
+],
+"donantes_inv": [
+"Travail, genre et sociétés",
+"Scandinavian journal of immunology. Supplement",
+"Respect for Nature: A Theory of Environmental Ethics",
+"Journal of Materials Science: Materials in Electronics"
+],
+"valor_nuevo": "Jodakhal Dreosh",
+"cabeza_nueva": "Drepeela Pulhal"
+},
+{
+"tipo": "persona",
+"propiedad": "member of political party",
+"cabeza": "Bice Osei Kuffour",
+"valor": "New Patriotic Party",
+"donantes": [
+"Hezb-e Islami Gulbuddin",
+"French Communist Party",
+"Communist Party of the Soviet Union",
+"Hungarian Socialist Workers' Party"
+],
+"donantes_inv": [
+"Josep Parera Tort",
+"Gertrud Sauerborn",
+"Mikhail Shemyakin",
+"Lettie A. Allen"
+],
+"valor_nuevo": "Joambsor Daksor",
+"cabeza_nueva": "Halhalit Pultov"
+},
+{
+"tipo": "software_datos",
+"propiedad": "publisher",
+"cabeza": "Svenskt kvinnobiografiskt lexikon",
+"valor": "University of Gothenburg",
+"donantes": [
+"Bureau of Medicine and Surgery",
+"Academic Publishing House",
+"Dublin Core Metadata Initiative",
+"St. Martin's Press"
+],
+"donantes_inv": [
+"Buildings in Sweden",
+"Ligatus",
+"Food Analytical Methods",
+"Jurnal Psikoedukasi dan Konseling"
+],
+"valor_nuevo": "Sorzin Haljogra",
+"cabeza_nueva": "Talsorwes Oshwesdak"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "Nematode Specific Peptide family, group B CELE_H04M03.2",
+"valor": "Protein of unknown function DUF1459",
+"donantes": [
+"Science Studies of the Montana College of Agriculture",
+"mitochondrial inner membrane",
+"cellular response to tumor necrosis factor",
+"Marvin Gaye concert"
+],
+"donantes_inv": [
+"councilor of San Miguel Partido",
+"Termination of translesion DNA synthesis",
+"lens fiber cell differentiation",
+"Florilegium: (page 44 verso) Pepper Plant"
+],
+"valor_nuevo": "Oshtalamb Talsorfel",
+"cabeza_nueva": "Vicre Vensor"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "carnotaurinae",
+"valor": "abelisauridae",
+"donantes": [
+"Oscillospiraceae",
+"Flavivirus",
+"Avihepadnavirus",
+"ornithopoda"
+],
+"donantes_inv": [
+"Mjagkovaella",
+"Jatropha mosaic India virus",
+"Sammons's Opuntia virus",
+"Tomato mottle Taino virus"
+],
+"valor_nuevo": "Kamorru Ambzin",
+"cabeza_nueva": "Oshdreamb Dreyrinu"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "creator",
+"cabeza": "A Chestnut Racehorse Painted at George Lambton's Yard, Newmarket",
+"valor": "Alfred Munnings",
+"donantes": [
+"EMBnet",
+"Edgar Degas",
+"Thomas Rowlandson",
+"John Collins"
+],
+"donantes_inv": [
+"Tacoma-Pierce County Buildings Index",
+"Weather Research and Forecasting model",
+"Study for \"Mary Cassatt at the Louvre\" [recto]",
+"kqueue"
+],
+"valor_nuevo": "Felfel Vivenbar",
+"cabeza_nueva": "Feldakbar Minu"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Chimera Technologies Private Limited",
+"valor": "Bengaluru",
+"donantes": [
+"Kirkenes",
+"Trieste",
+"Milwaukee",
+"St. Anthony"
+],
+"donantes_inv": [
+"Counseling Association of Nigeria",
+"Evangelischer Pfarrverein in Württemberg",
+"Democritus University of Thrace Department of Molecular Biology and Genetics",
+"Magnum Semiconductor"
+],
+"valor_nuevo": "Elazintal Losen",
+"cabeza_nueva": "Tovpulpe Miela"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "chemokine-mediated signaling pathway",
+"valor": "cellular response to chemokine",
+"donantes": [
+"Twin-arginine translocation pathway, signal sequence, protein family",
+"red light signaling pathway",
+"trochlear nerve development",
+"Council of Ministers of Nepal"
+],
+"donantes_inv": [
+"mesonephric smooth muscle tissue development",
+"photoreceptor cell development",
+"Minister of Water Resources and Meteorology",
+"forebrain neuroblast differentiation"
+],
+"valor_nuevo": "Viqui Quital",
+"cabeza_nueva": "Wesoshosh Zindre"
+},
+{
+"tipo": "software_datos",
+"propiedad": "main subject",
+"cabeza": "MusicaPopular.cl",
+"valor": "music of Chile",
+"donantes": [
+"Younger Dryas impact hypothesis",
+"polymer brushes",
+"existentialism",
+"design prototyping"
+],
+"donantes_inv": [
+"Self-Supervised Bug Detection and Repair",
+"Climatic variations",
+"Is There Evidence for Impact-Triggered Fires at the End Pleistocene?",
+"Social construction, discourse and outdoor instruction assessment"
+],
+"valor_nuevo": "Tovquigra Halmi",
+"cabeza_nueva": "Jolo Nuhal"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "spinosauridae",
+"valor": "megalosauroidea",
+"donantes": [
+"Bruchini",
+"Nautiliaceae",
+"Avihepadnavirus",
+"Lyginopteridales"
+],
+"donantes_inv": [
+"Cetia",
+"Cycas necrotic stunt virus",
+"Petroclostridium",
+"pentaceratops"
+],
+"valor_nuevo": "Halyri Pulnuka",
+"cabeza_nueva": "Yribar Zintaldak"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "cyclase regulator activity",
+"valor": "regulation of cyclase activity",
+"donantes": [
+"cellular response to cytokinin stimulus",
+"Government of Chad",
+"Deutsche Digitale Bibliothek",
+"aortic valve morphogenesis"
+],
+"donantes_inv": [
+"municipal secretary of Ilhéus",
+"Minister of Water Resources and Meteorology",
+"Federal Minister of Power",
+"myoblast fate commitment"
+],
+"valor_nuevo": "Sortov Kaamb",
+"cabeza_nueva": "Lovi Venelapul"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "mayor of María Pinto",
+"valor": "mayor of a place in Chile",
+"donantes": [
+"response to metal ion",
+"geospatial scientist",
+"chemical homeostasis",
+"industrial or commercial public establishment or body"
+],
+"donantes_inv": [
+"Minister for Industry, Trade, Foreign Affairs and Climate",
+"proximal convoluted tubule segment 1 cell differentiation",
+"cyanelle stroma",
+"chaplain"
+],
+"valor_nuevo": "Itven Pulmortov",
+"cabeza_nueva": "Yriwes Dreviela"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Gewerkschaft Metall-Textil-Nahrung",
+"valor": "Vienna",
+"donantes": [
+"Taiyuan",
+"Dhaka",
+"Dubai",
+"Ta' Xbiex"
+],
+"donantes_inv": [
+"Faegre Baker Daniels LLP",
+"Etablissement public d'aménagement de Paris-Saclay",
+"International Student Identity Card",
+"Farmacity"
+],
+"valor_nuevo": "Credak Kanuwes",
+"cabeza_nueva": "Kamiela Talpuldak"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Dávid Lehotzky",
+"valor": "Szeged",
+"donantes": [
+"Detroit",
+"Gothenburg",
+"Florence",
+"Celje"
+],
+"donantes_inv": [
+"Sargis Baghdasaryan",
+"George W. Jackson",
+"Marja-Liisa Riekkola",
+"Burghardt Wittig"
+],
+"valor_nuevo": "Mivenbar Oshbar",
+"cabeza_nueva": "Felbarru Mijo"
+},
+{
+"tipo": "software_datos",
+"propiedad": "author",
+"cabeza": "PRRI April 2019 Survey",
+"valor": "Natalie Jackson",
+"donantes": [
+"William Robert Grove",
+"Hari Bansha Acharya",
+"Dmitry Marakasov",
+"William Thomson"
+],
+"donantes_inv": [
+"Behavior and Neurosis / Jules Hymen Masserman",
+"The IMA List of Minerals (March 2018)",
+"Learning Irish",
+"Infected"
+],
+"valor_nuevo": "Quielaela Dakpelo",
+"cabeza_nueva": "Kalo Dredak"
+},
+{
+"tipo": "software_datos",
+"propiedad": "headquarters location",
+"cabeza": "Instadoctor.gr",
+"valor": "Athens",
+"donantes": [
+"Abuja",
+"Alexandroupolis",
+"Berlin",
+"Las Vegas"
+],
+"donantes_inv": [
+"Information and Privacy Commissioner of Ontario",
+"Max Clean Becal Ventures Ltd",
+"University of Cumbria Creative Arts",
+"Institute for Responsible Medication Use"
+],
+"valor_nuevo": "Pulmor Crepemi",
+"cabeza_nueva": "Dreamb Itrudak"
+},
+{
+"tipo": "persona",
+"propiedad": "country of citizenship",
+"cabeza": "Charles Lim Yi Yong",
+"valor": "Singapore",
+"donantes": [
+"Taiwan",
+"United Kingdom",
+"Finland",
+"Israel"
+],
+"donantes_inv": [
+"Erik Boel",
+"Jerzy Jęczalik",
+"Antoni Garrell i Guiu",
+"Roland T. Loto"
+],
+"valor_nuevo": "Venpul Joruosh",
+"cabeza_nueva": "Oshvi Elamornu"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "place of publication",
+"cabeza": "Cynhyrchu cnydau yng Nghymru[electronic resource] = Crop production in Wales",
+"valor": "Aberystwyth",
+"donantes": [
+"Cambridge",
+"Harrisburg",
+"Adelaide",
+"Ahmadu Bello University"
+],
+"donantes_inv": [
+"2015 Global Survey on Health Technology Assessment by National Authorities",
+"Er libosli ayol",
+"The Army Medical Department 1917-1941",
+"Historia social del flamenco"
+],
+"valor_nuevo": "Felnudak Barvenwes",
+"cabeza_nueva": "Drenu Miruzin"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Rainer O. Neugebauer",
+"valor": "Wilhelmshaven",
+"donantes": [
+"Dresden",
+"Detroit",
+"Baton Rouge",
+"Paderborn"
+],
+"donantes_inv": [
+"Carlos Beruff",
+"Dávid Lehotzky",
+"Anna Kennedy",
+"George W. Jackson"
+],
+"valor_nuevo": "Sorwespe Losenru",
+"cabeza_nueva": "Grasorbar Yricrevi"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "place of publication",
+"cabeza": "Biotechnology: Recent Trends and Emerging Dimensions",
+"valor": "New York",
+"donantes": [
+"Cambridge",
+"Harrisburg",
+"Leipzig",
+"Ahmadu Bello University"
+],
+"donantes_inv": [
+"Johann Theodor Jablonski: Allgemeines Lexikon der Künste und Wissenschaften",
+"Svensk motortidnings månadshäfte \"Motor\"",
+"Le nouveau dictionnaire de la civilisation indienne: M-Z",
+"Coastal erosion and sedimentation of Pukehina Beach and Waihi Estuary"
+],
+"valor_nuevo": "Ambdakzin Tovdre",
+"cabeza_nueva": "Puljo Elaosh"
+},
+{
+"tipo": "software_datos",
+"propiedad": "part of",
+"cabeza": "X display manager",
+"valor": "X Window System",
+"donantes": [
+"metanephros development",
+"supervisory councillors of Ifako-Ijaye local government",
+"cellular response to interleukin-6",
+"protein biosynthesis"
+],
+"donantes_inv": [
+"protein insertion into membrane raft",
+"Cardiovascular Research Institute of Maastricht",
+"state-owned enterprise",
+"Minister for Rural Development"
+],
+"valor_nuevo": "Zinka Josorwes",
+"cabeza_nueva": "Venbarmor Felbar"
+},
+{
+"tipo": "software_datos",
+"propiedad": "main subject",
+"cabeza": "HockeyLive",
+"valor": "ice hockey in Norway",
+"donantes": [
+"jurisprudence",
+"music of Chile",
+"organocobalt compound",
+"Younger Dryas impact hypothesis"
+],
+"donantes_inv": [
+"Water resources of the Big Black River basin, Mississippi",
+"Advanced Nonlinear Studies",
+"Celestial Atlas",
+"Canadian Geotechnical Journal"
+],
+"valor_nuevo": "Zinzin Elaquijo",
+"cabeza_nueva": "Numijo Senven"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "Textile production in western Europe",
+"valor": "The Archaeology Of Medieval Europe: Volume 2: Twelfth To Sixteenth Centuries",
+"donantes": [
+"Conference on Early Mars: Geologic and Hydrologic Evolution, Physical and Chemical Environments, and the Implications for Life",
+"ARPN Journal of Engineering and Applied Sciences",
+"English Legal History and its Sources: Essays in Honour of Sir John Baker",
+"Growing Black Holes: Accretion in a Cosmological Context"
+],
+"donantes_inv": [
+"Feedback control of a single atom in an optical cavity",
+"The adaptation of the Anglo-Saxon royal courts to Christianity",
+"Comets and Prebiotic Organic Molecules on Early Earth",
+"Surgical Smoke: Risks and Mitigation Strategies"
+],
+"valor_nuevo": "Zingrazin Venpulit",
+"cabeza_nueva": "Lohalyri Morrulo"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "followed by",
+"cabeza": "The Farm / Splash / Lulu",
+"valor": "Too Spooky For Me! / Wild Flower Bouquet / Two Fathers",
+"donantes": [
+"The Older Woman",
+"Parenthetical remarks in the Silvae",
+"Wedding Bell Blues",
+"viral release from host cell"
+],
+"donantes_inv": [
+"The Byzantine Successor State",
+"Xilinx ISE",
+"Petronius' linguistic resources",
+"The Charles Avery Story"
+],
+"valor_nuevo": "Westovmor Quidre",
+"cabeza_nueva": "Drenu Morsen"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Prenatal yoga & natural birth",
+"valor": "Jeannine Parvati Baker",
+"donantes": [
+"François Crépin",
+"James Wilson Robertson",
+"Dmitry Marakasov",
+"National Institute for Occupational Safety and Health"
+],
+"donantes_inv": [
+"Improvements in crop growing",
+"Memoir on the extinct species of American ox",
+"Call of the Wild",
+"Space Hawk"
+],
+"valor_nuevo": "Nutovhal Dakyri",
+"cabeza_nueva": "Sendremi Pelo"
+},
+{
+"tipo": "software_datos",
+"propiedad": "creator",
+"cabeza": "kqueue",
+"valor": "Jonathan Lemon",
+"donantes": [
+"Sperandio di Bartolommeo de' Savelli",
+"Thomas William Dewar",
+"EMBnet",
+"Sol LeWitt"
+],
+"donantes_inv": [
+"Search Engine Watch",
+"Studies of a Jockey Wearing Green",
+"Wikidata Concepts Monitor",
+"Procession to the Hustings after a Successful Canvas (No. 14)"
+],
+"valor_nuevo": "Senelabar Elajo",
+"cabeza_nueva": "Virubar Viela"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of triplex DNA binding",
+"valor": "regulation of DNA binding",
+"donantes": [
+"geospatial scientist",
+"regulation of cellular metabolic process",
+"stress-activated MAPK cascade",
+"application"
+],
+"donantes_inv": [
+"regulation of ascus development",
+"amine metabolic process",
+"jasmonoyl-leucine synthetase activity",
+"establishment of natural killer cell polarity"
+],
+"valor_nuevo": "Jolodre Haldre",
+"cabeza_nueva": "Tovelaka Locre"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "main subject",
+"cabeza": "The Gaming Licence Duty (Games) Order 1995",
+"valor": "gambling",
+"donantes": [
+"Catalan literature",
+"business studies",
+"mathematics",
+"economics of open science"
+],
+"donantes_inv": [
+"Technological applications of deterministic chaos.",
+"Hate Symbols Database",
+"Basic Battle Skills",
+"Irrigation in Mesilla valley, New Mexico"
+],
+"valor_nuevo": "Westal Weshal",
+"cabeza_nueva": "Kagraka Grasen"
+},
+{
+"tipo": "organizacion",
+"propiedad": "legal form",
+"cabeza": "Katholische Hospitalvereinigung Thüringen",
+"valor": "gemeinnützige GmbH",
+"donantes": [
+"kabushiki gaisha",
+"společnost s ručením omezeným",
+"association under the French law of 1901",
+"limited liability company"
+],
+"donantes_inv": [
+"Rye Field Publishing",
+"Iwaizumi Holdings",
+"Garden gnome liberationists",
+"Deutsche Vereinigung für Politische Wissenschaft"
+],
+"valor_nuevo": "Pulvitov Johal",
+"cabeza_nueva": "Venhal Pullo"
+},
+{
+"tipo": "software_datos",
+"propiedad": "maintained by",
+"cabeza": "Nationaal Wegenbestand",
+"valor": "Rijkswaterstaat",
+"donantes": [
+"Department of Agriculture and Water Resources",
+"Department of the Environment and Energy",
+"Department of Social Services",
+"Department of Home Affairs"
+],
+"donantes_inv": [
+"United States Census of Religious Bodies, State File, 1936",
+"ABC News/Washington Post Poll: Politics and International Relations, 2005",
+"Mennonite Church Member Profile, 1989",
+"Nebraska Annual Social Indicators Survey, 1989"
+],
+"valor_nuevo": "Oshdrepe Ruhal",
+"cabeza_nueva": "Halmor Fello"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Magnus Nilsson",
+"valor": "Gothenburg",
+"donantes": [
+"Baton Rouge",
+"Plzeň",
+"Szeged",
+"Dresden"
+],
+"donantes_inv": [
+"Mirosláv Cipro",
+"Dávid Lehotzky",
+"Marja-Liisa Riekkola",
+"Marco Fassadoni"
+],
+"valor_nuevo": "Sordre Numor",
+"cabeza_nueva": "Seneladak Talwes"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "parent organization",
+"cabeza": "Al Amal Hospital Jeddah",
+"valor": "Ministry of Health",
+"donantes": [
+"RIKEN Nishina Center",
+"Indian Council of Agricultural Research",
+"Muhlenberg College Division of Interdisciplinary Studies",
+"Maccabi Health Care Services"
+],
+"donantes_inv": [
+"Institute of Neurobiology and Molecular Medicine",
+"Vallibel Willwind",
+"Network Control Center Data System",
+"Wink Bingo"
+],
+"valor_nuevo": "Moramb Feltovnu",
+"cabeza_nueva": "Yridrenu Sengrasor"
+},
+{
+"tipo": "software_datos",
+"propiedad": "author",
+"cabeza": "Empirical Study of Religious Liberty Decisions (1996-2005)",
+"valor": "Gregory C. Sisk",
+"donantes": [
+"Charles Darwin",
+"Keith J. Halford",
+"John Gormley",
+"Ryōtarō Shiba"
+],
+"donantes_inv": [
+"The Public Character of Revelation: Divine Speech and Finite Reason",
+"Sadbodharatnamala",
+"Toxic Bachelors",
+"Al-Mufassal fi 'Ahkam al-Mar'ah wa Bayt al-Muslim fi al-Shari'at al-Islamiyyah"
+],
+"valor_nuevo": "Peambbar Wesrulo",
+"cabeza_nueva": "Sengra Barvi"
+},
+{
+"tipo": "organizacion",
+"propiedad": "location",
+"cabeza": "Smart Media Nusantara (Smena)",
+"valor": "Baiturrahman",
+"donantes": [
+"Zehlendorf",
+"U.S. Route 24 in Colorado",
+"Cleveland Museum of Art",
+"Rotherbaum"
+],
+"donantes_inv": [
+"Scetch for the artwork Untitled (Lebensform)",
+"Exercising Horses on Warren Hill, Newmarket",
+"Hospital Muñiz",
+"Wallaby Men's Emu water story"
+],
+"valor_nuevo": "Ambitven Sorcrebar",
+"cabeza_nueva": "Dakmor Oshfelvi"
+},
+{
+"tipo": "software_datos",
+"propiedad": "location",
+"cabeza": "Southwest Florida Eagle Cam",
+"valor": "North Fort Myers",
+"donantes": [
+"Llantrisant Fawr",
+"Museum of Modern Art",
+"Zehlendorf",
+"Pori Art Museum"
+],
+"donantes_inv": [
+"Support the Construction of Daya Bay Nuclear Plant",
+"Barn With Stable And Granary At Cwrt-y-brychan",
+"University of Washington Institute for Stem Cell & Regenerative Medicine",
+"Upper East Regional Museum"
+],
+"valor_nuevo": "Quizin Rubar",
+"cabeza_nueva": "Sortov Talhal"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Razavi University of Islamic Sciences",
+"valor": "Mashhad",
+"donantes": [
+"Songshan District",
+"Changsha",
+"Hole Municipality",
+"São Pedro"
+],
+"donantes_inv": [
+"Farbo Glacier",
+"Hari parbat Glacier",
+"Archaeological site of Aliki",
+"Lednik Kungyr-Suu"
+],
+"valor_nuevo": "Pulcreka Nufel",
+"cabeza_nueva": "Daktallo Minunu"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Analogix",
+"valor": "Santa Clara",
+"donantes": [
+"Brasília",
+"Valletta",
+"New Delhi",
+"Dallas"
+],
+"donantes_inv": [
+"Information and Privacy Commissioner of Ontario",
+"International Centre for Theoretical Physics",
+"Democritus University of Thrace Department of Molecular Biology and Genetics",
+"Cultuur Maatschappij Kali Bakar"
+],
+"valor_nuevo": "Mihal Halosh",
+"cabeza_nueva": "Quipecre Senpulbar"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Extrasensory Perception",
+"valor": "Joseph Banks Rhine",
+"donantes": [
+"Benedict XVI",
+"William Robert Grove",
+"Mark Crispin",
+"Joseph Leidy"
+],
+"donantes_inv": [
+"The Black Wolf's Breed",
+"Temperature Dependence of InGaN Dual-Junction Solar Cell",
+"The philosophy of natural history",
+"The physical geology of the Grand Cañon district"
+],
+"valor_nuevo": "Venhal Elaru",
+"cabeza_nueva": "Sorpelo Zinyri"
+},
+{
+"tipo": "software_datos",
+"propiedad": "main subject",
+"cabeza": "Letteratura tradotta in Italia",
+"valor": "translated literature",
+"donantes": [
+"entomology",
+"polymer brushes",
+"ice hockey in Norway",
+"geotechnical engineering"
+],
+"donantes_inv": [
+"Database of Japanese Intellectual History",
+"Yu Shaobao cui zhong quan zhuan",
+"Automated wireless greenhouse management system",
+"Irrigation in Mesilla valley, New Mexico"
+],
+"valor_nuevo": "Loamb Oshtal",
+"cabeza_nueva": "Wessor Senyri"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "organic hydroxy compound transport",
+"valor": "organic substance transport",
+"donantes": [
+"response to metal ion",
+"Archaeoceti",
+"regulation of multicellular organismal process",
+"carbon-carbon lyase activity"
+],
+"donantes_inv": [
+"proximal convoluted tubule segment 1 cell differentiation",
+"mitral valve morphogenesis",
+"Mayor of Elk Grove, California",
+"regulation of cell proliferation involved in tissue homeostasis"
+],
+"valor_nuevo": "Halgraamb Crecre",
+"cabeza_nueva": "Lovi Lonuamb"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "replaced by",
+"cabeza": "Central Museum of Dinosaurs of Mongolia",
+"valor": "Natural History Museum",
+"donantes": [
+"Australian Securities Exchange",
+"Comparative Biochemistry and Physiology C: Toxicology and Pharmacology",
+"NIOSH pocket guide to chemical hazards (78-210, fifth printing) (superseded)",
+"JoCaml"
+],
+"donantes_inv": [
+"Apache Commons HttpClient",
+"The join calculus language",
+"Tokyo Chuo Seika Co., Ltd",
+"Gender Equality Ombud"
+],
+"valor_nuevo": "Wespul Sordre",
+"cabeza_nueva": "Vikamor Rudak"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "2010 IEEE International Workshop on Machine Learning for Signal Processing",
+"valor": "Institute of Electrical and Electronics Engineers",
+"donantes": [
+"Ordnance Survey",
+"Korea Maritime Institute",
+"Emerald Publishing Limited",
+"T. R. Harrison"
+],
+"donantes_inv": [
+"Journal of Occupational Health Psychology",
+"Register of Local Entities",
+"Interdisciplinary topics in gerontology and geriatrics",
+"International Journal of Nanotechnology"
+],
+"valor_nuevo": "Morvipe Mikafel",
+"cabeza_nueva": "Ruyri Zinvenven"
+},
+{
+"tipo": "software_datos",
+"propiedad": "operator",
+"cabeza": "National Digital Science Library",
+"valor": "Korea Institute of Science & Technology Information",
+"donantes": [
+"NHS Norfolk and Waveney Integrated Care Board",
+"Laboratoires Servier",
+"Aneurin Bevan University Health Board",
+"Washington Department of Natural Resources"
+],
+"donantes_inv": [
+"Haslucks Green Medical Centre",
+"Hotel NH Tango",
+"LiteraturPort",
+"OYO 505 Ente Space Hostel"
+],
+"valor_nuevo": "Oshmor Nuvi",
+"cabeza_nueva": "Pulzinven Hallo"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Lednik Kungyr-Suu",
+"valor": "Osh Region",
+"donantes": [
+"Hole Municipality",
+"Chișinău",
+"Jahangiri Rural District",
+"Patiala"
+],
+"donantes_inv": [
+"Reproductive & Genetic Hospital CITIC-Xiangya",
+"Razavi University of Islamic Sciences",
+"Souvenez-Vous, reverse",
+"Sif Glacier"
+],
+"valor_nuevo": "Ambyri Wesnu",
+"cabeza_nueva": "Kabarfel Vidre"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "viral assembly intermediate",
+"valor": "cytoplasm",
+"donantes": [
+"Cabinet of Cuba",
+"Council of Ministers",
+"cellular response to salicylic acid stimulus",
+"North Carolina Council of State"
+],
+"donantes_inv": [
+"skeletal muscle fiber development",
+"Minister for Construction and Spatial Management",
+"E2-like conjugating enzyme YLL042C",
+"Bolwig's organ morphogenesis"
+],
+"valor_nuevo": "Yrizin Graven",
+"cabeza_nueva": "Wescre Loela"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "Robust fault detection and isolation in mobile robot",
+"valor": "IFAC Proceedings Volumes",
+"donantes": [
+"Life Is Worth Living and Other Stories",
+"Zenodo",
+"Growing Black Holes: Accretion in a Cosmological Context",
+"Amazing Stories"
+],
+"donantes_inv": [
+"The physical geography of Richborough",
+"Cosmic Bond, Super Lover: William Bloom's Qhe! Series",
+"Minnesota Plant List",
+"Historical Glacier Fluctuations"
+],
+"valor_nuevo": "Halzin Senpul",
+"cabeza_nueva": "Weszindak Rupe"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "beta selection",
+"valor": "alpha-beta T cell differentiation",
+"donantes": [
+"teichoic acid D-alanylation",
+"Ilhéus City Hall",
+"Cabinet of Cuba",
+"Assembly of Viral Components at the Budding Site"
+],
+"donantes_inv": [
+"tumor necrosis factor-mediated signaling pathway",
+"Prokaryotic membrane lipoprotein lipid",
+"red light photoreceptor activity",
+"Minister of Energy and Mineral Resources"
+],
+"valor_nuevo": "Morfello Ittalbar",
+"cabeza_nueva": "Pedre Morsen"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "thesis committee member",
+"cabeza": "Data-driven Discovery and Model Reduction of Complex Systems",
+"valor": "J. Nathan Kutz",
+"donantes": [
+"John Collins",
+"Eibe Frank",
+"Claire Freeman",
+"Matthew Goddard"
+],
+"donantes_inv": [
+"Astrophysics of Stellar Multiple Systems",
+"John Dewey and Pragmatic Economics",
+"Transmit Radio-Frequency Field Mapping In High Field Magnetic Resonance Imaging",
+"The role of NFATc1 in proximal tubule injury and repair"
+],
+"valor_nuevo": "Tovtal Elataldre",
+"cabeza_nueva": "Kakasen Ruambpul"
+},
+{
+"tipo": "organizacion",
+"propiedad": "member of",
+"cabeza": "Canadian Philosophical Association",
+"valor": "Canadian Federation for the Humanities and Social Sciences",
+"donantes": [
+"Connecticut League of Museums",
+"International Association of Agricultural Museums",
+"Climate Justice Alliance",
+"Saxon Academy of Sciences and Humanities"
+],
+"donantes_inv": [
+"The Livestock Conservancy",
+"Census and Statistics Department",
+"Bethany Historical Society, Connecticut",
+"Haskell"
+],
+"valor_nuevo": "Peyrihal Miit",
+"cabeza_nueva": "Numorbar Gramisen"
+},
+{
+"tipo": "software_datos",
+"propiedad": "part of",
+"cabeza": "denkXweb",
+"valor": "Deutsche Digitale Bibliothek",
+"donantes": [
+"skeletal muscle tissue development",
+"muscle structure development",
+"Cabinet of Ghana",
+"The Ultimate Hits"
+],
+"donantes_inv": [
+"chondrocyte differentiation",
+"viral replication",
+"E2-like conjugating enzyme YLL042C",
+"Minister for Development Planning and Aid Coordination"
+],
+"valor_nuevo": "Ambdakit Pulnu",
+"cabeza_nueva": "Zinmihal Wesgra"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "Rational Rhapsody",
+"valor": "IBM",
+"donantes": [
+"GNU Project",
+"Matthias Probst",
+"SAS Institute",
+"George M. Sheldrick"
+],
+"donantes_inv": [
+"Lightweight User Interface Toolkit",
+"Apache Beehive",
+"Picture Motion Browser",
+"WAsP"
+],
+"valor_nuevo": "Zindak Viit",
+"cabeza_nueva": "Vidre Elabar"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "On the Origin of Species",
+"valor": "Charles Darwin",
+"donantes": [
+"Fayçal Rahmoune",
+"William Poundstone",
+"Susan Margery-Jeaffreson-Lloyd",
+"Daniel J. Treier"
+],
+"donantes_inv": [
+"WordNet–Wikipedia–Wiktionary alignment",
+"La Condition ouvrière",
+"PRRI April 2019 Survey",
+"The Columbian ground squirrel : its biology and control"
+],
+"valor_nuevo": "Tovjolo Sorvensen",
+"cabeza_nueva": "Dredrefel Pefel"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "operator",
+"cabeza": "AMC Classic Salem Valley 8",
+"valor": "AMC Theatres",
+"donantes": [
+"NH Hotel Group",
+"Diocese of Romblon",
+"Arab Center for Research and Policy Studies",
+"German Federal Archives"
+],
+"donantes_inv": [
+"SMART by Servier",
+"OYO Flagship 37428 Hotel Jay Vee Continental",
+"Haslucks Green Medical Centre",
+"OYO 63062 Arambol Ocean"
+],
+"valor_nuevo": "Halyrimi Misenit",
+"cabeza_nueva": "Elatov Pulmi"
+},
+{
+"tipo": "software_datos",
+"propiedad": "operator",
+"cabeza": "Syrian Memory Institution",
+"valor": "Arab Center for Research and Policy Studies",
+"donantes": [
+"NHS Norfolk and Waveney Integrated Care Board",
+"National Commission for Museums and Monuments",
+"OYO Rooms",
+"Biodiversity Research Center, Academia Sinica"
+],
+"donantes_inv": [
+"National Hydrography Dataset",
+"OYO 78729 Hotel Divine",
+"Mohammed VI Museum of Modern and Contemporary Art",
+"OYO 505 Ente Space Hostel"
+],
+"valor_nuevo": "Fellonu Rucre",
+"cabeza_nueva": "Rupul Grawesmi"
+},
+{
+"tipo": "organizacion",
+"propiedad": "founded by",
+"cabeza": "National Union of Greece",
+"valor": "Georgios Kosmidis",
+"donantes": [
+"Erhard Bartsch",
+"John Sutton",
+"Antun Saadeh",
+"Laljibhai Patel"
+],
+"donantes_inv": [
+"Mycroft AI, Inc.",
+"Klyachkin clinics",
+"GeoEye",
+"Post Carbon Institute"
+],
+"valor_nuevo": "Venamb Puljo",
+"cabeza_nueva": "Zinquital Lodre"
+},
+{
+"tipo": "software_datos",
+"propiedad": "author",
+"cabeza": "WordNet–Wikipedia–Wiktionary alignment",
+"valor": "Iryna Gurevych",
+"donantes": [
+"Hari Bansha Acharya",
+"François Crépin",
+"Joseph Brennan",
+"Mark Crispin"
+],
+"donantes_inv": [
+"Model Archive of Pahute Mesa-Oasis Valley Groundwater Flow Model",
+"Correlation Clustering: from Local to Global Constraints",
+"Bearing an Hourglass",
+"Sadbodharatnamala"
+],
+"valor_nuevo": "Weska Tovcre",
+"cabeza_nueva": "Zinnumi Elatovka"
+},
+{
+"tipo": "persona",
+"propiedad": "member of political party",
+"cabeza": "Cyriaque Delisle",
+"valor": "Front de libération du Québec",
+"donantes": [
+"Chinese Communist Party",
+"Hezb-e Islami Gulbuddin",
+"Alliance '90/The Greens",
+"Conservative Party of Norway"
+],
+"donantes_inv": [
+"Wallace B. Douglas",
+"Mikhail Shemyakin",
+"Josep Parera Tort",
+"Andrew R. Wheeler"
+],
+"valor_nuevo": "Elafelsen Pejoela",
+"cabeza_nueva": "Midaklo Dakyrital"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Programming Research Group",
+"valor": "Department of Computer Science, University of Oxford",
+"donantes": [
+"Department of Education",
+"Federal Government of Brazil",
+"SolarWinds",
+"Ministry of Finance"
+],
+"donantes_inv": [
+"Dardanelles Fortified Area Command",
+"Pingdom",
+"Center for Mineral Technology",
+"Guangzhou Institute of Energy Conversion"
+],
+"valor_nuevo": "Zinfelela Jopulosh",
+"cabeza_nueva": "Vensor Pulfelmi"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "Information Structure and Production Planning",
+"valor": "The Oxford handbook of information structure",
+"donantes": [
+"Free Radical Biology and Medicine",
+"Minnesota Wildflowers: A Field Guide to the Flora of Minnesota",
+"The Atlantic",
+"Amazing Stories"
+],
+"donantes_inv": [
+"North American species of Festuca",
+"Nanostructured TiO2 and their energy applications-a review",
+"CD95-induced cell death is mediated by reactive oxygen species",
+"Rotational Cooling of Trapped Polyatomic Molecules"
+],
+"valor_nuevo": "Cregralo Weslomi",
+"cabeza_nueva": "Graloyri Ittaldak"
+},
+{
+"tipo": "publicacion",
+"propiedad": "thesis committee member",
+"cabeza": "Astrophysics of Stellar Multiple Systems",
+"valor": "Keivan Stassun",
+"donantes": [
+"Matthew Goddard",
+"Claire Freeman",
+"John (Jack) McConchie",
+"J. Nathan Kutz"
+],
+"donantes_inv": [
+"A Modal Proof Theory for Polynomial Coalgebras",
+"The role of NFATc1 in proximal tubule injury and repair",
+"Dynamic subscription based multi-transport intelligent gateway",
+"Structural Studies of Fluxional Lesions in Deoxyribonucleic Acid"
+],
+"valor_nuevo": "Nuvi Daktov",
+"cabeza_nueva": "Creela Grape"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "parent organization",
+"cabeza": "State Archive of the Russian Federation",
+"valor": "Ministry of Culture of Russia",
+"donantes": [
+"Vanderbilt University School of Medicine",
+"Martin J. Whitman School of Management",
+"Chinese Academy of Agricultural Sciences",
+"Muhlenberg College Division of Natural Sciences and Mathematics"
+],
+"donantes_inv": [
+"E Ink Corporation",
+"Agroscope",
+"Phyllis Chapter",
+"Solar Energy Technologies Office"
+],
+"valor_nuevo": "Talquilo Ittov",
+"cabeza_nueva": "Kadak Pulsor"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Petroclostridium",
+"valor": "Oscillospiraceae",
+"donantes": [
+"Flavivirus",
+"Burkholderiales",
+"Gammaretrovirus",
+"Acanthoscelidina"
+],
+"donantes_inv": [
+"Cistus × hybridus nothosubsp. grandiflorus",
+"African green monkey simian foamy virus",
+"Zixibacteria",
+"Thomomys umbrinus zacatecae"
+],
+"valor_nuevo": "Lowes Yrimor",
+"cabeza_nueva": "Pultal Pevi"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Cercopithecine gammaherpesvirus 14",
+"valor": "Lymphocryptovirus",
+"donantes": [
+"Alphatorquevirus",
+"saurolophinae",
+"Lyginopteridales",
+"Acanthoscelidina"
+],
+"donantes_inv": [
+"Cycas necrotic stunt virus",
+"Acholeplasma phage MV-L51",
+"Mjagkovaella",
+"heterodontosauridae"
+],
+"valor_nuevo": "Tovdre Elaquipe",
+"cabeza_nueva": "Taljo Pulcre"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "congenital plasminogen activator inhibitor type 1 deficiency",
+"valor": "rare hemorrhagic disorder due to a constitutional coagulation factors defect",
+"donantes": [
+"establishment of viral latency",
+"cell population proliferation",
+"regulation of icosanoid secretion",
+"regulation of biological process"
+],
+"donantes_inv": [
+"regulation of phagocytosis",
+"mitochondrial matrix",
+"regulation of apolipoprotein binding",
+"proteasome regulatory particle, base subcomplex"
+],
+"valor_nuevo": "Oshnupul Halbarpe",
+"cabeza_nueva": "Talru Sennu"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "Blood gene expression markers for target organ toxicity",
+"valor": "Toxicological Sciences",
+"donantes": [
+"Phytotaxa",
+"Journal of Anatomy",
+"The Atlantic",
+"Die juristischen Konsequenzen"
+],
+"donantes_inv": [
+"The Darwinian Theory",
+"Cosmic Bond, Super Lover: William Bloom's Qhe! Series",
+"Surgical Smoke: Risks and Mitigation Strategies",
+"The Candle"
+],
+"valor_nuevo": "Senwesvi Jomi",
+"cabeza_nueva": "Tovelawes Katallo"
+},
+{
+"tipo": "publicacion",
+"propiedad": "place of publication",
+"cabeza": "Chinese Journal of Analytical Chemistry",
+"valor": "Changchun",
+"donantes": [
+"Aberystwyth",
+"Monrovia",
+"Cambridge",
+"Jerusalem"
+],
+"donantes_inv": [
+"Francis Bacon: The Logic of Sensation",
+"Historia del pensamiento social",
+"Former Members – Parliament of South Australia",
+"Contemporary Art Society for Wales : 50th anniversary exhibition"
+],
+"valor_nuevo": "Venzinmor Kalo",
+"cabeza_nueva": "Lohalosh Lorusor"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Ukrainian Supreme Liberation Council",
+"valor": "Lviv",
+"donantes": [
+"Hartford",
+"Brasília",
+"Palmerston",
+"Milwaukee"
+],
+"donantes_inv": [
+"Information and Privacy Commissioner of Ontario",
+"The Camille and Henry Dreyfus Foundation",
+"Clark County Public Works",
+"Cultuur Maatschappij Kali Bakar"
+],
+"valor_nuevo": "Bartal Senfel",
+"cabeza_nueva": "Dakyri Oshmorven"
+},
+{
+"tipo": "organizacion",
+"propiedad": "part of",
+"cabeza": "Naval Medical Research Center",
+"valor": "United States Navy",
+"donantes": [
+"The Ultimate Hits",
+"Sistema Estadístico Nacional",
+"alpha-beta T cell differentiation",
+"regulation of cyclase activity"
+],
+"donantes_inv": [
+"plasma lipoprotein particle",
+"triplet codon-amino acid adaptor activity",
+"Minister of the Environment, Climate Change, Tourism, and International Trade",
+"protein insertion into membrane raft"
+],
+"valor_nuevo": "Viwes Felelagra",
+"cabeza_nueva": "Ambru Jolowes"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "PMP22 gene expression",
+"valor": "EGR2 and SOX10-mediated initiation of Schwann cell myelination",
+"donantes": [
+"Government of Greece",
+"state property",
+"T-helper cell differentiation",
+"cellular response to interleukin-6"
+],
+"donantes_inv": [
+"determination of digestive tract left/right asymmetry",
+"metanephric pyramids development",
+"Wnt-activated signaling pathway involved in forebrain neuron fate commitment",
+"formation of translation initiation ternary complex"
+],
+"valor_nuevo": "Pesen Miitpe",
+"cabeza_nueva": "Peit Peitjo"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "Maryland water supply and demand study",
+"valor": "Maryland Department of Planning",
+"donantes": [
+"Korea Maritime Institute",
+"Academic Publishing House",
+"Sebelas Maret University",
+"Institute of Electrical and Electronics Engineers"
+],
+"donantes_inv": [
+"Russian Mathematical Surveys",
+"Exploratory Data Analysis",
+"Revista Digital de Iconografía Medieval",
+"Criminal Behaviour and Mental Health"
+],
+"valor_nuevo": "Peitpul Yrikawes",
+"cabeza_nueva": "Drezinit Rusenyri"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "parent taxon",
+"cabeza": "Tomato leaf curl Nigeria virus",
+"valor": "Begomovirus",
+"donantes": [
+"Ostracoda",
+"ornithopoda",
+"Nautiliaceae",
+"Cistus hybridus"
+],
+"donantes_inv": [
+"Thomomys umbrinus chihuahuae",
+"Spiroplasma phage 1-KC3",
+"Harvey murine sarcoma virus",
+"Chickpea chlorotic stunt virus"
+],
+"valor_nuevo": "Dreosh Numi",
+"cabeza_nueva": "Jogra Felloosh"
+},
+{
+"tipo": "organizacion",
+"propiedad": "member of",
+"cabeza": "Repository Library of Estonia",
+"valor": "International Federation of Library Associations and Institutions",
+"donantes": [
+"International Association of Agricultural Museums",
+"Lithuanian Museum Association",
+"Ordem dos Engenheiros",
+"International Statistical Institute"
+],
+"donantes_inv": [
+"Le Musée de f.p.c.",
+"Catholic University of Colombia",
+"The Livestock Conservancy",
+"Indigenous Environmental Network"
+],
+"valor_nuevo": "Baramb Pulhal",
+"cabeza_nueva": "Mielacre Oshpe"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "mRNA cleavage and polyadenylation specificity factor complex assembly",
+"valor": "RNA 3'-end processing",
+"donantes": [
+"Maastricht University",
+"Cabinet of North Korea",
+"Science Studies of the Montana College of Agriculture",
+"Protein of unknown function DUF4735"
+],
+"donantes_inv": [
+"sorocarp stalk development",
+"Minister of Agriculture of Samoa",
+"T-helper cell lineage commitment",
+"GLI1 binds HHIP gene, PTCH2 gene and BOC gene promoters"
+],
+"valor_nuevo": "Pebar Mordaklo",
+"cabeza_nueva": "Cremi Ambjo"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "diffstat",
+"valor": "Thomas E. Dickey",
+"donantes": [
+"SLAC National Accelerator Laboratory",
+"BAE Systems",
+"Ericsson",
+"Apple"
+],
+"donantes_inv": [
+"pivmetalib",
+"Visual Test",
+"Apache Excalibur",
+"Apache ORC"
+],
+"valor_nuevo": "Yriamblo Petov",
+"cabeza_nueva": "Creoshosh Vental"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "place of publication",
+"cabeza": "Legislative, Historical and Biographical Compendium of Colorado",
+"valor": "Denver",
+"donantes": [
+"Leipzig",
+"New York",
+"Champaign",
+"Hamilton"
+],
+"donantes_inv": [
+"Historia social del flamenco",
+"World Intellectual Property Indicators 2016",
+"Do What You Wanna Do",
+"The Prince of Tides: Original Motion Picture Soundtrack"
+],
+"valor_nuevo": "Yriamb Barfeljo",
+"cabeza_nueva": "Mika Jopegra"
+},
+{
+"tipo": "persona",
+"propiedad": "employer",
+"cabeza": "Gustaf Drevin",
+"valor": "Karolinska Institutet",
+"donantes": [
+"University of Warsaw",
+"Gdańsk University of Technology",
+"United Food and Commercial Workers",
+"Monterrey Institute of Technology and Higher Education"
+],
+"donantes_inv": [
+"Marco Roos",
+"Anna Latos-Bieleńska",
+"Munetaka Ishikawa",
+"Sunil Kumar Podder"
+],
+"valor_nuevo": "Moryrivi Taltov",
+"cabeza_nueva": "Itosh Senelavi"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Marja-Liisa Riekkola",
+"valor": "Nokia",
+"donantes": [
+"Prague",
+"Florence",
+"Torres Novas",
+"Dundee"
+],
+"donantes_inv": [
+"Giuseppe Levi",
+"Chris Jiashu Xu",
+"Barbara Pistilli",
+"Abu Reza Fazlul Haque Bablu"
+],
+"valor_nuevo": "Weszin Joqui",
+"cabeza_nueva": "Tovmorwes Pulruit"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "mitochondrial electron transport, ubiquinol to cytochrome c",
+"valor": "aerobic electron transport chain",
+"donantes": [
+"stress-activated MAPK cascade",
+"application",
+"council member",
+"fatty acid transport"
+],
+"donantes_inv": [
+"ribulose bisphosphate carboxylase complex",
+"cerebellar Purkinje cell layer maturation",
+"Minister for Industry, Trade, Foreign Affairs and Climate",
+"branch and bound"
+],
+"valor_nuevo": "Rusenlo Dakpe",
+"cabeza_nueva": "Felsordre Soryrizin"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "EGS",
+"valor": "SLAC National Accelerator Laboratory",
+"donantes": [
+"Apple",
+"Arc System Works",
+"Sun Microsystems",
+"GNU Project"
+],
+"donantes_inv": [
+"Silk Test",
+"Apache Beehive",
+"Apache ORC",
+"Windows Spotlight"
+],
+"valor_nuevo": "Quifelamb Venkalo",
+"cabeza_nueva": "Lojo Dretalru"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "Lightweight User Interface Toolkit",
+"valor": "Sun Microsystems",
+"donantes": [
+"Thomas E. Dickey",
+"National Instruments",
+"PTV Group",
+"Technical University of Denmark"
+],
+"donantes_inv": [
+"Rational Rhapsody",
+"Exposé",
+"xxHash",
+"VISSIM"
+],
+"valor_nuevo": "Rumor Talbar",
+"cabeza_nueva": "Talsor Dakloosh"
+},
+{
+"tipo": "publicacion",
+"propiedad": "author",
+"cabeza": "Memoir on the extinct species of American ox",
+"valor": "Joseph Leidy",
+"donantes": [
+"Isuna Hasekura",
+"Joe Walsh",
+"John Gormley",
+"Charles Darwin"
+],
+"donantes_inv": [
+"Directory of environmental life scientists",
+"Infected",
+"Improvements in crop growing",
+"Spice and Wolf, vol. 15"
+],
+"valor_nuevo": "Ambcretov Nuambven",
+"cabeza_nueva": "Gravenqui Ithal"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "parent organization",
+"cabeza": "Medical Park Gaziantep Hospital",
+"valor": "Medical Park Hospitals Group",
+"donantes": [
+"Vanderbilt University School of Medicine",
+"SolarWinds",
+"Council of Scientific and Industrial Research",
+"University of California, Davis, College of Biological Sciences"
+],
+"donantes_inv": [
+"Institute of Plant Physiology and Genetics",
+"Al Amal Hospital Jeddah",
+"Institute of Acoustics",
+"Phyllis Chapter"
+],
+"valor_nuevo": "Nuvijo Zinpe",
+"cabeza_nueva": "Felbar Dregramor"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "pre-miRNA export from nucleus",
+"valor": "gene silencing by miRNA",
+"donantes": [
+"supervisory councillors of Ifako-Ijaye local government",
+"Executive Council of Quebec",
+"O-antigen ligase-related",
+"psychology terminology"
+],
+"donantes_inv": [
+"Minister for Reconciliation and Civic Equality",
+"Putative ABC-type taurine transport system periplasmic binding component KPHS_30900",
+"epithalamus development",
+"Probable ABC-type iron(III)-transport system, binding lipoprotein precursor component FP1463"
+],
+"valor_nuevo": "Graviamb Nuka",
+"cabeza_nueva": "Halzinbar Sentov"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Cognitive and Behavioral Neurology",
+"valor": "cognitive neuroscience",
+"donantes": [
+"Younger Dryas impact hypothesis",
+"pragmatics",
+"organocobalt compound",
+"jurisprudence"
+],
+"donantes_inv": [
+"Topic Continuity in Discourse",
+"Plan S for Shock: Science. Shock. Solution. Speed.",
+"Occupational Outlook Handbook",
+"Climatic variations"
+],
+"valor_nuevo": "Nuwesmi Yriruqui",
+"cabeza_nueva": "Rudakbar Creelami"
+},
+{
+"tipo": "software_datos",
+"propiedad": "subclass of",
+"cabeza": "branch and bound",
+"valor": "algorithmic paradigm",
+"donantes": [
+"response to organonitrogen compound",
+"response to catecholamine",
+"anatomical structure maturation",
+"transition metal ion homeostasis"
+],
+"donantes_inv": [
+"regulation of arachidonic acid secretion",
+"viral head-tail joining",
+"virus tail, tube",
+"regulation of neurotrophin production"
+],
+"valor_nuevo": "Mormi Halven",
+"cabeza_nueva": "Puloshru Venyri"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "associated electoral district",
+"cabeza": "26 High Street, Jedburgh",
+"valor": "Berwickshire, Roxburgh and Selkirk",
+"donantes": [
+"Banbury",
+"Dwyfor Meirionnydd",
+"North East Fife",
+"West Dorset"
+],
+"donantes_inv": [
+"Fishing Temple, River Deveron, Duff House",
+"Saevar Howe, mound 370m SSW of Linkshouse",
+"Grove Cinema",
+"Stanton Surgery"
+],
+"valor_nuevo": "Elatovela Felviqui",
+"cabeza_nueva": "Wesfel Oshka"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of RNA polymerase II regulatory region sequence-specific DNA binding",
+"valor": "regulation of transcription regulatory region DNA binding",
+"donantes": [
+"geospatial scientist",
+"protein-macromolecule adaptor activity",
+"plastid stroma",
+"colonial administrator"
+],
+"donantes_inv": [
+"PX4 autopilot",
+"short-chain fatty acid import",
+"meiotic centromeric cohesion protection",
+"nephron tubule formation"
+],
+"valor_nuevo": "Barwesdak Ithalqui",
+"cabeza_nueva": "Senqui Morgraamb"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Montana Office of Rural Health and Area Health Education Center",
+"valor": "Montana State University",
+"donantes": [
+"Bernstein Network",
+"Steel Authority of India Limited",
+"Department of Computer Science, University of Oxford",
+"E Ink Holdings"
+],
+"donantes_inv": [
+"HSBC Turkey",
+"Bernstein Center for Computational Neuroscience Berlin",
+"Radioactive Isotope Beam Factory",
+"National Institute for Organ, Tissue and Cells Donation and Transplantation"
+],
+"valor_nuevo": "Pulwesmi Elasor",
+"cabeza_nueva": "Dresorqui Mihalpe"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "place of publication",
+"cabeza": "Johann Theodor Jablonski: Allgemeines Lexikon der Künste und Wissenschaften",
+"valor": "Leipzig",
+"donantes": [
+"Boise",
+"Aurangabad",
+"Changchun",
+"Syracuse"
+],
+"donantes_inv": [
+"Liberia Herald",
+"The Fallacy of Shiite Belief",
+"Lunar Surface Data Book 5 (00N/20E)",
+"The Giant Cue Ball: Efficient Relaxation of Ceres' Craters"
+],
+"valor_nuevo": "Viit Itlosor",
+"cabeza_nueva": "Credre Oshpeosh"
+},
+{
+"tipo": "software_datos",
+"propiedad": "developer",
+"cabeza": "BBC Store",
+"valor": "BBC Worldwide",
+"donantes": [
+"BAE Systems",
+"Sony Group",
+"Microsoft",
+"SLAC National Accelerator Laboratory"
+],
+"donantes_inv": [
+"Apache Reusable Dialog Components Taglib",
+"Apache Beehive",
+"WAsP",
+"Simons' BASIC"
+],
+"valor_nuevo": "Jopul Joqui",
+"cabeza_nueva": "Kagra Wespul"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "Migration Theory and the Migration Period",
+"valor": "Building on the Past: Papers Celebrating 150 Years of the Royal Archaeological Institute",
+"donantes": [
+"IFAC Proceedings Volumes",
+"The Archaeology Of Medieval Europe: Volume 2: Twelfth To Sixteenth Centuries",
+"Mastering Endo-Laparoscopic and Thoracoscopic Surgery",
+"The Unfinished World and Other Stories"
+],
+"donantes_inv": [
+"North American species of Festuca",
+"The Deepening Liturgical Crisis",
+"Comets and Prebiotic Organic Molecules on Early Earth",
+"The Statistical Department"
+],
+"valor_nuevo": "Dredre Venpetov",
+"cabeza_nueva": "Nuoshlo Grabarru"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Christian Democratic Labour Union of Germany",
+"valor": "Berlin",
+"donantes": [
+"Bogotá",
+"Halifax",
+"Karachi",
+"Bauchi State"
+],
+"donantes_inv": [
+"Analogix",
+"VIGO PUBLIC realitní I. Podfond",
+"Vip Italia",
+"Prometal"
+],
+"valor_nuevo": "Bardreela Wesosh",
+"cabeza_nueva": "Elawes Morpulsen"
+},
+{
+"tipo": "software_datos",
+"propiedad": "main subject",
+"cabeza": "Hate Symbols Database",
+"valor": "hate speech",
+"donantes": [
+"global warming",
+"Carrie Nation",
+"intellectual disability",
+"César A. Récluz"
+],
+"donantes_inv": [
+"hymnary.org",
+"Climatic variations",
+"Death by Black Hole",
+"Carry Nation"
+],
+"valor_nuevo": "Barka Sentov",
+"cabeza_nueva": "Felwes Mipuldak"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Clark County Public Works",
+"valor": "Las Vegas",
+"donantes": [
+"Tirana",
+"Farnborough",
+"New Brunswick",
+"Dubai"
+],
+"donantes_inv": [
+"UAE University Department of Psychology and Counseling",
+"Société Industrielle et Minière du Congo Oriental",
+"XPANCEO",
+"University of Delaware Department of Chemistry and Biochemistry"
+],
+"valor_nuevo": "Gradre Sorsorosh",
+"cabeza_nueva": "Lotal Drefelwes"
+},
+{
+"tipo": "software_datos",
+"propiedad": "publisher",
+"cabeza": "ProKinO: Protein Kinase Ontology Browser",
+"valor": "University of Georgia",
+"donantes": [
+"United States Geological Survey",
+"Steklov Institute of Mathematics",
+"American Statistical Association",
+"Taylor & Francis"
+],
+"donantes_inv": [
+"Physics of Particles and Nuclei Letters",
+"Custos e @gronegócio Online",
+"Revista Digital de Iconografía Medieval",
+"Revista Direito Ambiental e Sociedade"
+],
+"valor_nuevo": "Soramb Petal",
+"cabeza_nueva": "Wesquisor Miambmor"
+},
+{
+"tipo": "persona",
+"propiedad": "residence",
+"cabeza": "Rima Sultana Rimu",
+"valor": "Cox's Bazar",
+"donantes": [
+"Mukaihara",
+"Helsinki",
+"Bengaluru",
+"Barcelona"
+],
+"donantes_inv": [
+"Swadhin Kumar Mandal",
+"Subi Jacob George",
+"Rosemary Odinga",
+"Montagu Burrows"
+],
+"valor_nuevo": "Venfelit Ambjoela",
+"cabeza_nueva": "Pulmiqui Pultov"
+},
+{
+"tipo": "publicacion",
+"propiedad": "author",
+"cabeza": "On the anatomy of vertebrates ..",
+"valor": "Richard Owen",
+"donantes": [
+"José da Silva Mendes Leal",
+"Fayçal Rahmoune",
+"Washington State Department of Labor and Industries",
+"Mark Kac"
+],
+"donantes_inv": [
+"Western blue flag conservation program : 3-year summary report",
+"Model Archive of Pahute Mesa-Oasis Valley Groundwater Flow Model",
+"Fabrication and Characterization of Micro-membrane GaN Light Emitting Diodes",
+"PRRI April 2019 Survey"
+],
+"valor_nuevo": "Mormiwes Mizin",
+"cabeza_nueva": "Mormivi Senyrihal"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Marxism, Freedom and the State",
+"valor": "Mikhail Bakunin",
+"donantes": [
+"William Smellie",
+"Donald Harden",
+"Herbert Marcuse",
+"William D. Sellers"
+],
+"donantes_inv": [
+"Call of the Wild",
+"Notes on fishes of the genus Brachygobius",
+"Extrasensory Perception",
+"Small Groups Survey, 1991 (Individuals Not in Groups Sample)"
+],
+"valor_nuevo": "Loquizin Sordak",
+"cabeza_nueva": "Feldak Johal"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Land Bond (Drawings of 6% Land Bonds) Regulations, 1963",
+"valor": "Land Bond Act, 1934",
+"donantes": [
+"Industrial Research and Standards Act, 1946",
+"Wildlife Act, 1976",
+"Diseases of Animals Act, 1966",
+"Ministers and Secretaries (Amendment) Act, 1939"
+],
+"donantes_inv": [
+"Home-Grown Wheat (National Percentage For Cereal Year 1961-62) Order, 1960",
+"Wildlife (Wild Mammals) (Open Seasons) (Amendment) Order, 1986",
+"European Union (Fluorinated Greenhouse Gas) (Amendment) Regulations 2020",
+"Local Financial Year (Adaptation) Order, 1979"
+],
+"valor_nuevo": "Talsor Talgra",
+"cabeza_nueva": "Barvi Venqui"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Parks and Wildlife Commission of the Northern Territory",
+"valor": "Palmerston",
+"donantes": [
+"Malmö",
+"Reisterstown",
+"New Brunswick",
+"Damascus"
+],
+"donantes_inv": [
+"Mohammed V Foundation for Solidarity",
+"University of Iowa Department of Molecular Physiology and Biophysics",
+"International Centre for Theoretical Physics",
+"Dialogue Franco-Russe"
+],
+"valor_nuevo": "Rudak Daksen",
+"cabeza_nueva": "Felelahal Senelaela"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "cardiac pacemaker cell development",
+"valor": "cardiac muscle cell development",
+"donantes": [
+"aerobic electron transport chain",
+"foreign minister",
+"regulation of muscle system process",
+"rare hemorrhagic disorder due to a constitutional coagulation factors defect"
+],
+"donantes_inv": [
+"regulation of RNA polymerase II regulatory region sequence-specific DNA binding",
+"midbrain-hindbrain boundary maturation during neural plate development",
+"regulation of compound eye pigmentation",
+"Internal Security Act, 1982"
+],
+"valor_nuevo": "Barvigra Pulven",
+"cabeza_nueva": "Wesquiyri Morgra"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "Member of the Metropolitan Corporation Lahore",
+"valor": "council member",
+"donantes": [
+"cell fate commitment",
+"vestibular gland cell",
+"anatomical structure maturation",
+"respiratory tube development"
+],
+"donantes_inv": [
+"endocardial cushion development",
+"Mayor of Elk Grove, California",
+"regulation of heart contraction",
+"epithelial cell migration involved in proximal tubule morphogenesis"
+],
+"valor_nuevo": "Rudakfel Dremi",
+"cabeza_nueva": "Tovdre Tovquiyri"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "response to epinephrine",
+"valor": "response to catecholamine",
+"donantes": [
+"magistrate",
+"aircraft component",
+"agriculture minister",
+"regulation of blood circulation"
+],
+"donantes_inv": [
+"DNA-binding transcription factor activity",
+"iron ion homeostasis",
+"regulation of metal ion transport",
+"Minister for Industry, Trade, Foreign Affairs and Climate"
+],
+"valor_nuevo": "Senven Mornubar",
+"cabeza_nueva": "Zintal Venpe"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "endoribonuclease inhibitor activity",
+"valor": "negative regulation of endoribonuclease activity",
+"donantes": [
+"culmination involved in sorocarp development",
+"United States Navy",
+"posterior lateral line system development",
+"Cabinet of Myanmar"
+],
+"donantes_inv": [
+"Naval Medical Research Center",
+"skeletal muscle fiber development",
+"Cardiovascular Research Institute of Maastricht",
+"sorocarp stalk development"
+],
+"valor_nuevo": "Daknu Puldre",
+"cabeza_nueva": "Dakjozin Dreittal"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "Attorney-General of Fiji",
+"valor": "attorney general",
+"donantes": [
+"regulation of ribosomal subunit export from nucleus",
+"response to amino acid",
+"mayor of a place in Chile",
+"aircraft component"
+],
+"donantes_inv": [
+"meiotic centromeric cohesion protection",
+"establishment of dense core granule localization",
+"cerebellar Purkinje cell layer maturation",
+"mayor of Moral de Calatrava"
+],
+"valor_nuevo": "Ittovdak Jovi",
+"cabeza_nueva": "Loela Crefelsen"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of metal ion transport",
+"valor": "regulation of ion transport",
+"donantes": [
+"respiratory tube development",
+"mayor of a place in California",
+"regulation of eye pigmentation",
+"industrial or commercial public establishment or body"
+],
+"donantes_inv": [
+"regulation of RNA polymerase II regulatory region sequence-specific DNA binding",
+"cyanelle stroma",
+"Member of the Metropolitan Corporation Lahore",
+"urea homeostasis"
+],
+"valor_nuevo": "Kaoshnu Ruqui",
+"cabeza_nueva": "Kavenyri Crequi"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Asphalt Plant, Khuzestan",
+"valor": "Jahangiri Rural District",
+"donantes": [
+"Bloemfontein",
+"Melbourne",
+"Kumarkhali Upazila",
+"Dorudfaraman Rural District"
+],
+"donantes_inv": [
+"Ain el-Muftilla",
+"Shilaidaha Kachharibari",
+"Hajjiabad Base",
+"Divine Hospital Ibadan"
+],
+"valor_nuevo": "Ambamb Talqui",
+"cabeza_nueva": "Gravi Mielamor"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "heritage designation",
+"cabeza": "Casa Cuartel de la Guardia Civil",
+"valor": "Bien de Interés Cultural",
+"donantes": [
+"heritage monument in Lower Saxony",
+"Rijksmonument",
+"Italian national heritage",
+"Grade II listed building"
+],
+"donantes_inv": [
+"109, Brighton Road",
+"Premises Of Richard Law Fruit Shops And Flat Above",
+"Livestock Range with Loft, Crwys Farm",
+"24 And 25, Market Place"
+],
+"valor_nuevo": "Fellosor Ambcregra",
+"cabeza_nueva": "Yriit Felpul"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "creator",
+"cabeza": "Harmony in Blue and Violet: Miss Finch c.1885  (oil)",
+"valor": "James McNeill Whistler",
+"donantes": [
+"Mark Rothko",
+"Center for LGBTQ and Gender Studies in Religion",
+"Garegin Davtyan",
+"Julian Seward"
+],
+"donantes_inv": [
+"Composite Series I",
+"Skizze mit liegendet Figur, Bezeichnung (Figure Reclining) [p. 17]",
+"kqueue",
+"Interior of the Choir of Saint Bavo's Church at Haarlem"
+],
+"valor_nuevo": "Sensor Sorpe",
+"cabeza_nueva": "Zinven Oshzinnu"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "epithalamus development",
+"valor": "diencephalon development",
+"donantes": [
+"cartilage development",
+"negative regulation of endoribonuclease activity",
+"X Window System",
+"state property"
+],
+"donantes_inv": [
+"aortic valve formation",
+"chondrocyte differentiation",
+"operant conditioning",
+"Come Get To This"
+],
+"valor_nuevo": "Venwesit Jogra",
+"cabeza_nueva": "Lobarqui Pulmi"
+},
+{
+"tipo": "persona",
+"propiedad": "residence",
+"cabeza": "Ilkka Niiniluoto",
+"valor": "Helsinki",
+"donantes": [
+"India",
+"Nairobi",
+"Portobello",
+"Bengaluru"
+],
+"donantes_inv": [
+"Milagros García i Bonafé",
+"Lisa Cylinder",
+"Terufumi Sasaki",
+"Khanindra Chandra Chowdhury"
+],
+"valor_nuevo": "Nupelo Wesdak",
+"cabeza_nueva": "Pulqui Granutov"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "main subject",
+"cabeza": "Topic Continuity in Discourse",
+"valor": "pragmatics",
+"donantes": [
+"César A. Récluz",
+"astronomy",
+"political science",
+"gambling"
+],
+"donantes_inv": [
+"Organometallic Atom Transfer Radical Polymerisation Initiators",
+"Social construction, discourse and outdoor instruction assessment",
+"Climatic change, agriculture and settlement",
+"innovation lab"
+],
+"valor_nuevo": "Nuyrisor Dreoshtov",
+"cabeza_nueva": "Bartaldre Jozin"
+},
+{
+"tipo": "organizacion",
+"propiedad": "founded by",
+"cabeza": "House of Yahweh",
+"valor": "Yisrayl Hawkins",
+"donantes": [
+"Edwin Markham",
+"Fabrizio Ferri",
+"Laljibhai Patel",
+"Erhard Bartsch"
+],
+"donantes_inv": [
+"National Union of Greece",
+"Arts and Crafts Exhibition Society",
+"Klyachkin clinics",
+"Vyysky plant"
+],
+"valor_nuevo": "Loru Pultalbar",
+"cabeza_nueva": "Elazinmi Vilope"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of compound eye pigmentation",
+"valor": "regulation of eye pigmentation",
+"donantes": [
+"regulation of spore-bearing organ development",
+"missense mutation",
+"epithelial cell migration involved in nephron tubule morphogenesis",
+"regulation of vesicle-mediated transport"
+],
+"donantes_inv": [
+"response to raffinose",
+"mayor of Frades de la Sierra",
+"Maveli Stores",
+"chromosome abnormality"
+],
+"valor_nuevo": "Yriruka Itelanu",
+"cabeza_nueva": "Ruosh Puljoven"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "axial mesoderm structural organization",
+"valor": "axial mesoderm morphogenesis",
+"donantes": [
+"vagus nerve morphogenesis",
+"cardiac muscle cell differentiation",
+"Cabinet of Liechtenstein",
+"heart valve development"
+],
+"donantes_inv": [
+"eukaryotic translation initiation factor 4F complex",
+"meiotic chromosome segregation",
+"denkXweb",
+"Science Studies, Montana College of Agriculture and Mechanic Arts. Botany"
+],
+"valor_nuevo": "Pequifel Sennu",
+"cabeza_nueva": "Pulmor Halgratal"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "Use of Community Metadata: Public Policy Research in PolicyArchive",
+"valor": "Dublin Core Metadata Initiative",
+"donantes": [
+"Bureau of Medicine and Surgery",
+"University of the Arts London",
+"Hodder & Stoughton",
+"Elsevier BV"
+],
+"donantes_inv": [
+"répertoire géographique des communes",
+"The Misfit Economy",
+"Applied and Computational Harmonic Analysis",
+"Digital Policy, Regulation and Governance"
+],
+"valor_nuevo": "Sengratov Dakrulo",
+"cabeza_nueva": "Yridre Wesru"
+},
+{
+"tipo": "publicacion",
+"propiedad": "main subject",
+"cabeza": "Computational Methods for Finding Infinitesimal Homeostasis in Biological Models",
+"valor": "applied mathematics",
+"donantes": [
+"climate change",
+"economics of open science",
+"entomology",
+"neurips21-self-supervised-bug-detection-and-repair"
+],
+"donantes_inv": [
+"Hrvatska Revija za Rehabilitacijska Istraživanja",
+"HockeyLive",
+"Real-time and video exposure monitoring during cellulose insulation applications",
+"U.S. Trade Internet System"
+],
+"valor_nuevo": "Pecre Itlo",
+"cabeza_nueva": "Creruosh Itdre"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "municipal secretary of Ilhéus",
+"valor": "Ilhéus City Hall",
+"donantes": [
+"somatic motor neuron fate commitment",
+"O-antigen ligase-related",
+"Platelet homeostasis",
+"cardiac muscle cell differentiation"
+],
+"donantes_inv": [
+"cardiac muscle cell proliferation",
+"Chairman of Iseyin local government",
+"formation of translation initiation ternary complex",
+"equilibrioception"
+],
+"valor_nuevo": "Sentov Senmi",
+"cabeza_nueva": "Ambzin Morfel"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Kazimir Abramovich",
+"valor": "Kyiv",
+"donantes": [
+"Gwalior",
+"Bellflower",
+"Cheltenham",
+"Liberec"
+],
+"donantes_inv": [
+"Dagoberto Del Carmen Lefiqueo Antilef",
+"John Bryan",
+"Antonín Hyška",
+"Johann Christoph Grise"
+],
+"valor_nuevo": "Zinqui Yrisormor",
+"cabeza_nueva": "Tovquilo Talpulvi"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Louise Toupin",
+"valor": "Quebec",
+"donantes": [
+"Argentina",
+"Martuni Province",
+"Kaliningrad",
+"Detroit"
+],
+"donantes_inv": [
+"Janko Tišler",
+"Xavier-Philippe Gruwez",
+"George W. Jackson",
+"Natacha Fabbri"
+],
+"valor_nuevo": "Barcre Tovela",
+"cabeza_nueva": "Yripe Midre"
+},
+{
+"tipo": "software_datos",
+"propiedad": "main subject",
+"cabeza": "Paleobiology Database",
+"valor": "paleontology",
+"donantes": [
+"Yu Qian",
+"Younger Dryas impact hypothesis",
+"wireless sensor network",
+"neurips21-self-supervised-bug-detection-and-repair"
+],
+"donantes_inv": [
+"LINCS small molecules database",
+"Climatic variations",
+"HockeyLive",
+"Polyelectrolyte Brushes"
+],
+"valor_nuevo": "Nugramor Pulka",
+"cabeza_nueva": "Gradakdre Grait"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "Synthesis of nascent polypeptide containing signal sequence",
+"valor": "SRP-dependent cotranslational protein targeting to membrane",
+"donantes": [
+"cellular response to transforming growth factor beta stimulus",
+"myoblast differentiation",
+"O-antigen ligase-related",
+"Translesion synthesis by Y family DNA polymerases bypasses lesions on DNA template"
+],
+"donantes_inv": [
+"Minister of Domestic Trade of Cuba",
+"metanephric pyramids development",
+"neural tube closure",
+"E2-like conjugating enzyme YLL042C"
+],
+"valor_nuevo": "Nugra Sorela",
+"cabeza_nueva": "Barfel Morkawes"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "historic county",
+"cabeza": "13 And 14, Load Street",
+"valor": "Worcestershire",
+"donantes": [
+"Kirkcudbrightshire",
+"Caernarfonshire",
+"Roxburghshire",
+"Selkirkshire"
+],
+"donantes_inv": [
+"Penrhiwceiber Institute and Community Hall",
+"32 High Street, Selkirk",
+"Legal and General, 23 Charlotte Square, Edinburgh",
+"Taleifion"
+],
+"valor_nuevo": "Drefel Petovyri",
+"cabeza_nueva": "Morzin Gravi"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "developer",
+"cabeza": "Farming Simulator 2009",
+"valor": "Giants Software",
+"donantes": [
+"GNU Project",
+"Microsoft",
+"Sun Microsystems",
+"Apple"
+],
+"donantes_inv": [
+"Model for Prediction Across Scales",
+"Rational Rhapsody",
+"Windows Spotlight",
+"Application Request Routing"
+],
+"valor_nuevo": "Minufel Talbarnu",
+"cabeza_nueva": "Ambcre Puloshsor"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Archaeological site of Aliki",
+"valor": "Thasos Municipality",
+"donantes": [
+"Cuenca Province",
+"Chișinău",
+"Anambra State",
+"Kampala"
+],
+"donantes_inv": [
+"Case di Via Grado",
+"All Nigeria Foundation Hospital",
+"Rajiv Gandhi National University of Law",
+"JILA"
+],
+"valor_nuevo": "Sorgra Sorela",
+"cabeza_nueva": "Lomiit Grafel"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "George W. Jackson",
+"valor": "Detroit",
+"donantes": [
+"João Monlevade",
+"Dresden",
+"Santa Fe",
+"Taranto"
+],
+"donantes_inv": [
+"Muhammad ibn Sahnun",
+"Marco Fassadoni",
+"Alfredo Cruz Prados",
+"Susan Pickett"
+],
+"valor_nuevo": "Jodak Vendredre",
+"cabeza_nueva": "Yribarvi Cretal"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "publisher",
+"cabeza": "A Different Light: First Photographs of Aotearoa",
+"valor": "Auckland University Press",
+"donantes": [
+"United States Census Bureau",
+"United States Geological Survey",
+"Academic Publishing House",
+"American Chemical Society"
+],
+"donantes_inv": [
+"volcanoes.usgs.gov",
+"Planning a Platform for Learning Linked Data",
+"International Journal of Nanotechnology",
+"Litchfield Ledger"
+],
+"valor_nuevo": "Peelaamb Itvibar",
+"cabeza_nueva": "Yribarnu Crefelven"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "creator",
+"cabeza": "Drei Skizzen mit Bezeichnung (Three Sketches with Inscriptions) [p. 4]",
+"valor": "Max Beckmann",
+"donantes": [
+"Goran S. Milovanović",
+"Richard Diebenkorn",
+"Sol LeWitt",
+"Elihu Vedder"
+],
+"donantes_inv": [
+"Search Engine Watch",
+"Mt. Colognola - Sheep Grazing on Lake Trasimeno",
+"From \"Le crepuscule des nymphes\" (illustration, page 37)",
+"GNUbatch"
+],
+"valor_nuevo": "Elahal Mitov",
+"cabeza_nueva": "Zinhallo Pepul"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Transport Malta",
+"valor": "Valletta",
+"donantes": [
+"Berlin",
+"Pune",
+"Telde",
+"Buenos Aires"
+],
+"donantes_inv": [
+"Security Intelligence Review Committee",
+"Marquette University Department of Psychology",
+"Dialogue Franco-Russe",
+"Instadoctor.gr"
+],
+"valor_nuevo": "Gratalpul Itlo",
+"cabeza_nueva": "Gragra Tovven"
+},
+{
+"tipo": "persona",
+"propiedad": "educated at",
+"cabeza": "Agnieszka Sobczyk-Kopcioł",
+"valor": "Warsaw University of Life Sciences",
+"donantes": [
+"University of Silesia in Katowice",
+"University of Santo Tomas",
+"Indian Institute of Technology Bombay",
+"Griffith University"
+],
+"donantes_inv": [
+"Joosep Nõu",
+"Heather J Green",
+"Shaul Harel",
+"Prabhat Ranjan Pujahari"
+],
+"valor_nuevo": "Barlo Quiviela",
+"cabeza_nueva": "Taldrenu Soroshhal"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "response to amine",
+"valor": "response to organonitrogen compound",
+"donantes": [
+"application",
+"response to carbohydrate",
+"fatty acid transport",
+"missense mutation"
+],
+"donantes_inv": [
+"proteasome regulatory particle, base subcomplex",
+"regulation of compound eye pigmentation",
+"aldehyde-lyase activity",
+"regulation of cell proliferation involved in tissue homeostasis"
+],
+"valor_nuevo": "Sorpe Taldaktal",
+"cabeza_nueva": "Sordre Daksen"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Green Warriors of Norway",
+"valor": "Bergen",
+"donantes": [
+"Rome",
+"Carlisle",
+"Las Vegas",
+"Paris"
+],
+"donantes_inv": [
+"Nadace Jedličkova ústavu",
+"National Civil Aviation Agency of Brazil",
+"Toshiba Nanoanalysis Corporation",
+"Christian Democratic Labour Union of Germany"
+],
+"valor_nuevo": "Crevizin Gravendak",
+"cabeza_nueva": "Nuyrimor Pewes"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Société Industrielle et Minière du Congo Oriental",
+"valor": "City of Brussels",
+"donantes": [
+"Sydney",
+"Ta' Xbiex",
+"Hartford",
+"Rome"
+],
+"donantes_inv": [
+"Hewlett Packard Labs",
+"Parks and Wildlife Commission of the Northern Territory",
+"Etablissement public d'aménagement de Paris-Saclay",
+"Nomad Health"
+],
+"valor_nuevo": "Mirudre Barcreka",
+"cabeza_nueva": "Kayridak Felela"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Solar do Barão das Laranjeiras, Rua Direita das Laranjeiras",
+"valor": "São Pedro",
+"donantes": [
+"Štip Municipality",
+"Russian Empire",
+"Fontanellato",
+"Phoenix"
+],
+"donantes_inv": [
+"Bali Glacier",
+"Divine Hospital Ibadan",
+"Oglala Civil Rights Organization",
+"Calvary Comprehensive Secondary School Umunze"
+],
+"valor_nuevo": "Wesmiit Micreamb",
+"cabeza_nueva": "Talzinit Mortovzin"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "operator",
+"cabeza": "Hotel NH Tango",
+"valor": "NH Hotel Group",
+"donantes": [
+"Museum of the History of Polish Jews",
+"NHS Devon Integrated Care Board",
+"German Federal Archives",
+"Literarisches Colloquium Berlin"
+],
+"donantes_inv": [
+"Wycliffe Surgery",
+"OYO 49576 Hotel Divine",
+"Scientific Database of China Plant Species",
+"National Hydrography Dataset"
+],
+"valor_nuevo": "Vensor Zinkadak",
+"cabeza_nueva": "Quiwestal Halsen"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "part of",
+"cabeza": "Federal Minister of Power",
+"valor": "Federal Cabinet of Pakistan",
+"donantes": [
+"primary neural tube formation",
+"carbon fixation",
+"mesonephros development",
+"Cabinet of Myanmar"
+],
+"donantes_inv": [
+"prostate epithelial cord elongation",
+"Manipulation of host energy metabolism",
+"E2-like conjugating enzyme YLL042C",
+"Naval Medical Research Center"
+],
+"valor_nuevo": "Ambmorsor Nuoshwes",
+"cabeza_nueva": "Pevenvi Barvenjo"
+},
+{
+"tipo": "persona",
+"propiedad": "place of birth",
+"cabeza": "Chandrima Shaha",
+"valor": "Kolkata",
+"donantes": [
+"Szeged",
+"Kranj",
+"Plzeň",
+"Argentina"
+],
+"donantes_inv": [
+"Burghardt Wittig",
+"Rainer O. Neugebauer",
+"Muhammad ibn Sahnun",
+"Janko Tišler"
+],
+"valor_nuevo": "Oshkamor Jodrejo",
+"cabeza_nueva": "Barru Vensor"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "establishment of dense core granule localization",
+"valor": "establishment of secretory granule localization",
+"donantes": [
+"regulation of DNA binding",
+"epithelial cell migration involved in nephron tubule morphogenesis",
+"positive regulation of cell population proliferation",
+"regulation of gonad development"
+],
+"donantes_inv": [
+"cell wall integrity MAPK cascade",
+"response to raffinose",
+"regulation of arachidonic acid secretion",
+"Mayor of Elk Grove, California"
+],
+"valor_nuevo": "Talvi Pecre",
+"cabeza_nueva": "Drefel Nuoshit"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "nephron tubule formation",
+"valor": "embryonic epithelial tube formation",
+"donantes": [
+"aerobic electron transport chain",
+"regulation of gonad development",
+"maintenance of meiotic sister chromatid cohesion, centromeric",
+"carbon-carbon lyase activity"
+],
+"donantes_inv": [
+"Member of the Metropolitan Corporation Lahore",
+"bronchiole development",
+"regulation of male gonad development",
+"cargo adaptor activity"
+],
+"valor_nuevo": "Kait Dakdreamb",
+"cabeza_nueva": "Halgragra Vidre"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "headquarters location",
+"cabeza": "MAI JAMA'A CLINIC, (BAUCHI)",
+"valor": "Bauchi State",
+"donantes": [
+"Amsterdam",
+"Bălți",
+"Buenos Aires",
+"Paris"
+],
+"donantes_inv": [
+"Centre for Environmental and Geographic Information Services",
+"Ukrainian Supreme Liberation Council",
+"Electricity Supply Commission of Malawi",
+"National Statistics and Information Authority"
+],
+"valor_nuevo": "Yriqui Miqui",
+"cabeza_nueva": "Nunu Halpulela"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Urban mansion, Alexei Șciusev, 47",
+"valor": "Chișinău",
+"donantes": [
+"Melbourne",
+"Montgomery County",
+"Boulder",
+"Nivan Rural District"
+],
+"donantes_inv": [
+"Oglala Civil Rights Organization",
+"El Cafetal",
+"Hari parbat Glacier",
+"Fundo para o Desenvolvimento Tecnológico das Telecomunicações"
+],
+"valor_nuevo": "Venfel Zinmicre",
+"cabeza_nueva": "Grayricre Taldak"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "transcription factor TFIIE complex",
+"valor": "RNA polymerase II, holoenzyme",
+"donantes": [
+"T-helper cell differentiation",
+"interphase",
+"Government of Croatia",
+"Interleukin-27 signaling"
+],
+"donantes_inv": [
+"chemokine-mediated signaling pathway",
+"LETM1 exchanges protons (mitochondrial intermembrane space) for calcium (mitochondrial matrix)",
+"Research and teaching corpus of spoken German",
+"cardiac muscle cell proliferation"
+],
+"valor_nuevo": "Josor Talqui",
+"cabeza_nueva": "Itelait Nudakela"
+},
+{
+"tipo": "organizacion",
+"propiedad": "parent organization",
+"cabeza": "Dardanelles Fortified Area Command",
+"valor": "military of the Ottoman Empire",
+"donantes": [
+"Chinese Academy of Sciences",
+"Montana State University",
+"888 Holdings",
+"Vallibel Finance"
+],
+"donantes_inv": [
+"Kuwait Investment Authority",
+"Division of Program Coordination Planning and Strategic Initiatives",
+"Network Control Center Data System",
+"Institute of Nanostructured Materials"
+],
+"valor_nuevo": "Kaela Zinsorven",
+"cabeza_nueva": "Mifel Taltovosh"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "meiotic centromeric cohesion protection",
+"valor": "maintenance of meiotic sister chromatid cohesion, centromeric",
+"donantes": [
+"fatty acid transport",
+"viral process",
+"anatomical structure maturation",
+"anatomical structure arrangement"
+],
+"donantes_inv": [
+"striatum development",
+"Mayor of Hot Springs, Arkansas",
+"branch and bound",
+"cone matrix sheath"
+],
+"valor_nuevo": "Kasor Barmorosh",
+"cabeza_nueva": "Crezinhal Jobar"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Dulcinea Solar Plant",
+"valor": "Cuenca Province",
+"donantes": [
+"Giza Governorate",
+"Osh Region",
+"Mashhad",
+"Boulder"
+],
+"donantes_inv": [
+"Qasr el-Baramuni",
+"Ain Gallaw",
+"Wannasorn Tower",
+"Shilaidaha Kachharibari"
+],
+"valor_nuevo": "Sormor Katovmor",
+"cabeza_nueva": "Nunu Loru"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Brekke",
+"valor": "Bodø Municipality",
+"donantes": [
+"Kings County",
+"Nivan Rural District",
+"Jahangiri Rural District",
+"Beitou District"
+],
+"donantes_inv": [
+"Qasr el-Baramuni",
+"Souvenez-Vous, reverse",
+"Ain Gallaw",
+"Manganello sanctuary"
+],
+"valor_nuevo": "Baryri Itmigra",
+"cabeza_nueva": "Ambsenbar Oshyri"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "hypoglossal nerve structural organization",
+"valor": "hypoglossal nerve morphogenesis",
+"donantes": [
+"trochlear nerve development",
+"Ilhéus City Hall",
+"viral entry into host cell",
+"Deliberative Council of San Miguel Partido"
+],
+"donantes_inv": [
+"forebrain dorsal/ventral pattern formation",
+"heart valve cell differentiation",
+"Elastic fibre formation",
+"myoblast fate commitment"
+],
+"valor_nuevo": "Petal Wesnulo",
+"cabeza_nueva": "Quidak Elajobar"
+},
+{
+"tipo": "lugar_estructura",
+"propiedad": "located in the administrative territorial entity",
+"cabeza": "Tri-Service General Hospital Songshan Branch",
+"valor": "Songshan District",
+"donantes": [
+"Kampala",
+"Jahangiri Rural District",
+"Bloemfontein",
+"Amarusio Municipality"
+],
+"donantes_inv": [
+"Huemul Glacier",
+"Calvary Comprehensive Secondary School Umunze",
+"Souvenez-Vous, reverse",
+"Equality Arizona"
+],
+"valor_nuevo": "Yrikaamb Yrijonu",
+"cabeza_nueva": "Ambosh Viitsen"
+},
+{
+"tipo": "persona",
+"propiedad": "place of death",
+"cabeza": "Jose  Norambuena Canales",
+"valor": "Valdivia",
+"donantes": [
+"Charlotte",
+"Rottweil",
+"Kiruna",
+"Lisbon"
+],
+"donantes_inv": [
+"Petras Ilgūnas",
+"Robert J. Battista",
+"Antonín Hyška",
+"Dagoberto Del Carmen Lefiqueo Antilef"
+],
+"valor_nuevo": "Dreamb Ruosh",
+"cabeza_nueva": "Sorelami Barpul"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "hair follicle placode formation",
+"valor": "hair follicle development",
+"donantes": [
+"EGR2 and SOX10-mediated initiation of Schwann cell myelination",
+"SRP-dependent cotranslational protein targeting to membrane",
+"cardiac muscle cell differentiation",
+"gene silencing by miRNA"
+],
+"donantes_inv": [
+"somatotropin secreting cell differentiation",
+"TypeI restriction modification DNA specificity protein BT_4541",
+"Deputy Prime Minister of Oman",
+"vulval cell fate commitment"
+],
+"valor_nuevo": "Barsorcre Mortovfel",
+"cabeza_nueva": "Talmortal Tovqui"
+},
+{
+"tipo": "software_datos",
+"propiedad": "main subject",
+"cabeza": "Database of Japanese Intellectual History",
+"valor": "Japanese philosophy",
+"donantes": [
+"electrical engineering",
+"Catalan literature",
+"pragmatics",
+"existentialism"
+],
+"donantes_inv": [
+"Associació d'Escriptors en Llengua Catalana - author pages",
+"Stanford Sentiment Treebank",
+"Constituency data: GPs and GP practices",
+"The Journal of Humanistic Counseling"
+],
+"valor_nuevo": "Barzin Grapejo",
+"cabeza_nueva": "Talpe Talfelnu"
+},
+{
+"tipo": "software_datos",
+"propiedad": "owned by",
+"cabeza": "List of prices of medicinal products marketed in Italian Republic",
+"valor": "Italian Medicines Agency",
+"donantes": [
+"Sports Reference, LLC",
+"Madrid City Council",
+"TotalEnergies",
+"National Amusements"
+],
+"donantes_inv": [
+"Women in Refrigerators",
+"Cloud Datalab",
+"Statistics and public policy (Philadelphia, Pa.)",
+"Diegesis: Interdisziplinäres E-Journal für Erzählforschung"
+],
+"valor_nuevo": "Ambpuldak Mibar",
+"cabeza_nueva": "Crelo Morfelnu"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "Tail fiber assembly protein STY3692",
+"valor": "Bacteriophage T4, Gp38, tail fibre assembly",
+"donantes": [
+"Interleukin-27 signaling",
+"carbon fixation",
+"Cabinet of Cuba",
+"RNA 3'-end processing"
+],
+"donantes_inv": [
+"photosynthetic NADP+ reduction",
+"councilor of Merlo Partido",
+"spermatid nucleus differentiation",
+"Prokaryotic membrane lipoprotein lipid"
+],
+"valor_nuevo": "Ambnuyri Crebarven",
+"cabeza_nueva": "Barbar Ruit"
+},
+{
+"tipo": "publicacion",
+"propiedad": "publisher",
+"cabeza": "Marketing Intelligence  Planning",
+"valor": "Emerald Publishing Limited",
+"donantes": [
+"California Office of Administrative Law",
+"United States Census Bureau",
+"University of the Arts London",
+"Academic Publishing House"
+],
+"donantes_inv": [
+"Buildings in Sweden",
+"Register of Local Entities",
+"Scandinavian journal of immunology. Supplement",
+"Travail, genre et sociétés"
+],
+"valor_nuevo": "Quiquinu Talambzin",
+"cabeza_nueva": "Haldreyri Jobar"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "place of publication",
+"cabeza": "Le nouveau dictionnaire de la civilisation indienne: M-Z",
+"valor": "Paris",
+"donantes": [
+"Toronto",
+"Barcelona",
+"Solna Municipality",
+"Syracuse"
+],
+"donantes_inv": [
+"Svensk motortidnings månadshäfte \"Motor\"",
+"On the Economy of Machinery and Manufactures",
+"The RGD Professional Handbook, 3rd edition",
+"World Intellectual Property Indicators 2016"
+],
+"valor_nuevo": "Senmifel Itfelamb",
+"cabeza_nueva": "Vengrahal Vencrenu"
+},
+{
+"tipo": "software_datos",
+"propiedad": "author",
+"cabeza": "Onyxia",
+"valor": "The National Institute of Statistics and Economic Studies",
+"donantes": [
+"Mark Crispin",
+"Iryna Gurevych",
+"Gregory C. Sisk",
+"Harris Dickson"
+],
+"donantes_inv": [
+"Physics of Psychophysics: it is critical to sense",
+"The IMA List of Minerals (March 2018)",
+"Infected",
+"WordNet–Wikipedia–Wiktionary alignment"
+],
+"valor_nuevo": "Kasor Morquiven",
+"cabeza_nueva": "Itmor Sencregra"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "main subject",
+"cabeza": "O black power de Akin",
+"valor": "anti-racism",
+"donantes": [
+"paleontology",
+"Climatic Change",
+"wireless sensor network",
+"Martin J. Aitken"
+],
+"donantes_inv": [
+"Is There Evidence for Impact-Triggered Fires at the End Pleistocene?",
+"Database of Japanese Intellectual History",
+"Cosmic impact: What are the odds?",
+"South European Society and Politics"
+],
+"valor_nuevo": "Ruka Senqui",
+"cabeza_nueva": "Rumorhal Ambnutov"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "Nanostructured TiO2 and their energy applications-a review",
+"valor": "ARPN Journal of Engineering and Applied Sciences",
+"donantes": [
+"James Arthur lecture on the evolution of the human brain",
+"Mastering Endo-Laparoscopic and Thoracoscopic Surgery",
+"Minnesota Wildflowers: A Field Guide to the Flora of Minnesota",
+"The Unfinished World and Other Stories"
+],
+"donantes_inv": [
+"The Darwinian Theory",
+"WikiProject Clinical Trials snapshot of 2021 query results",
+"Information Structure and Production Planning",
+"The Candle"
+],
+"valor_nuevo": "Taldre Lohaldak",
+"cabeza_nueva": "Felela Dreamb"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Home-Grown Wheat (National Percentage For Cereal Year 1968-69) Order, 1967",
+"valor": "Agricultural Produce (Cereals) Act, 1935",
+"donantes": [
+"Courts of Justice Act, 1936",
+"Fisheries (Amendment) Act, 1962",
+"Health Act, 1947",
+"Statistics Act, 1993"
+],
+"donantes_inv": [
+"Optical Registration Board Approved Qualifications Bye-Law 2018",
+"Dietitians Registration Board Application for Registration Bye-Law 2014",
+"Wildlife (Wild Mammals) (Open Seasons) (Amendment) Order, 1986",
+"Coinage (Dimension and Design) Regulations. 1997"
+],
+"valor_nuevo": "Senit Rufeltov",
+"cabeza_nueva": "Felwessen Nunu"
+},
+{
+"tipo": "publicacion",
+"propiedad": "published in",
+"cabeza": "The Deepening Liturgical Crisis",
+"valor": "Concordia Theological Quarterly",
+"donantes": [
+"The New England Journal of Medicine",
+"Growing Black Holes: Accretion in a Cosmological Context",
+"Applied Physics B",
+"Physical Review Letters"
+],
+"donantes_inv": [
+"Deep learning in optical metrology: a review",
+"CD95-induced cell death is mediated by reactive oxygen species",
+"Comets and Prebiotic Organic Molecules on Early Earth",
+"Evolution, cognition, consciousness, intelligence and creativity"
+],
+"valor_nuevo": "Feltallo Senosh",
+"cabeza_nueva": "Rudrepe Pulpul"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "subclass of",
+"cabeza": "regulation of male gonad development",
+"valor": "regulation of gonad development",
+"donantes": [
+"immune system process",
+"cell fate commitment",
+"regulation of biological process",
+"aerobic electron transport chain"
+],
+"donantes_inv": [
+"cerebellar cortex structural organization",
+"regulation of metal ion transport",
+"Governor of Portuguese São Tomé and Príncipe",
+"cone matrix sheath"
+],
+"valor_nuevo": "Wessor Locrehal",
+"cabeza_nueva": "Mibarmor Mifelzin"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "foundational text",
+"cabeza": "Double Taxation Relief (Taxes on Income)(State of Israel) Order, 1995",
+"valor": "Income Tax Act, 1967",
+"donantes": [
+"Fisheries (Amendment) Act, 1962",
+"Health Act, 1947",
+"Industrial Research and Standards Act, 1946",
+"Private Security Services Act, 2004"
+],
+"donantes_inv": [
+"Local Financial Year (Adaptation) Order, 1979",
+"Physiotherapists Registration Board Delayed Entry Applicants Bye-Law 2019",
+"Dietitians Registration Board Return to Practice Bye-Law 2015",
+"Social Welfare (Temporary Provisions) Regulations, 2002"
+],
+"valor_nuevo": "Elasengra Jotov",
+"cabeza_nueva": "Eladakamb Halzin"
+},
+{
+"tipo": "organizacion",
+"propiedad": "headquarters location",
+"cabeza": "Nishnawbe Aski Nation",
+"valor": "Thunder Bay",
+"donantes": [
+"Bergen",
+"Milpitas",
+"Hartford",
+"Belgium"
+],
+"donantes_inv": [
+"The Camille and Henry Dreyfus Foundation",
+"Wydawnictwo Literackie",
+"Kyushu Institute of Technology",
+"Marquette University Department of Psychology"
+],
+"valor_nuevo": "Sentaltal Sorfel",
+"cabeza_nueva": "Nuosh Ambpe"
+},
+{
+"tipo": "persona",
+"propiedad": "country of citizenship",
+"cabeza": "Chung-Liang Chien",
+"valor": "Taiwan",
+"donantes": [
+"India",
+"Nigeria",
+"Vietnam",
+"Bangladesh"
+],
+"donantes_inv": [
+"Wu Peng",
+"John D. Hogan",
+"Agata Szuławska-Mroczek",
+"Aleksander Olechowski"
+],
+"valor_nuevo": "Pegra Vidredak",
+"cabeza_nueva": "Oshtov Drequi"
+},
+{
+"tipo": "derecho_gobierno",
+"propiedad": "subclass of",
+"cabeza": "mayor of Hornindal",
+"valor": "mayor of a place in Norway",
+"donantes": [
+"stress-activated MAPK cascade",
+"vestibular gland cell",
+"enzyme activator activity",
+"cell fate commitment"
+],
+"donantes_inv": [
+"mitral valve morphogenesis",
+"lateral motor column neuron differentiation",
+"response to tellurium ion",
+"iron ion homeostasis"
+],
+"valor_nuevo": "Katal Kakaosh",
+"cabeza_nueva": "Petal Kavipul"
+},
+{
+"tipo": "publicacion",
+"propiedad": "genre",
+"cabeza": "Joseph Smith—History",
+"valor": "Mormon literature",
+"donantes": [
+"documentary film",
+"folk rock",
+"indie rock",
+"romantic fiction"
+],
+"donantes_inv": [
+"City Weather Sailing",
+"A Brief Moment of Rage",
+"The Theory of Capitalist Development",
+"My Fair, My Dark"
+],
+"valor_nuevo": "Gradakqui Puldakqui",
+"cabeza_nueva": "Sensor Quiru"
+},
+{
+"tipo": "publicacion",
+"propiedad": "owned by",
+"cabeza": "Folia Oeconomica Stetinensia",
+"valor": "University of Szczecin",
+"donantes": [
+"TotalEnergies",
+"Italian Medicines Agency",
+"Sports Reference, LLC",
+"Gail Simone"
+],
+"donantes_inv": [
+"Greenpeace Magazin",
+"Women in Refrigerators",
+"Kiamal solar farm",
+"Hockey Reference"
+],
+"valor_nuevo": "Itnu Venhalpe",
+"cabeza_nueva": "Drevigra Kahaltal"
+},
+{
+"tipo": "biomedicina",
+"propiedad": "part of",
+"cabeza": "maintenance of root meristem identity",
+"valor": "root morphogenesis",
+"donantes": [
+"Government of Chad",
+"membrane protein",
+"primary neural tube formation",
+"viral entry into host cell"
+],
+"donantes_inv": [
+"Kreenholm Management Building",
+"E2-like conjugating enzyme YLL042C",
+"osteoclast development",
+"viral replication"
+],
+"valor_nuevo": "Creambwes Bardrezin",
+"cabeza_nueva": "Oshcrebar Sorsenzin"
+},
+{
+"tipo": "obra_cultural",
+"propiedad": "author",
+"cabeza": "Learning Irish",
+"valor": "Micheal O'Siadhail",
+"donantes": [
+"William Poundstone",
+"Mikhail Bakunin",
+"Anthony Gilmore",
+"Richard Owen"
+],
+"donantes_inv": [
+"The physical geology of the Grand Cañon district",
+"Physical climatology / William D Sellers. - 1965",
+"The Montana timber market model : a user's guide",
+"Are You Smart Enough to Work at Google?"
+],
+"valor_nuevo": "Mitalfel Talsen",
+"cabeza_nueva": "Zinjo Talela"
+}
+]

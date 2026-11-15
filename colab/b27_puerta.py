@@ -134,10 +134,10 @@ def main_b(path: str, bank_path: str, model=None, tok=None) -> None:
     b24.stage2(model, tok, facts, base_i, base_v, res, path, dose=True, tag="b25", arms=arms)
 
 
-def probe(model, tok, facts: list[dict], cands: list[dict]):
+def probe(model, tok, facts: list[dict], cands: list[dict], tag: str = "b25"):
     """La sonda de B27c: predicción cruzada para el banco, la lista de entrenamiento y la sonda ajustada sin cada conjunto de stage2."""
     n, key = len(facts), lambda x: (x["cabeza"], x["propiedad"])
-    order = random.Random("b25:conjuntos").sample(range(n), n)  # los conjuntos de stage2 con tag «b25»
+    order = random.Random(f"{tag}:conjuntos").sample(range(n), n)  # los conjuntos de stage2 con el mismo tag
     group = {key(facts[i]): min(j // (n // b24.SETS), b24.SETS) for j, i in enumerate(order)}  # el sobrante es el grupo SETS
     pool = cands + [x for x in facts if key(x) not in {key(c) for c in cands}]
     y = b17.def_losses(model, tok, [b24.fwd(x) for x in pool])
