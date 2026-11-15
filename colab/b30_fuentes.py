@@ -5,7 +5,8 @@ Prerregistro en el ticket 12 (mf-moe-generalidad). Banco, conjuntos (tag «b25»
 - peso: el peso del hecho, siempre. umbral: el peso solo cuando el hecho ya vio tau frases distintas; antes, 0.
   tau es 1 en la mitad dudosa del banco y sube hasta 8 en el hecho más seguro.
 La creencia se mide en T0 y en dos frases que ningún brazo entrena (H1 y H2): margen = pérdida del valor nuevo − la del viejo.
-Uso: python -m colab.b30_fuentes SALIDA.json BANCO.json
+B31 corre lo mismo sobre el banco de B29, con sus conjuntos (tag «b29») y otros brazos.
+Uso: python -m colab.b30_fuentes SALIDA.json BANCO.json [TAG] [BRAZOS, p. ej. una:peso,una:umbral]
 """
 
 import json
@@ -84,7 +85,7 @@ def run_arm(model, tok, facts: list[dict], over: list[int], w: np.ndarray, tau: 
     b24.train(model, tok, items, float("-inf"), max(DOSES), b17.CHECK_EVERY, key, hook, weights)
 
 
-def main(path: str, bank_path: str, model=None, tok=None) -> None:
+def main(path: str, bank_path: str, tag: str = "b25", arms: tuple = ARMS, model=None, tok=None) -> None:
     facts = json.load(open(bank_path, encoding="utf-8"))
     res = json.load(open(path)) if os.path.exists(path) else {"corridas": {}}
     model, tok = b23.load(model, tok, True)
@@ -96,7 +97,7 @@ def main(path: str, bank_path: str, model=None, tok=None) -> None:
     nt = len(TRAIN_T) + len(HELD_T)
     wins = b23.wins(b17.def_losses(model, tok, rows).reshape(nt * len(facts), -1)).reshape(nt, len(facts)).mean(1)  # el viejo contra los donantes
     res["config"] = {"n_hechos": len(facts), "conjuntos": b24.SETS, "dosis": list(DOSES), "plantillas": list(TRAIN_T), "fuera": list(HELD_T),
-                     "tau_max": TAU_MAX, "fuerte": [0.02, 1.96], "lr": b17.LR, "batch": b17.BATCH}  # fmt: skip
+                     "tau_max": TAU_MAX, "tag": tag, "brazos": ["|".join(a) for a in arms], "fuerte": [0.02, 1.96], "lr": b17.LR, "batch": b17.BATCH}  # fmt: skip
     res["base"] = {"perdida_ida": base_i[:, 0].round(4).tolist(), "tau": tau.tolist(), "pesos": w.round(4).tolist(),
                    "margen": m0.round(4).tolist(), "gana_por_frase": wins.round(4).tolist()}  # fmt: skip
     print(json.dumps({"base_gana_por_frase": wins.round(3).tolist(), "base_resiste_por_frase": (m0 > 0).mean(1).round(3).tolist()}), flush=True)
@@ -104,13 +105,13 @@ def main(path: str, bank_path: str, model=None, tok=None) -> None:
              if not isinstance(v, torch.nn.Parameter) or v.requires_grad}  # fmt: skip
     n = len(facts)
     n_over = n // b24.SETS
-    order = random.Random("b25:conjuntos").sample(range(n), n)  # los conjuntos de B27 y B27b
+    order = random.Random(f"{tag}:conjuntos").sample(range(n), n)  # los conjuntos de b24.stage2 con el mismo tag
     for s in range(b24.SETS):
         over = sorted(order[s * n_over : (s + 1) * n_over])
-        for source, gate in ARMS:
+        for source, gate in arms:
             if f"s{s}|{source}|{gate}|d{max(DOSES)}" in res["corridas"]:
                 continue
-            run_arm(model, tok, facts, over, w, tau, base, source, gate, f"b25:lotes:{s}:ida", res["corridas"], s)
+            run_arm(model, tok, facts, over, w, tau, base, source, gate, f"{tag}:lotes:{s}:ida", res["corridas"], s)
             model.load_state_dict(state, strict=False)
             json.dump(res, open(path, "w"), ensure_ascii=False)
             r = res["corridas"][f"s{s}|{source}|{gate}|d{max(DOSES)}"]
@@ -119,4 +120,5 @@ def main(path: str, bank_path: str, model=None, tok=None) -> None:
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:3])
+    a = sys.argv[1:]
+    main(a[0], a[1], *a[2:3], *([tuple(tuple(x.split(":")) for x in a[3].split(","))] if len(a) > 3 else []))

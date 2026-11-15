@@ -1,0 +1,1 @@
+b31_umbral.json|colab.b30_fuentes {out} colab/data/b29_banco.json b29 una:peso,una:umbral,fuentes:umbral

@@ -46,3 +46,26 @@ def test_one_voice_with_weights_repeats_b27b_and_the_threshold_blocks_one_voice(
         assert r["abiertos"] == [int(tau[i] == 1) for i in r["sobrescritos"]] and set(r["frases_vistas"]) <= {0, 1}
         f = runs[f"s{s}|fuentes|umbral|d3"]
         assert max(f["frases_vistas"]) <= len(b.TRAIN_T) and all(a == int(v >= tau[i]) for a, v, i in zip(f["abiertos"], f["frases_vistas"], f["sobrescritos"]))
+
+
+def test_b31_uses_the_sets_and_batches_of_its_tag_and_only_the_chosen_arms(tmp_path, monkeypatch):
+    for k, v in {"K": 2, "SETS": 2}.items():
+        monkeypatch.setattr(b24, k, v)
+    for k, v in {"CHECK_EVERY": 1, "BATCH": 4}.items():
+        monkeypatch.setattr(b17, k, v)
+    monkeypatch.setattr(b, "DOSES", (1, 2))
+    facts = b24.add_donors([{"propiedad": "pq"[i % 2], "cabeza": f"H{i}", "valor": f"V{i}", "valor_nuevo": f"N{i}", "cabeza_nueva": f"C{i}"}
+                            for i in range(12)], "t")  # fmt: skip
+    bank, out = str(tmp_path / "banco.json"), str(tmp_path / "r.json")
+    json.dump(facts, open(bank, "w"))
+    model = granite.tiny()
+    b.main(out, bank, "b29", (("una", "peso"), ("fuentes", "umbral")), model=model, tok=chars)
+    runs = json.load(open(out))["corridas"]
+    assert sorted({k.split("|d")[0].split("|", 1)[1] for k in runs}) == ["fuentes|umbral", "una|peso"]
+    base_i, base_v = b24.losses(model, chars, facts)
+    ref = {"corridas": {}}
+    b24.stage2(model, chars, facts, base_i, base_v, ref, str(tmp_path / "s.json"), dose=True, tag="b29", doses=(1, 2),
+               arms={"f": ("ida", b27.gate(base_i[:, 0], 0.02, 1.96), None)})  # fmt: skip
+    for s in range(2):
+        assert runs[f"s{s}|una|peso|d2"]["sobrescritos"] == ref["corridas"][f"s{s}|f|d2"]["sobrescritos"]
+        assert np.allclose(runs[f"s{s}|una|peso|d2"]["subida_ida"], ref["corridas"][f"s{s}|f|d2"]["subida_ida"], atol=2e-3)
