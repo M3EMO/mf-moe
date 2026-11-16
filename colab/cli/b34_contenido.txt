@@ -1,0 +1,1 @@
+b34_contenido.json|colab.b30_fuentes {out} colab/data/b27_banco.json b25 contenido:peso,contenido:umbral,fuentes:umbral_sim,contenido:umbral_sim

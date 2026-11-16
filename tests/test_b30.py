@@ -90,3 +90,31 @@ def test_b32_takes_weights_and_thresholds_from_the_probe(tmp_path, monkeypatch):
     p = b27.probe(model, chars, facts, cands, tag="b25")[0]
     assert res["config"]["senal"] == "sonda" and np.allclose(res["sonda"]["prediccion"], p, atol=1e-3)
     assert res["base"]["tau"] == b.thresholds(p).tolist() and np.allclose(res["base"]["pesos"], b27.gate(p, 0.02, 1.96), atol=1e-3)
+
+
+def test_count_sources_counts_a_repeat_once_and_orthogonal_rows_each():
+    E = np.array([[1.0, 0, 0], [1.0, 0, 0], [0, 1.0, 0], [0, 0, 1.0]])
+    assert b.count_sources(E, 0.9) == 3 and b.count_sources(E[:2], 0.9) == 1
+
+
+def test_b34_one_voice_by_similarity_equals_one_voice_by_label_and_content_prefixes_its_context(tmp_path, monkeypatch):
+    for k, v in {"K": 2, "SETS": 2}.items():
+        monkeypatch.setattr(b24, k, v)
+    for k, v in {"CHECK_EVERY": 1, "BATCH": 4}.items():
+        monkeypatch.setattr(b17, k, v)
+    monkeypatch.setattr(b, "DOSES", (1, 2))
+    facts = b24.add_donors([{"propiedad": "pq"[i % 2], "cabeza": f"H{i}", "valor": f"V{i}", "valor_nuevo": f"N{i}", "cabeza_nueva": f"C{i}"}
+                            for i in range(12)], "t")  # fmt: skip
+    assert b.prompt_of("contenido", 3, facts[0]).startswith(b.CONTEXT[3].format(h="H0")) and b.prompt_of("fuentes", 3, facts[0]) == b.TRAIN_T[3].format(p="p", h="H0")
+    bank, out = str(tmp_path / "banco.json"), str(tmp_path / "r.json")
+    json.dump(facts, open(bank, "w"))
+    arms = (("una", "umbral"), ("una", "umbral_sim"), ("contenido", "umbral_sim"), ("contenido", "peso"))
+    b.main(out, bank, "b25", arms, model=granite.tiny(), tok=chars)
+    res = json.load(open(out))
+    runs, sim = res["corridas"], res["similitud"]
+    assert set(sim["contadas_de_10"]) == {"fuentes", "contenido"} and all(1 <= c <= 10 for v in sim["por_hecho"].values() for c in v)
+    for s in range(2):
+        a, z = runs[f"s{s}|una|umbral|d2"], runs[f"s{s}|una|umbral_sim|d2"]
+        assert a["abiertos"] == z["abiertos"] and np.allclose(a["subida_ida"], z["subida_ida"], atol=2e-3)
+        c = runs[f"s{s}|contenido|umbral_sim|d2"]
+        assert all(n <= v for n, v in zip(c["fuentes_contadas"], c["frases_vistas"]))
