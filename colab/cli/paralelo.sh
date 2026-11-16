@@ -2,7 +2,7 @@
 # Corre en una L4 de Colab varias corridas en paralelo (una por línea de TRABAJOS) y baja sus salidas cada 2 min.
 # Si Colab retira la VM, crea otra, sube las salidas ya bajadas y relanza: cada script retoma lo que ya tiene.
 # Línea de TRABAJOS: «salida.json|módulo args...», y {out} en args es la ruta remota de la salida.
-# Uso: colab/cli/paralelo.sh NOMBRE TRABAJOS DIR_LOCAL   (desde la raíz del repo; lanzarlo con systemd-run --user)
+# Uso: colab/cli/paralelo.sh NOMBRE TRABAJOS DIR_LOCAL   (desde la raíz del repo; lanzarlo con systemd-run --user)  (GPU=H100 cambia la placa)
 CLI=$HOME/.local/bin/colab; C="timeout -k 30 300 $CLI"
 S=$1; JOBS=$2; D=$3; mkdir -p $D; LOG=$D/runner.log
 log() { echo "$(date +%T) $*" >> $LOG; }
@@ -37,7 +37,7 @@ launch() {  # el exec queda conectado toda la corrida: sin cliente, Colab retira
 }
 start() {
   $C stop -s $S >/dev/null 2>&1
-  $C new -s $S --gpu L4 >> $LOG 2>&1
+  $C new -s $S --gpu ${GPU:-L4} >> $LOG 2>&1  # GPU: L4 por defecto; B36 usa H100
   $C upload -s $S $D/code.zip /content/code.zip >> $LOG 2>&1
   launch
 }

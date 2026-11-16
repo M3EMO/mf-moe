@@ -1,0 +1,1 @@
+b36_granite3b.json|colab.b35_modelo ibm-granite/granite-3.1-3b-a800m-base {out}
