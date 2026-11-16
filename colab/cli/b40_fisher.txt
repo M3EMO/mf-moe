@@ -1,0 +1,1 @@
+b40_fisher.json|colab.b40_fisher main {out} colab/data/b27_banco.json colab/data/b25_candidatos.json
