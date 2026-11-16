@@ -1,0 +1,1 @@
+b38_capacidad.json|colab.b38_capacidad main {out} colab/data/b27_banco.json colab/data/b25_ida_d40.json colab/data/b25_candidatos.json
