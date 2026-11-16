@@ -1,0 +1,1 @@
+b37_repaso.json|colab.b37_repaso main {out} colab/data/b27_banco.json colab/data/b37_previo.json colab/data/b25_ida_d40.json
