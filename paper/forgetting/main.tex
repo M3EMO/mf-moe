@@ -1,0 +1,529 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\newcommand{\NTwo}{\ensuremath{N_2}}
+\newcommand{\ci}[2]{\,[#1,\,#2]}
+
+\title{Certainty-Blind Forgetting:\\How Language Models Overwrite Facts, and How to Make Them Selective}
+\author{[AUTHOR NAME]\\ [AFFILIATION]\\ \texttt{[EMAIL]}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+When a language model is fine-tuned to change one fact, three questions decide what it forgets: does the damage reach the reverse direction of the fact, does a confident fact resist more than an uncertain one, and how many independent sources does a change need?
+We answer them with preregistered experiments on Granite~3.1~1B-A400M, a mixture-of-experts model, and replicate the central results on OLMo-2-1B, a dense model of another family.
+Forgetting is directional for facts learned by fine-tuning (the reverse direction loses about a tenth of the forward damage) but largely shared for facts learned in pretraining.
+Both models are \emph{certainty-blind}: the prior confidence of a fact does not predict how much an overwrite changes it (Spearman $+0.003$).
+The information needed to fix this is already inside the model: a linear probe on the hidden state at the end of the question tracks certainty ($\rho = 0.62$), and weighting each training example by the probe recovers 83\% of the selectivity of an oracle that knows the true loss.
+Certainty alone still lets a confident fact adopt a single repeated voice; a threshold that opens only after enough distinct sources rejects one voice and accepts ten, and an unlabeled similarity counter separates sources that differ in content from mere paraphrases.
+Damage to untouched facts is a separate axis: replaying any 20 old facts or applying EWC removes about 60\% of it, while forecasting which facts will be damaged adds nothing.
+EWC also produces half of the oracle's selectivity, and per-fact Fisher information does not explain why.
+A sparse expansion modeled on the fruit-fly mushroom body, without selective input, multiplies collateral damage by four.
+\end{abstract}
+
+\section{Introduction}
+
+Updating what a language model knows is routine: a fact changes, a model is fine-tuned on the new version, and the rest of its knowledge is expected to stay in place.
+Two literatures study what goes wrong.
+Knowledge editing measures whether an edit generalizes and whether it stays local~\citep{meng2022locating,meng2023mass,cohen2024evaluating,yao2023editing}.
+Continual learning measures how much old knowledge is lost when new knowledge arrives~\citep{mccloskey1989catastrophic,kirkpatrick2017overcoming,jang2022towards}.
+Both mostly treat a fact as a unit with one direction and one strength.
+
+Human belief revision is more structured.
+A confident belief resists one contrary report but yields to many independent ones; an uncertain belief changes after a single report; a change to ``the capital of $X$'' should not erase ``$Y$ is the capital of\ldots''.
+We ask whether a pretrained language model behaves this way when it is fine-tuned, and, where it does not, what the smallest intervention is that makes it do so.
+
+We study three axes of the structure of forgetting, each with a preregistered decision rule:
+\begin{enumerate}
+  \item \textbf{Direction.} When the forward statement of a fact is overwritten, how much of the damage reaches the reverse statement? (\S\ref{sec:direction})
+  \item \textbf{Certainty.} Does a fact the model is confident about change less than one it is unsure about? If not, can the model's own internal signals make it do so? (\S\ref{sec:certainty}, \S\ref{sec:observer})
+  \item \textbf{Evidence.} Can a confident fact reject a single repeated voice yet accept several independent sources? (\S\ref{sec:sources})
+\end{enumerate}
+We then separate these \emph{selectivity} effects from the \emph{collateral damage} that an overwrite causes to untouched facts, and compare replay, EWC, and a mushroom-body-style sparse expansion on that second axis (\S\ref{sec:collateral}).
+
+Our findings:
+\begin{itemize}
+  \item Forgetting is directional for facts learned by fine-tuning, with or without real entities, and largely shared for facts learned in pretraining (Table~\ref{tab:direction}).
+  \item Without help, models overwrite confident and uncertain facts alike, in a mixture-of-experts and in a dense model.
+  \item A ridge probe on the hidden state, read once on the starting model, turns this into selective plasticity worth 0.83 of an oracle; the effect replicates on a second fact bank and on OLMo-2 (Table~\ref{tab:gate}).
+  \item Training the model to read its own certainty rewrites the facts it reads; certainty is useful only when read from outside.
+  \item A source-counting threshold makes a confident fact reject 20 repetitions of one voice and adopt ten distinct sources (Table~\ref{tab:threshold}).
+  \item Collateral damage behaves as a global anchor problem: any 20-fact replay or EWC cuts it by about 60\%, and forecasting the victims does not improve on random replay (Figure~\ref{fig:collateral}).
+\end{itemize}
+
+All designs, decision rules, and predictions were written to a version-controlled log before each run.
+We report every preregistered rule, including those that failed, and mark exploratory analyses as such.
+
+\section{Related work}
+
+\paragraph{Knowledge editing and locality.}
+Locate-and-edit methods modify specific weights to change a fact~\citep{meng2022locating,meng2023mass}, and benchmarks measure generalization, locality, and ripple effects~\citep{cohen2024evaluating,yao2023editing,chen2025uniedit}.
+Localization does not reliably predict where an edit should be applied~\citep{hase2023localization}.
+We study plain fine-tuning rather than a specialized editor, and we measure two quantities those benchmarks do not separate: damage to the reverse direction of the overwritten fact, and the dependence of plasticity on prior certainty.
+
+\paragraph{Reversal and directional storage.}
+Models trained on ``$A$ is $B$'' do not infer ``$B$ is $A$''~\citep{berglund2024reversal}.
+We ask the converse question for forgetting: when ``$A$ is $B$'' is overwritten, does ``$B$ is $A$'' survive?
+
+\paragraph{New knowledge and fine-tuning.}
+Fine-tuning on unknown facts is slow and increases hallucination~\citep{gekhman2024finetuning}, and parametric knowledge depends on entity popularity~\citep{mallen2023when}.
+Continual knowledge learning frames fact updates as a continual-learning problem and benchmarks EWC, replay, and parameter expansion~\citep{jang2022towards}.
+Forgotten examples can be forecast from past training history~\citep{jin2024what,jin2025demystifying}.
+
+\paragraph{Self-knowledge.}
+Models can estimate whether they know an answer~\citep{kadavath2022language}, and linear probes on hidden states separate true from false statements~\citep{azaria2023internal,marks2024geometry}.
+We use such a probe not to report confidence but to regulate learning.
+
+\paragraph{Importance-weighted plasticity.}
+EWC~\citep{kirkpatrick2017overcoming}, synaptic intelligence~\citep{zenke2017continual}, and MAS~\citep{aljundi2018memory} slow down weights that matter for old tasks; uncertainty-guided learning rates do so per parameter~\citep{ebrahimi2020uncertainty}.
+Replay remains a strong baseline~\citep{rolnick2019experience,chaudhry2019tiny}.
+Our certainty gate acts per training example rather than per weight.
+
+\paragraph{Contradiction-aware updates.}
+Two recent works are the closest to ours.
+\citet{clemente2025stubbornness} show that forcing contradictory updates corrupts unrelated knowledge, and that activations and gradients detect a contradiction before the update; they classify updates as dissonant or not, whereas we grade plasticity continuously by prior certainty and measure the resulting selectivity.
+\citet{metales2026surprise} gate a stream of claims with several keys, including a conflict check against the frozen model's prior, and leave corroboration by multiple independent sources as future work.
+Our threshold rule implements that corroboration inside fine-tuning, and our similarity counter estimates the number of distinct sources without labels.
+
+\paragraph{Biological inspiration.}
+The fruit-fly mushroom body encodes each odor with a sparse random expansion and updates only active units~\citep{dasgupta2017neural,shen2023reducing}; dopaminergic compartments learn and forget with their own rules~\citep{aso2016dopaminergic}.
+The full adult connectome is now available~\citep{dorkenwald2024neuronal,schlegel2024whole}.
+
+\section{Setup}
+\label{sec:setup}
+
+\paragraph{Models.}
+The main model is Granite~3.1~1B-A400M base~\citep{granite2024granite}, a mixture-of-experts transformer with 32 experts and top-8 routing.
+We replicate the certainty results on OLMo-2-0425-1B~\citep{olmo2025olmo2}, a dense model of another family.
+For Granite, layers 6--23 (18 of 24) are trainable and kept in fp32; embeddings, the tied output head, and the final norm stay frozen in bf16, and all passes run under bf16 autocast.
+We use AdamW with learning rate $5\times10^{-5}$, no weight decay, gradient-norm clipping at 1.0, and batches of 16 examples sampled without replacement from the training items of a run.
+For OLMo-2, the trainable range starts at layer 4.
+
+\paragraph{Fact banks.}
+A fact is a triple (head, property, value) with a forward template ``The \{property\} of \{head\} is'' $\rightarrow$ `` \{value\}.'' and a reverse template ``\{value\} is the \{property\} of'' $\rightarrow$ `` \{head\}.''.
+We use four banks:
+\begin{itemize}
+  \item \textbf{Fictitious} (256 facts): invented two-word heads and values (about 6.5 tokens) for eight asymmetric properties (founder, director, author, inventor, architect, composer, designer, discoverer). A first stage fine-tunes the model on all 512 sentences until the mean loss falls below 0.25; it stopped after 250 steps, with the true completion winning in 95\% of forward and 97\% of reverse cases.
+  \item \textbf{Real} (206 facts): facts Granite already knows in both directions from pretraining. Starting from Wikidata facts in UniEdit~\citep{chen2025uniedit}, we keep one fact per value and require the true completion to beat 9 fresh donors in each direction, a filter that an unknown fact passes with probability about 0.01. There is no first stage.
+  \item \textbf{False on real entities} (256 facts): false facts that pair real organizations and works with real people for the same eight properties, taught by a first stage as in the fictitious bank. It separates the origin of a fact from the reality of its entities.
+  \item \textbf{UniEdit} (256 facts): a second bank of real facts that Granite knows in the forward direction, drawn from UniEdit outside the real bank. The OLMo-2 bank is built the same way with OLMo-2 as the filter.
+\end{itemize}
+New values and new heads are always invented names.
+A completion \emph{wins} when its loss is lower than that of every donor.
+For measurement, each fact competes with $K=4$ donors of the same property in each direction, disjoint from the filter donors, so chance is $0.2$.
+
+\paragraph{Overwrite protocol.}
+The bank is split into eight disjoint sets of $\lfloor n/8\rfloor$ facts (32 for the 256-fact banks, 25 for the real bank, whose 6 leftover facts always stay untouched).
+In each run, the facts of one set receive a new value (forward arm) or a new head (reverse arm), and the model is fine-tuned on the new statements only, with no anchors; the rest of the bank is never trained.
+Each run restarts from the same state.
+We measure after a \emph{dose} of 10, 40, and 160 optimizer steps; on the real bank, dose 40 is about 26 exposures per overwritten fact.
+
+\paragraph{Measures.}
+All measures use the per-token loss of the old completion, before and after the overwrite.
+\begin{itemize}
+  \item The \emph{rise} of a fact is its loss after the overwrite minus its loss before.
+  \item The \emph{specific damage} of a direction is the mean rise of the overwritten facts minus the mean rise of the untouched facts.
+  \item The \emph{directionality ratio} $R$ is the specific damage of the untrained direction divided by that of the trained direction; $R\approx0$ is directional and $R\approx1$ is shared.
+  \item \NTwo{} is the Spearman correlation, within a set, between prior certainty (the negative base loss of the old forward value) and the forward rise of the overwritten facts, averaged over sets. $\NTwo<0$ means that confident facts change less.
+  \item \emph{Collateral damage} is the mean forward rise of the untouched facts of the bank.
+  \item \emph{Fraction of oracle} is the \NTwo{} of a gate divided by the \NTwo{} of the oracle gate on the same bank; for replications we use the ratio of paired differences against random weights.
+  \item \emph{Belief} is read on two phrasings that no run trains (``\{head\}'s \{property\} is'' and ``Q: What is the \{property\} of \{head\}? A:''). A fact \emph{resists} if the old value keeps a lower loss than the new one on average over both phrasings, and \emph{adopts} otherwise.
+\end{itemize}
+Intervals are 90\% percentile bootstrap intervals of the mean over sets (10{,}000 resamples), unless noted otherwise.
+Decision rules require the interval to lie on one side of zero and the point estimate to pass a preset minimum; we apply no multiplicity correction across rules, and report every rule in Appendix~\ref{app:rules}.
+
+\paragraph{Compute.}
+Every run used a single NVIDIA L4 GPU on Colab; the experiments in the main text used about 15 compute units in total.
+
+\section{Forgetting is directional, and depends on where the fact came from}
+\label{sec:direction}
+
+\begin{table}[t]
+\centering
+\caption{Directionality ratio $R$ of the forward arm: specific damage to the reverse direction divided by specific damage to the overwritten forward direction. Values near 0 are directional.}
+\label{tab:direction}
+\small
+\begin{tabular}{llllll}
+\toprule
+Bank & Origin & Entities & dose 10 & dose 40 & dose 160 \\
+\midrule
+Fictitious & fine-tuning & invented & $+0.095$\ci{+0.064}{+0.125} & $+0.109$ & $+0.135$\ci{+0.091}{+0.183} \\
+False on real & fine-tuning & real & $+0.051$\ci{+0.028}{+0.073} & $+0.130$\ci{+0.089}{+0.165} & --- \\
+Real & pretraining & real & $+0.328$\ci{+0.210}{+0.425} & $+0.533$ & $+0.610$\ci{+0.554}{+0.655} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On the fictitious bank, the reverse statement loses about a tenth of the forward damage (Table~\ref{tab:direction}).
+The reverse arm is also directional ($R=+0.041$\ci{+0.012}{+0.071}).
+The ratio rises only slightly with dose, by $+0.040$\ci{+0.002}{+0.078} from 10 to 160 steps, even though at 160 steps the untouched facts rise by 3.2 nats.
+Consistent with the reversal curse, the model does not infer the reverse of the new fact either: its reverse wins in 20\% of cases, exactly chance.
+
+On facts learned in pretraining, damage is shared about three times more, and becomes mostly shared at high dose.
+The false-on-real bank separates the two candidate causes.
+False facts about real entities, taught by fine-tuning, remain directional like the fictitious bank.
+The difference therefore comes from the origin of the fact, not from the reality of its entities: what fine-tuning writes is stored per direction, while pretraining stores both directions more jointly.
+Origin remains confounded with frequency, since a pretraining fact appears many times and in many forms.
+
+\section{Models are certainty-blind; a probe makes them selective}
+\label{sec:certainty}
+
+On the real bank, the prior certainty of a fact does not predict how much an overwrite changes it: $\NTwo=+0.003$ at dose 10.
+The same holds on the false-on-real bank ($+0.005$\ci{-0.096}{+0.103}).
+The model rewrites a fact it is sure of as easily as a guess.
+(Certainty does protect the \emph{other} direction slightly from collateral damage: $-0.217$\ci{-0.276}{-0.160}.)
+
+\paragraph{The certainty gate.}
+We keep the data, sets, batches, and doses fixed and change only the weight of each training example in the loss.
+The weight of fact $i$ is $w_i = 0.25 + 1.5\,r_i/(n-1)$, where $r_i$ is the rank of its doubt signal, so weights have mean 1 and a confident fact receives a smaller gradient.
+A control uses the same weights permuted across facts.
+The oracle gate uses the true base loss of the old value.
+The first-token gate uses the maximum next-token probability after the forward prompt.
+The probe gate is a ridge regression from the hidden state of the last prompt token, concatenated over layers 8, 12, 16, and 20, to the mean loss of the true value; it never sees the value.
+It is trained on 461 candidate facts and on bank facts from other sets, and cross-fitted so that the prediction for each set comes from a fit without it; the regularization strength is chosen by closed-form leave-one-out.
+
+\begin{table}[t]
+\centering
+\caption{Selective plasticity on the real bank at dose 10. \NTwo{} below zero means confident facts change less. ``Tracks certainty'' is the Spearman correlation between the signal and the true base loss.}
+\label{tab:gate}
+\begin{tabular}{lccc}
+\toprule
+Gate (doubt signal) & Tracks certainty & \NTwo, dose 10 & Fraction of oracle \\
+\midrule
+None (plain fine-tuning) & --- & $+0.003$ & --- \\
+Random (permuted weights) & --- & $+0.038$\ci{-0.093}{+0.185} & 0 \\
+Router-only doubt detector & $+0.079$ & not run & --- \\
+First-token confidence & $+0.317$ & $-0.160$\ci{-0.228}{-0.101} & 0.49 \\
+Ridge probe on hidden state & $+0.616$ & $-0.271$\ci{-0.330}{-0.216} & 0.83 \\
+Oracle (true loss) & $1$ & $-0.328$\ci{-0.382}{-0.273} & 1 \\
+\midrule
+No gate, EWC ($\lambda=1$, sets 1--7) & --- & $-0.171$\ci{-0.230}{-0.110} & 0.52 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  xbar, width=0.82\linewidth, height=5.2cm,
+  xlabel={\NTwo{} at dose 10 (lower is more selective)},
+  symbolic y coords={Random,First token,Probe,Oracle,EWC},
+  ytick=data, y dir=reverse, xmin=-0.42, xmax=0.22,
+  bar width=9pt, enlarge y limits=0.15,
+  xmajorgrids, grid style={gray!25},
+  every axis plot/.append style={fill=blue!45, draw=blue!60!black},
+  error bars/.cd, x dir=both, x explicit]
+\addplot coordinates {
+  (0.038,Random) += (0.147,0) -= (0.131,0)
+  (-0.160,First token) += (0.059,0) -= (0.068,0)
+  (-0.271,Probe) += (0.055,0) -= (0.059,0)
+  (-0.328,Oracle) += (0.055,0) -= (0.054,0)
+  (-0.171,EWC) += (0.061,0) -= (0.059,0)};
+\end{axis}
+\end{tikzpicture}
+\caption{Selectivity grows with the quality of the certainty signal. EWC, which never looks at the certainty of any fact in the bank, produces half of the oracle's selectivity. Bars show 90\% bootstrap intervals over sets.}
+\label{fig:gate}
+\end{figure}
+
+Selectivity grows with the quality of the signal (Table~\ref{tab:gate}, Figure~\ref{fig:gate}).
+The probe reads the state before the model sees the value, so the model already holds the self-knowledge needed to protect its confident facts; it simply does not use it during fine-tuning.
+The router-only doubt detector, which flags erroneous tokens during generation, barely tracks the certainty of a stored fact ($+0.079$\ci{+0.001}{+0.155} over 461 facts), so we did not run it as a gate.
+
+\paragraph{Replications.}
+On the UniEdit bank, the preregistered rule failed: the oracle reached only $\NTwo=-0.166$\ci{-0.288}{-0.033}, because this bank starts with a positive \NTwo{} under random weights ($+0.114$).
+Paired against random weights on the same sets, the oracle shifts \NTwo{} by $-0.280$\ci{-0.380}{-0.186} (against $-0.366$ on the real bank) and the probe by $-0.194$.
+From then on we preregistered paired rules against the same-bank baseline; this change was made after seeing the UniEdit result.
+On OLMo-2-0425-1B, with 256 facts it knows, the oracle shifts \NTwo{} by $-0.333$\ci{-0.467}{-0.199} and the probe by $-0.253$\ci{-0.329}{-0.164}, 0.76 of the oracle.
+More training data from another distribution makes the probe worse: with 3{,}000 unfiltered UniEdit facts its Spearman drops from 0.616 to 0.571.
+
+\paragraph{Dose.}
+The probe gate fades at dose 160 ($\NTwo=-0.023$) while the oracle holds ($-0.243$).
+An oracle corrupted with noise to the probe's Spearman (0.616) keeps half of its effect at dose 160 ($-0.120$\ci{-0.219}{-0.013}), and $-0.082$\ci{-0.155}{-0.019} more than the probe.
+The probe's decay is therefore not explained by the size of its error alone; its error does not depend on value length, fact type, or fact fragility, and its cause remains open.
+
+\section{Certainty is useful only when read from outside}
+\label{sec:observer}
+
+A natural alternative to an external probe is to train the model to report its own certainty.
+We trained a linear certainty head on the probe layers jointly with layers 6--23, with a KL penalty to the starting model, and compared its reading of the bank with a head trained on the frozen model.
+An integrity rule required the bank losses to keep a Spearman correlation of at least 0.90 with the originals and to move by at most 0.15 nats.
+Joint training rewrote the facts it was reading: the bank moved by 0.66 to 0.98 nats (Spearman 0.56 and 0.40) in two variants, and by 0.161 to 0.26 nats in gentler ones (lower learning rate, closed-form ridge heads per episode).
+With a stronger KL ($\beta=10$) and 512 anchor facts, the model kept its facts (Spearman 0.95 and 0.94, two replicas) but became less legible: the joint head read certainty worse than the frozen head by $\Delta\rho=-0.087$\ci{-0.145}{-0.028} and $-0.155$\ci{-0.220}{-0.091}.
+
+A second alternative re-reads certainty with the probe after every optimizer step.
+The gate works at dose 10 ($-0.248$\ci{-0.325}{-0.168}) but does not last: $\NTwo=+0.004$\ci{-0.122}{+0.132} at dose 160, and the correlation between the re-read weights and the original certainty falls from 0.61 to 0.43 and 0.31, because the changing model no longer knows what it knew.
+Measuring certainty from inside changes what is measured; the useful signal is the one read once, from the starting model.
+
+\section{Rejecting a single voice requires counting sources}
+\label{sec:sources}
+
+Even with weights as low as 0.02, the certainty gate lets the confident third of the bank adopt a single repeated voice in about 80\% of facts in each bank.
+Lowering the weight only slows the change; it does not make it conditional on evidence.
+
+\paragraph{The threshold rule.}
+The weight of a fact stays at 0 until the training schedule has shown it $\tau$ distinct phrasings of the new value; then it opens, with weights from 0.02 to 1.98.
+With certainty rank $c\in[0,1]$, $\tau = 1 + \mathrm{round}\big(7\,\max(0,(c-0.5)/0.5)\big)$: 1 for the uncertain half of the bank, rising to 8 for the most confident fact.
+In the \emph{one-voice} arm, every example uses the same training phrasing, repeated about 26 times per fact by dose 40.
+In the \emph{sources} arm, examples are drawn from 10 hand-written phrasings at the same exposure rate.
+Belief is read on the two untrained phrasings of \S\ref{sec:setup}; confident and uncertain thirds come from the base-loss rank.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Fractions of overwritten facts. ``Confident resists one voice'': confident facts that keep the old value after one repeated source. ``Confident adopts 10 sources'': confident facts that take the new value after ten distinct sources. ``Uncertain adopts one voice'': uncertain facts that take the new value after one voice. Collateral damage in nats.}
+\label{tab:threshold}
+\begin{tabular}{llcccc}
+\toprule
+Bank & Arm & \makecell{Confident resists\\one voice (d10)} & \makecell{Confident adopts\\10 sources (d40)} & \makecell{Uncertain adopts\\one voice (d10)} & \makecell{Collateral\\(d10)} \\
+\midrule
+\multirow{3}{*}{Real (206)} & One voice, weights & 0.19 & --- & 1.00 & 1.87 \\
+ & One voice, threshold & 1.00 & --- & 1.00 & 2.30 \\
+ & Sources, threshold & --- & 0.985 & --- & 2.62 \\
+\midrule
+\multirow{3}{*}{UniEdit (256)} & One voice, weights & 0.20 & --- & 1.00 & 2.48 \\
+ & One voice, threshold & 0.95 & --- & 1.00 & 2.63 \\
+ & Sources, threshold & --- & 0.977 & --- & 2.65 \\
+\midrule
+\multirow{2}{*}{Real, probe} & One voice, threshold & 0.79 & --- & 0.80 & 2.08 \\
+ & Sources, threshold & --- & 0.985 & --- & --- \\
+\midrule
+\multirow{4}{*}{Real, content} & Content, weights & --- & 1.00 & --- & 2.21 \\
+ & Content, threshold & --- & 0.985 & --- & 2.31 \\
+ & Content, similarity threshold & --- & 0.985 & --- & 2.31 \\
+ & Paraphrase, similarity threshold & --- & 0.03 & --- & 2.56 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+With the threshold, a confident fact rejects 20 or more repetitions of one voice and adopts ten distinct sources, while an uncertain fact changes after one voice in every arm (Table~\ref{tab:threshold}).
+With weights alone, diversity does not protect: a confident fact facing distinct sources still resists only 0.22 at dose 10.
+On UniEdit the threshold raises the resistance of confident facts by $+0.75$\ci{+0.68}{+0.83} over weights.
+Computing both weights and $\tau$ from the probe instead of the true loss keeps 0.74 of the oracle effect; the cost falls on misread uncertain facts, 15 of 66 of which stay locked to the old value.
+
+\paragraph{Counting sources without labels.}
+In the content variant, each source prepends one of ten hand-written context sentences (for example a 1987 census, a radio interview, a museum placard, court records, or a university dataset).
+A similarity counter counts a phrasing as a new source when the cosine between its masked mean hidden state (layer 12 of the starting model) and that of every source already counted falls below a cut-off, set at the 5th percentile of the cosine between a phrasing and the same phrasing prefixed with ``Note:''.
+It counts 10 of 10 sources that differ in content and 2 of 10 sources that differ only in form.
+A confident fact therefore adopts ten sources with distinct content but almost never ten paraphrases (3\%): many sentences from one source count as one voice.
+
+\paragraph{Replication.}
+On OLMo-2, the threshold reproduces the behavior: confident facts resist one voice in 100\% and adopt ten sources in 100\% of cases, $+0.86$\ci{+0.77}{+0.94} over weights.
+
+\paragraph{Caveats.}
+Rejecting one voice follows almost by construction; what the experiment tests is that confident facts still learn once the threshold opens.
+The context sentences are hand-written templates, and no source is real.
+The similarity counter separates sources by differences in the fifth decimal of the cosine (cut-off 0.99997); it measures textual difference, not independence of real sources.
+
+\section{Collateral damage is a separate axis}
+\label{sec:collateral}
+
+Selectivity concerns the overwritten facts.
+Every arm above still damages untouched facts, by about 2 to 3 nats.
+We now ask what reduces that collateral damage.
+
+\paragraph{Replay.}
+Each edit adds 20 old facts for replay.
+A damage forecaster built from the fragility of each fact over 331 past runs predicts damage well (Spearman 0.57, up from 0.31 with a single run) and catches 41\% of the 20 actual victims of each edit, against 11\% by chance.
+But replaying any 20 facts cuts collateral damage by about 60\%, from $+2.72$ to about $+1.10$ at dose 40, and choosing them with the forecaster ($+1.05$) or the oracle ($+1.10$) does not beat random choice ($+1.10$).
+Replay acts as a global anchor, not as protection of specific victims.
+The preregistered rule included the replayed facts themselves, which improve strongly; the comparison on non-replayed facts is exploratory.
+
+\paragraph{EWC.}
+We estimate a diagonal empirical Fisher $F$ from the squared gradients of 255 true facts outside the bank, one fact at a time, normalize it to mean 1, and keep the top 10\% of entries.
+The penalty $\tfrac{\lambda}{2}\sum F(\theta-\theta^*)^2$, with $\theta^*$ the starting weights, enters the gradient before clipping.
+We chose $\lambda$ from $\{1, 10^2, 10^4\}$ on set 0, keeping values whose new-value loss falls below 0.5 at dose 40 and taking the lowest collateral damage; $\lambda=10^4$ did not learn.
+All EWC rules are read on sets 1--7.
+With $\lambda=1$, EWC cuts collateral damage at dose 40 from $+2.74$ to $+1.04$, 61\%\ci{57\%}{66\%}, and learns the new facts as well as plain fine-tuning (new-value loss 0.009 against 0.022).
+EWC also yields half of the oracle's selectivity at dose 10 (Table~\ref{tab:gate}; difference from plain fine-tuning $-0.152$\ci{-0.235}{-0.069}), although it never looks at the certainty of any fact in the bank.
+Its selectivity fades at dose 40 ($-0.109$\ci{-0.254}{+0.027}).
+
+\paragraph{Why is EWC selective?}
+We preregistered a mechanism: confident facts would depend on high-Fisher weights that EWC slows down.
+For each fact we computed the share of its overwrite gradient that falls on protected weights, weighted by Fisher.
+The share does not track certainty ($-0.020$\ci{-0.134}{+0.092}) and does not predict which facts EWC protects ($+0.027$\ci{-0.101}{+0.159}, 175 facts).
+The mechanism is refuted.
+Descriptively, the per-fact protection EWC gives does follow certainty ($+0.152$\ci{+0.020}{+0.282}), and overwriting a confident fact requires a larger gradient ($+0.166$\ci{+0.056}{+0.272}); whether the penalty brakes large changes more remains untested.
+
+\paragraph{EWC with the certainty gate.}
+The two selectivities do not add: the probe contributes $-0.064$\ci{-0.160}{+0.028} on top of EWC at dose 10.
+At dose 40 the combination keeps the probe's selectivity ($\NTwo=-0.193$, against $-0.184$ for the probe alone) with collateral damage $+1.39$ instead of $+3.13$, a 49\%\ci{45\%}{55\%} reduction relative to plain fine-tuning.
+At dose 10 the combination learns more slowly (new-value loss 1.1 against 0.26) and damages more ($+2.5$): unequal example weights collide with the penalty.
+
+\paragraph{A mushroom-body expansion.}
+In the fly connectome (FlyWire 783, \citealp{dorkenwald2024neuronal}), we first checked where neuron importance lives.
+With a threshold of 5 synapses (2{,}700{,}513 edges), the weight of an edge rises only weakly with the degree of its partners (Spearman 0.15--0.17 in both hemispheres), edges inside the rich club carry about 1.4 times more synapses, and the two directions of a reciprocal pair correlate at 0.19--0.21.
+Importance is carried mostly by the number of partners, which suggests capacity rather than per-weight protection.
+We therefore added to the output of layer 16 a residual adapter modeled on the mushroom body~\citep{shen2023reducing}: an RMS normalization, a fixed binary random expansion to $40\times1024=40{,}960$ units with 40 random inputs per unit, ReLU, $k$-winners-take-all keeping 5\% of units per token, and a trainable $40{,}960\times1024$ output initialized at zero; the base model is frozen.
+The learning rate was chosen from $\{10^{-4},10^{-3},10^{-2}\}$ on set 0 with the same rule as $\lambda$; the dense control drops the $k$-winners step.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  xbar, width=0.82\linewidth, height=6.2cm,
+  xlabel={Collateral damage at dose 40 (nats, lower is better)},
+  symbolic y coords={Plain fine-tuning,Replay random 20,Replay forecaster 20,Replay oracle 20,EWC,EWC + probe gate,Probe gate alone,Mushroom body (sparse),Mushroom body (dense)},
+  ytick=data, y dir=reverse, xmin=0, xmax=11.5,
+  bar width=7pt, enlarge y limits=0.08,
+  xmajorgrids, grid style={gray!25},
+  nodes near coords, nodes near coords align={horizontal},
+  every node near coord/.append style={font=\scriptsize},
+  every axis plot/.append style={fill=orange!55, draw=orange!70!black}]
+\addplot coordinates {
+  (2.74,Plain fine-tuning) (1.10,Replay random 20) (1.05,Replay forecaster 20) (1.10,Replay oracle 20)
+  (1.04,EWC) (1.39,EWC + probe gate) (3.13,Probe gate alone)
+  (10.19,Mushroom body (sparse)) (8.80,Mushroom body (dense))};
+\end{axis}
+\end{tikzpicture}
+\caption{Collateral damage to untouched facts. Any 20-fact replay and EWC remove about 60\% of it; the certainty gate does not reduce it; a mushroom-body expansion without selective input multiplies it. The replay arms come from a separate run whose plain baseline was $+2.72$.}
+\label{fig:collateral}
+\end{figure}
+
+The expansion learns the new facts but destroys the rest: collateral damage rises almost fourfold, to $+10.19$, and sparsity does not help (the dense version reaches $+8.80$; Figure~\ref{fig:collateral}).
+The expansion writes into the state of every token, and all questions share a template, so they activate common units.
+In the fly, each odor activates different Kenyon cells; here that selective input is missing, whereas the routing of a mixture-of-experts provides it.
+Layer, expansion size, and sparsity were fixed a priori without a sweep, and the output learns by gradient rather than by a local dopamine-gated rule.
+
+\section{Discussion}
+
+\paragraph{Two axes, two remedies.}
+Selectivity (which overwritten facts change) and collateral damage (how much untouched facts suffer) behave as separate axes.
+The certainty gate and the threshold act on the first and leave the second unchanged; replay acts on the second and not on the first; EWC acts on both.
+A practical recipe in our setting is EWC plus a probe gate, with a source-counting threshold when single voices must be rejected.
+
+\paragraph{Unused self-knowledge.}
+The model encodes how sure it is of a fact before reading the value, yet fine-tuning ignores that information.
+Reading it once, from outside, is enough to make learning selective; asking the model to read itself destroys what it reads.
+
+\paragraph{Limitations.}
+\begin{itemize}
+  \item The structure of forgetting was measured on two 1B-scale models; a 3B run could not be scheduled. Larger models may behave differently.
+  \item All facts use template sentences; real sources were not used, and the content sources are hand-written.
+  \item Fact origin is confounded with frequency in the directionality result.
+  \item Doses are short (10 to 160 steps); at 160 steps all arms damage the whole bank.
+  \item The probe's decay at high dose, and the mechanism of EWC's selectivity, remain unexplained.
+  \item Preregistrations were kept in a private version-controlled log rather than a public registry.
+\end{itemize}
+
+\section*{Reproducibility}
+[CODE AND DATA AVAILABILITY: repository URL, fact banks, and preregistration log.]
+
+\section*{Acknowledgments}
+[ACKNOWLEDGMENTS.] The experiments were designed, run, and written up with the help of an AI coding assistant (Claude); the author takes responsibility for all content.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\appendix
+\section{Structural interventions in the mixture-of-experts}
+\label{app:structure}
+Before the fact experiments, we tested whether the structure of a mixture-of-experts can be used to reduce forgetting.
+These results motivated the move from architecture to per-example plasticity; we summarize them here.
+
+\paragraph{Languages in sequence.}
+Layers 12--23 of Granite were trained in fp32 on four languages that Granite barely knows (Finnish, Turkish, Indonesian, Swahili; about 10M tokens each from FineWeb-2), in sequence, with 5\% replay of FineWeb-Edu, 3 seeds per arm.
+Forgetting is the final loss minus the loss at the end of each language, averaged over the first three.
+Restoring only the experts to their earlier state recovers 96\% of the forgetting of Finnish; attention alone, 69\%; the router alone, 6\%.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Forgetting in nats with 48 experts, paired by seed (3 pairs). Positive differences mean the arm forgets less than the control. $p$ from paired $t$, Holm-corrected in parentheses.}
+\label{tab:moe}
+\begin{tabular}{lccc}
+\toprule
+Arm & Forgetting & Difference vs.\ control [95\% CI] & $p$ (Holm) \\
+\midrule
+Control: 48 experts from the start & 0.729 & --- & --- \\
+Split 32$\rightarrow$48 where the router doubts & 0.711 & $+0.018$\ci{-0.005}{+0.051} & 0.41 (0.81) \\
+Split + parent frozen & 0.741 & $-0.012$\ci{-0.034}{+0.016} & 0.51 (0.81) \\
+Split + aligned merge & 0.807 & $-0.078$\ci{-0.106}{-0.049} & 0.042 (0.21) \\
+Split + usage consolidation & 0.561 & $+0.169$\ci{+0.145}{+0.182} & 0.005 (0.029) \\
+Usage consolidation, no split & 0.505 & $+0.224$\ci{+0.216}{+0.234} & 0.0005 (0.006) \\
+Random consolidation, no split & 0.615 & $+0.114$\ci{+0.096}{+0.142} & 0.014 (0.12) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Freezing, at the end of each language, the 8 experts per layer that the language used most reduces forgetting by 31\% and costs 0.022 nats of learning per language (Table~\ref{tab:moe}).
+Freezing the same number of random experts already gives 16\%, so part of the effect is reserved capacity; choosing by usage adds the rest in all three seeds.
+Splitting experts where the router doubts, merging them, or growing a tree of low-rank children never beats this flat rule.
+In a second setting (concept definitions, 144 runs), usage consolidation again beats random freezing by $+0.071$ nats (90\% CI $[+0.061, +0.081]$).
+
+\paragraph{Predicting which concepts are damaged.}
+Across six WordNet areas, we trained conflicting definitions and asked which untouched concepts are damaged.
+With a fixed effect per concept, prior routing overlap does not predict damage ($-0.014$\ci{-0.032}{+0.006}), the WordNet tree does not either ($+0.016$\ci{-0.014}{+0.041}), and hidden-state similarity predicts little ($+0.086$\ci{+0.057}{+0.116}), while damage is reproducible across repetitions ($+0.377$).
+Damage follows a coarse topic structure (same topic $+0.381$, same supertopic $+0.192$ relative to another supertopic) that weakens within a topic and is not self-similar; a learned tree does not beat a flat map.
+A gradient-based map computed before training does not predict damage either, and mean damage is not first order: the first-order estimate predicts $-1.51$ nats where the real rise is $+0.61$, consistent with a curvature account of fine-tuning fragility~\citep{dimitrov2026loss}.
+These null results led us to stop predicting damage from structure and to regulate plasticity per example instead.
+
+\section{Preregistered rules and outcomes}
+\label{app:rules}
+
+Table~\ref{tab:rules} lists the main decision rule of each run in the main text, in the order they were run.
+Brier scores refer to the probability we assigned to the rule passing before the run; lower is better.
+Predictions, rules, and analyses were written by the same team, and no multiplicity correction was applied.
+
+\begin{table}[h]
+\centering
+\scriptsize
+\caption{Main preregistered rules. ``Pass'' and ``fail'' refer to the rule as written before the run.}
+\label{tab:rules}
+\begin{tabular}{p{2.6cm}p{6.2cm}p{4.2cm}c}
+\toprule
+Experiment & Rule & Result & Brier \\
+\midrule
+Direction, fictitious & $R$ at dose 10 directional (CI upper $<0.25$) & pass, $0.095$\ci{0.064}{0.125} & --- \\
+Direction, dose & $R$ at dose 160 directional & pass, $0.135$\ci{0.091}{0.183} & --- \\
+Direction, dose & Reverse of old fact still wins (CI lower $\ge 0.75$) & fail, $0.605$\ci{0.559}{0.652} & --- \\
+Direction, real & $R$ at dose 10 & partial, $0.328$\ci{0.210}{0.425} & --- \\
+Direction, false on real & $R$ at dose 40 below origin border & pass, $0.130$\ci{0.089}{0.165} & 0.645 \\
+Certainty, false on real & \NTwo{} absent (CI lower $>-0.1$) & absent, $+0.005$\ci{-0.096}{+0.103} & 0.215 \\
+Gate, oracle & Oracle \NTwo{} present ($\le-0.2$, CI $<0$), random absent & pass & 0.063 \\
+Gate, first token & \NTwo{} present & fail, $-0.160$ & 0.203 \\
+Gate, probe & \NTwo{} present; fraction of oracle $\ge 0.5$ & pass, $-0.271$; 0.83 & 0.090; 0.250 \\
+Self-reading (joint head) & Bank integrity (Spearman $\ge0.90$, shift $\le0.15$ nats) & fail in 4 variants; pass with $\beta=10$ & 0.36--0.42 \\
+Self-reading, $\beta=10$ & Joint head inherits certainty ($\Delta\ge0.05$) & fail, does not inherit & 0.26 \\
+Re-read gate & \NTwo{} at dose 160 present & fail, $+0.004$ & 0.023 \\
+Gate, UniEdit & Oracle \NTwo{} present & fail, $-0.166$ & 0.640 \\
+Threshold, real & Confident resists one voice; adopts ten sources & pass & 0.010; 0.360 \\
+Threshold, UniEdit & Resistance gain over weights (paired) & pass, $+0.753$\ci{0.680}{0.828} & 0.063 \\
+Threshold, UniEdit & Collateral cost of threshold & not replicated, $+0.148$\ci{-0.211}{0.497} & 0.360 \\
+Threshold, probe & Resistance gain over weights & pass, $+0.588$\ci{0.508}{0.657} & 0.063 \\
+Noisy oracle & Retains effect at dose 160 & pass, $-0.120$\ci{-0.219}{-0.013} & 0.360 \\
+Content sources & Confident adopts ten content sources & pass, 0.985 & 0.023 \\
+Content sources & Diversity with weights protects & fail, 0.209 & 0.023 \\
+OLMo-2 & Oracle and probe \NTwo{} present; threshold gain & pass, $-0.333$; $-0.253$; $+0.857$ & 0.090 \\
+Replay & Oracle-chosen replay beats random (positive control) & fail, $-0.053$\ci{-0.250}{0.137} & 0.563 \\
+Replay & Forecaster-chosen replay beats random & fail & 0.303 \\
+EWC & Collateral reduction & pass, 61\%\ci{57}{66} & 0.160 \\
+Mushroom body & Relative collateral reduction $\ge 0.30$ & fail, $-2.81$ & 0.303 \\
+EWC + gate & Probe adds selectivity over EWC & fail, $-0.064$ & 0.303 \\
+EWC + gate & Collateral reduction at dose 40 & pass, 49\%\ci{45}{55} & 0.090 \\
+EWC mechanism & Fisher share tracks certainty & fail, $-0.020$\ci{-0.134}{0.092} & 0.360 \\
+EWC mechanism & Fisher share predicts protection & fail, $+0.027$\ci{-0.101}{0.159} & 0.250 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Post-hoc changes, all disclosed in the log: the paired rule against the same-bank baseline was adopted after the UniEdit gate failed; the stopping loss of the first stage of the false-on-real bank was lowered after its first attempt failed its gate; one run's time cap was extended; and the self-reading pilot chose its learning rate and weight decay by looking at the bank.
+Three bugs were found and fixed before the affected comparisons were read (a default value evaluated as true in an integrity check, dropout left on during a head pass, and an integrity check comparing losses measured with different batch compositions).
+Mixture-of-experts gradients are not deterministic on GPU: the Fisher estimate differs by 0.02--0.04\% of its entries between machines.
+
+\end{document}
