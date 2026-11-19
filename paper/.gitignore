@@ -1,0 +1,8 @@
+# Derivados de compilar (ver README de cada paper)
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.pdf
+*.tar.gz
