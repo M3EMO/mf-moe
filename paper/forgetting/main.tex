@@ -472,13 +472,12 @@ Our attempts to have the model read itself either rewrote what it read or made i
   \item Percentile bootstrap intervals over 7 or 8 sets are narrow and can undercover; several analyses bootstrap over facts, which are not independent.
   \item Appendix~\ref{app:rules} lists more than 110 preregistered rules, including integrity checks and controls, each read at 90\% with no multiplicity correction; some passes are expected by chance.
   \item The rule predictions were written by an AI assistant, not by a human forecaster, and the same team wrote predictions, rules, and analyses.
-  \item Preregistrations were kept in a private version-controlled log rather than a public registry.
+  \item Preregistrations were kept in a version-controlled log, now public, rather than in a public registry; only the commit history attests their order.
 \end{itemize}
 
 \section*{Reproducibility}
-[CODE AND DATA AVAILABILITY: repository URL, fact banks, and preregistration log.]
-
-We release, at [CODE URL], the training and analysis scripts for every run, the five fact banks as JSON files (fictitious, real, false on real entities, UniEdit, and the OLMo-2 bank) with their donors and new values, the per-run JSON outputs with all per-fact losses, and the preregistration log with designs, rules, predictions, and outcomes in the order they were written.
+We release, at \url{https://github.com/M3EMO/mf-moe}, the training and analysis scripts for every run, the five fact banks as JSON files (fictitious, real, false on real entities, UniEdit, and the OLMo-2 bank) with their donors and new values, and the per-run JSON outputs with all per-fact losses.
+The preregistration log, with designs, rules, predictions, and outcomes in the order they were written, is in the companion repository \url{https://github.com/M3EMO/vigia}, folder \texttt{.scratch/mf-moe-generalidad} (in Spanish).
 Sets, batch orders, and weight permutations derive from fixed seeds tagged by bank; arms that share a tag share batches, so comparisons between arms are paired.
 Training is deterministic across Colab virtual machines: base losses and repeated arms matched earlier runs with an error of 0.0. The exception is the EWC Fisher estimate, whose retained entries differ by 0.02--0.04\% between machines because mixture-of-experts gradients are not deterministic on GPU.
 All GPU runs used one NVIDIA L4 (24 GB) on Google Colab, about 8 GPU-hours for the main text; probe fitting and the connectome analysis ran on a laptop CPU.
